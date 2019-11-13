@@ -10,7 +10,7 @@ use ggez::{
     event::{EventHandler},
 };
 
-use crate::{Point, Vector};
+use crate::{Point, Vector, Draw, Position};
 
 pub struct MainState {
     universe: Universe,
@@ -31,6 +31,8 @@ impl EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult{
+        let draw_query = <(Read<Draw>, Read<Position>)>::query();
+        // draw_query.iter(&world)
         ggez::graphics::present(ctx)
     }
 }

@@ -5,7 +5,7 @@ use ggez::input;
 use legion::prelude::*;
 
 mod components;
-use components::{Position, Acceleration, Velocity, Mass, Point, Vector};
+use components::{Position, Acceleration, Velocity, Mass, Point, Vector, Draw};
 
 mod main_state;
 use main_state::MainState;
@@ -24,7 +24,7 @@ fn main() -> GameResult {
     world.insert_from(
         (),
         vec![
-        (Position([400.0, 400.0].into()), Mass(1.0)),
+        (Position([400.0, 400.0].into()), Mass(1.0), Draw(ggez::graphics::WHITE)),
         ],
     );
 
