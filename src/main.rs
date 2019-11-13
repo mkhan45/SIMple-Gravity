@@ -5,7 +5,7 @@ use ggez::input;
 use legion::prelude::*;
 
 mod components;
-use components::{Kinematics, Point, Vector};
+use components::{Position, Acceleration, Velocity, Mass, Point, Vector};
 
 mod main_state;
 use main_state::MainState;
@@ -21,12 +21,12 @@ fn main() -> GameResult {
     let universe = Universe::new(None);
     let mut world = universe.create_world();
 
-    // world.insert_from(
-    //     (),
-    //     vec![
-    //         (Kinematics::new(400.0, 400.0)),
-    //     ],
-    // );
+    world.insert_from(
+        (),
+        vec![
+        (Position([400.0, 400.0].into()), Mass(1.0)),
+        ],
+    );
 
     let main_state = &mut MainState::new(universe);
     event::run(ctx, event_loop, main_state)
