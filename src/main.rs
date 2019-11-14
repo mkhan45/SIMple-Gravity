@@ -7,12 +7,12 @@ use ggez::*;
 use legion::prelude::*;
 
 mod components;
-use components::{Draw, Mass, Point, Position, Radius, Vector, Kinematics};
+use components::{Draw, Kinematics, Mass, Point, Position, Radius, Static, Vector};
 
 mod main_state;
 use main_state::MainState;
 
-const G: f32 = 6.674;
+const G: f32 = 66.74;
 
 fn main() -> GameResult {
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Mikail Khan")
@@ -26,16 +26,28 @@ fn main() -> GameResult {
 
     world.insert_from(
         (),
-        vec![(
-            Position([400.0, 400.0].into()),
-            Kinematics {
-                vel: [-1.0, 0.0].into(),
-                accel: [0.0, 0.0].into(),
-            },
-            Mass(1.0),
-            Draw(ggez::graphics::WHITE),
-            Radius(10.0),
-        )],
+        vec![
+            (
+                Position([400.0, 400.0].into()),
+                Kinematics {
+                    vel: [0.0, 0.0].into(),
+                    accel: [0.0, 0.0].into(),
+                },
+                Mass(30.0),
+                Draw(ggez::graphics::WHITE),
+                Radius(10.0),
+            ),
+            (
+                Position([200.0, 200.0].into()),
+                Kinematics {
+                    vel: [0.0, 0.0].into(),
+                    accel: [0.0, 0.0].into(),
+                },
+                Mass(300.0),
+                Draw(ggez::graphics::WHITE),
+                Radius(10.0),
+            ),
+        ],
     );
 
     let main_state = &mut MainState::new(universe, world);

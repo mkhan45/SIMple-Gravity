@@ -12,7 +12,7 @@ use ggez::{
     Context, GameResult,
 };
 
-use crate::{Kinematics, Draw, Point, Position, Radius, Vector};
+use crate::{Draw, Kinematics, Mass, Point, Position, Radius, Static, Vector, G};
 
 pub const DT: f32 = 0.5;
 
@@ -32,10 +32,34 @@ impl MainState {
 
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        let gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
+        let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
+
+        gravity_query.iter(&self.main_world).for_each(|(current_pos, kinematics, rad1)| {
+
+            kinematics.accel = [0.0, 0.0].into();
+
+            inner_query.iter(&self.main_world).for_each(|(other_pos, other_mass, rad2)| {
+                let dist_vec = other_pos.0 - current_pos.0;
+                let dist_mag = current_pos.dist(&other_pos);
+
+                if dist_mag >= rad1.0 + rad2.0 {
+                    let dist_comp = dist_vec / dist_mag;
+
+                    let grav_accel_mag = other_mass.0 / dist_mag.powi(2) * G;
+                    let grav_accel: Vector = dist_comp * grav_accel_mag;
+
+                    kinematics.accel += grav_accel
+                }
+            });
+
+        });
+
+        // let integrate_query = <(Write<Position>, Write<Kinematics>)>::query().filter(!shared_data::<Static>()); // doesn't work idk why
         let integrate_query = <(Write<Position>, Write<Kinematics>)>::query();
         integrate_query
-            .iter_entities(&self.main_world)
-            .for_each(|(entity, (mut pos, mut kinematics))| {
+            .iter(&self.main_world)
+            .for_each(|(pos, kinematics)| {
                 let vel = &mut kinematics.vel;
                 let accel = kinematics.accel;
 
@@ -45,6 +69,7 @@ impl EventHandler for MainState {
                 pos.0.x += vel.x * DT + accel.x / 2.0 * DT.powi(2);
                 pos.0.y += vel.y * DT + accel.y / 2.0 * DT.powi(2);
             });
+
         Ok(())
     }
 
@@ -63,10 +88,10 @@ impl EventHandler for MainState {
                     0.05,
                     color.0,
                 )
-                    .expect("error building mesh");
+                .expect("error building mesh");
                 ggez::graphics::draw(ctx, &circle, graphics::DrawParam::new())
                     .expect("error drawing mesh");
-                });
+            });
         ggez::graphics::present(ctx)
     }
 }
