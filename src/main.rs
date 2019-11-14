@@ -12,6 +12,8 @@ use components::{Draw, Kinematics, Mass, Point, Position, Radius, Static, Vector
 mod main_state;
 use main_state::MainState;
 
+mod physics;
+
 const G: f32 = 66.74;
 
 fn main() -> GameResult {
@@ -28,22 +30,24 @@ fn main() -> GameResult {
         (),
         vec![
             (
-                Position([400.0, 400.0].into()),
+                Position([500.0, 500.0].into()),
                 Kinematics {
-                    vel: [0.0, 0.0].into(),
+                    vel: [3.0, -3.0].into(),
                     accel: [0.0, 0.0].into(),
+                    past_accel: [0.0, 0.0].into(),
                 },
-                Mass(30.0),
+                Mass(0.01),
                 Draw(ggez::graphics::WHITE),
                 Radius(10.0),
             ),
             (
-                Position([200.0, 200.0].into()),
+                Position([300.0, 300.0].into()),
                 Kinematics {
                     vel: [0.0, 0.0].into(),
                     accel: [0.0, 0.0].into(),
+                    past_accel: [0.0, 0.0].into(),
                 },
-                Mass(300.0),
+                Mass(100.0),
                 Draw(ggez::graphics::WHITE),
                 Radius(10.0),
             ),

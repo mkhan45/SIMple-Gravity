@@ -29,6 +29,7 @@ impl Into<ggez::mint::Point2<f32>> for Position {
 pub struct Kinematics {
     pub vel: Vector,
     pub accel: Vector,
+    pub past_accel: Vector,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
