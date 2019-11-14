@@ -7,7 +7,7 @@ use ggez::*;
 use legion::prelude::*;
 
 mod components;
-use components::{Acceleration, Draw, Mass, Point, Position, Vector, Velocity, Radius};
+use components::{Draw, Mass, Point, Position, Radius, Vector, Kinematics};
 
 mod main_state;
 use main_state::MainState;
@@ -28,6 +28,10 @@ fn main() -> GameResult {
         (),
         vec![(
             Position([400.0, 400.0].into()),
+            Kinematics {
+                vel: [-1.0, 0.0].into(),
+                accel: [0.0, 0.0].into(),
+            },
             Mass(1.0),
             Draw(ggez::graphics::WHITE),
             Radius(10.0),

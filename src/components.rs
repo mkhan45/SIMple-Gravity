@@ -19,10 +19,10 @@ impl Into<ggez::mint::Point2<f32>> for Position {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Velocity(pub Vector);
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Acceleration(pub Vector);
+pub struct Kinematics {
+    pub vel: Vector,
+    pub accel: Vector,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Mass(pub f32);
