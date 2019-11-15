@@ -820,7 +820,6 @@ version = "0.1.0"
 dependencies = [
  "ggez 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "legion 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "mint 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

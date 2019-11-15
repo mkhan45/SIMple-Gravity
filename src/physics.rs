@@ -1,64 +1,61 @@
-use crate::{main_state::DT, Draw, Kinematics, Mass, Point, Position, Radius, Vector, G};
+use crate::{main_state::DT, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, G, new_body};
 use legion::prelude::*;
 
 use std::collections::HashSet;
 
 pub fn integrate_positions(world: &World) {
     let pos_integrate_query = <(Write<Position>, Write<Kinematics>)>::query();
-    pos_integrate_query
-        .iter(world)
-        .for_each(|(pos, kinematics)| {
-            pos.0 += kinematics.vel * DT + (kinematics.accel / 2.0) * DT.powi(2);
-        });
+    pos_integrate_query.par_for_each(world, |(pos, kinematics)| {
+        pos.0 += kinematics.vel * DT + (kinematics.accel / 2.0) * DT.powi(2);
+    });
 }
 
 pub fn apply_gravity(world: &World) {
+    //for some reason adding a third component to the query doubles performance 
     let gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
     let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
 
-    gravity_query
-        .iter(world)
-        .for_each(|(current_pos, kinematics, rad1)| {
-            kinematics.accel = [0.0, 0.0].into();
+    gravity_query.par_for_each(world, |(current_pos, kinematics, _)| {
+        kinematics.accel.x = 0.0;
+        kinematics.accel.y = 0.0;
 
-            inner_query
-                .iter(world)
-                .for_each(|(other_pos, other_mass, rad2)| {
-                    let dist_vec = other_pos.0 - current_pos.0;
-                    let dist_mag = current_pos.dist(*other_pos);
+        inner_query
+            .iter(world)
+            .for_each(|(other_pos, other_mass, _)| {
+                let dist_vec = other_pos.0 - current_pos.0;
+                let dist_mag_sqr = dist_vec.norm_squared();
+                let dist_mag = dist_mag_sqr.powf(0.5);
 
-                    if dist_mag >= rad1.0 + rad2.0 {
-                        let dist_comp = dist_vec / dist_mag;
+                if current_pos != other_pos {
+                    let dist_comp = dist_vec / dist_mag;
 
-                        let grav_accel_mag = other_mass.0 / dist_mag.powi(2) * G;
-                        let grav_accel: Vector = dist_comp * grav_accel_mag;
+                    let grav_accel_mag = other_mass.0 / dist_mag_sqr * G;
+                    let grav_accel: Vector = dist_comp * grav_accel_mag;
 
-                        kinematics.accel += grav_accel
-                    }
-                });
-        });
+                    kinematics.accel += grav_accel
+                }
+            });
+    });
 }
 
 pub fn integrate_kinematics(world: &World) {
     let kinematics_integrate_query = <(Write<Kinematics>)>::query();
-    kinematics_integrate_query
-        .iter(world)
-        .for_each(|kinematics| {
-            let vel = &mut kinematics.vel;
-            let accel = kinematics.accel;
-            let past_accel = &mut kinematics.past_accel;
+    kinematics_integrate_query.par_for_each(world, |kinematics| {
+        let vel = &mut kinematics.vel;
+        let accel = kinematics.accel;
+        let past_accel = &mut kinematics.past_accel;
 
-            *vel += (accel + *past_accel) / 2.0 * DT;
+        *vel += (accel + *past_accel) / 2.0 * DT;
 
-            *past_accel = accel;
-        });
+        *past_accel = accel;
+    });
 }
 
 pub fn calc_collisions(world: &mut World) {
     let collision_query = <(Read<Position>, Read<Radius>, Read<Mass>, Read<Kinematics>)>::query();
 
     let mut removal_set: HashSet<Entity> = HashSet::new();
-    let mut create_set: Vec<(Position, Kinematics, Mass, Draw, Radius)> = Vec::new();
+    let mut create_set: Vec<Body> = Vec::new();
 
     collision_query
         .iter_entities(&world)
@@ -67,9 +64,9 @@ pub fn calc_collisions(world: &mut World) {
                 .iter_entities(&world)
                 .for_each(|(id2, (pos2, r2, m2, k2))| {
                     if id1 != id2
+                        && pos1.dist(*pos2) <= r1.0 + r2.0
                         && !removal_set.contains(&id1)
                         && !removal_set.contains(&id2)
-                        && pos1.dist(*pos2) <= r1.0 + r2.0
                     {
                         removal_set.insert(id1);
                         removal_set.insert(id2);
@@ -91,19 +88,13 @@ pub fn calc_collisions(world: &mut World) {
                             );
                             sum_weighted / mtotal
                         };
-                        create_set.push((
-                            Position(new_pos),
-                            Kinematics::new(new_vel),
-                            Mass(mtotal),
-                            Draw(ggez::graphics::WHITE),
-                            Radius(new_rad),
-                        ));
+                        create_set.push(new_body(new_pos, new_vel, mtotal, new_rad));
                     }
                 });
         });
 
-    removal_set.iter().for_each(|entity| {
-        world.delete(*entity);
+    removal_set.drain().for_each(|entity| {
+        world.delete(entity);
     });
 
     world.insert_from((), create_set);

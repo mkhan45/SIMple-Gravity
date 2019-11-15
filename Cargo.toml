@@ -8,5 +8,7 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5.1"
-mint = "0.5.1"
 legion = "0.1.1"
+
+[profile.dev]
+opt-level = 2
