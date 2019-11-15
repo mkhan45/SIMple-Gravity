@@ -12,11 +12,10 @@ use ggez::{
     Context, GameResult,
 };
 
-use crate::{Draw, Kinematics, Mass, Point, Position, Radius, Static, Vector, G};
+use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
+use crate::{Draw, Position, Radius};
 
-use crate::physics::{integrate_positions, apply_gravity, integrate_kinematics};
-
-pub const DT: f32 = 0.5;
+pub const DT: f32 = 1.0;
 
 pub struct MainState {
     universe: Universe,
@@ -33,13 +32,12 @@ impl MainState {
 }
 
 impl EventHandler for MainState {
-    fn update(&mut self, ctx: &mut Context) -> GameResult {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
         for _ in 0..(1.0 / DT) as usize {
-
+            calc_collisions(&mut self.main_world);
             integrate_positions(&self.main_world);
             apply_gravity(&self.main_world);
             integrate_kinematics(&self.main_world);
-
         }
 
         Ok(())
@@ -60,10 +58,10 @@ impl EventHandler for MainState {
                     0.05,
                     color.0,
                 )
-                    .expect("error building mesh");
+                .expect("error building mesh");
                 ggez::graphics::draw(ctx, &circle, graphics::DrawParam::new())
                     .expect("error drawing mesh");
-                });
+            });
         ggez::graphics::present(ctx)
     }
 }

@@ -1,5 +1,5 @@
 use ggez::graphics::Color;
-use nalgebra::{Point2, Vector2};
+use ggez::nalgebra::{Point2, Vector2};
 
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
@@ -8,7 +8,7 @@ pub type Vector = Vector2<f32>;
 pub struct Position(pub Point);
 
 impl Position {
-    pub fn dist(&self, p2: &Position) -> f32 {
+    pub fn dist(self, p2: Position) -> f32 {
         (self.0 - p2.0).norm()
     }
 }
@@ -30,6 +30,16 @@ pub struct Kinematics {
     pub vel: Vector,
     pub accel: Vector,
     pub past_accel: Vector,
+}
+
+impl Kinematics {
+    pub fn new(vel: Vector) -> Self {
+        Kinematics {
+            vel,
+            accel: Vector::new(0.0, 0.0),
+            past_accel: Vector::new(0.0, 0.0),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
