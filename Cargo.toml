@@ -10,5 +10,10 @@ edition = "2018"
 ggez = "0.5.1"
 legion = "0.1.1"
 
+gfx_core = "0.9"
+gfx_device_gl = "0.16"
+imgui = "0.1.0"
+imgui-gfx-renderer = "0.1.0"
+
 [profile.dev]
 opt-level = 2

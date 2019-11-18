@@ -1,6 +1,7 @@
 use legion::prelude::*;
 
 use ggez::{
+    event,
     event::EventHandler,
     graphics,
     graphics::{Color, DrawMode, DrawParam},
@@ -13,20 +14,26 @@ use ggez::{
 };
 
 use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
-use crate::{Draw, Kinematics, Mass, Position, Radius};
+use crate::{Draw, Kinematics, Mass, Position, Radius, imgui_wrapper::*};
 
 pub const DT: f32 = 1.0;
 
 pub struct MainState {
-    universe: Universe,
-    main_world: World,
+    pub universe: Universe,
+    pub main_world: World,
+    pub imgui_wrapper: ImGuiWrapper,
+    pub hidpi_factor: f32,
+    pub selected_entity: Option<Entity>,
 }
 
 impl MainState {
-    pub fn new(universe: Universe, main_world: World) -> Self {
+    pub fn new(universe: Universe, main_world: World, imgui_wrapper: ImGuiWrapper, hidpi_factor: f32) -> Self {
         MainState {
             universe,
             main_world,
+            imgui_wrapper,
+            hidpi_factor,
+            selected_entity: None,
         }
     }
 }
@@ -59,8 +66,46 @@ impl EventHandler for MainState {
                 let point: ggez::mint::Point2<f32> = (*pos).into();
                 builder.circle(DrawMode::fill(), point, rad.0, 0.05, color.0);
             });
+
         let mesh = builder.build(ctx).expect("error building mesh");
+
+        // self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
+
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
+        self.imgui_wrapper.render(ctx, self.hidpi_factor);
+
         ggez::graphics::present(ctx)
+    }
+
+    fn mouse_button_down_event(
+        &mut self,
+        ctx: &mut Context,
+        button: event::MouseButton,
+        x: f32,
+        y: f32,
+    ) {
+        self.imgui_wrapper.update_mouse_down((
+                button == event::MouseButton::Left,
+                button == event::MouseButton::Right,
+                button == event::MouseButton::Middle,
+        ));
+        
+        self.imgui_wrapper.shown_menus.clear();
+        self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
+    }
+
+    fn mouse_button_up_event(
+        &mut self,
+        _ctx: &mut Context,
+        _button: event::MouseButton,
+        _x: f32,
+        _y: f32,
+    ) {
+        self.selected_entity = None;
+        self.imgui_wrapper.update_mouse_down((false, false, false));
+    }
+
+    fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32) {
+        self.imgui_wrapper.update_mouse_pos(x, y);
     }
 }

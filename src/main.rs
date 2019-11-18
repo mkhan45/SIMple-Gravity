@@ -10,6 +10,8 @@ mod main_state;
 use main_state::MainState;
 
 mod physics;
+mod imgui_wrapper;
+use imgui_wrapper::ImGuiWrapper;
 
 const G: f32 = 66.74;
 type Body = (Position, Kinematics, Mass, Draw, Radius);
@@ -54,7 +56,8 @@ fn main() -> GameResult {
     //         ))
     //     }),
     // );
+    let hidpi_factor = event_loop.get_primary_monitor().get_hidpi_factor() as f32;
 
-    let main_state = &mut MainState::new(universe, world);
+    let main_state = &mut MainState::new(universe, world, ImGuiWrapper::new(ctx, hidpi_factor), hidpi_factor);
     event::run(ctx, event_loop, main_state)
 }
