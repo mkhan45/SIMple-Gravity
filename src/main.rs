@@ -14,6 +14,9 @@ mod imgui_wrapper;
 use imgui_wrapper::ImGuiWrapper;
 
 const G: f32 = 66.74;
+const SCREEN_X: f32 = 30.0;
+const SCREEN_Y: f32 = 30.0;
+
 type Body = (Position, Kinematics, Mass, Draw, Radius);
 
 pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f32) -> Body {
@@ -39,9 +42,9 @@ fn main() -> GameResult {
         world.insert_from(
             (),
             vec![
-                new_body([500.0, 500.0], [3.0, -3.0], 0.01, 5.0),
-                new_body([300.0, 300.0], [0.0, 0.0], 100.0, 20.0),
-                new_body([100.0, 100.0], [-1.6, -0.5], 1.0, 10.0),
+                // new_body([28.0, 15.0], [0.3, -0.3], 0.01, 0.5),
+                new_body([15.0, 15.0], [0.0, 0.0], 100.0, 1.0),
+                // new_body([0.0, 0.0], [-0.3, -0.1], 1.0, 0.1),
             ],
         );
 
@@ -57,6 +60,16 @@ fn main() -> GameResult {
     //     }),
     // );
     let hidpi_factor = event_loop.get_primary_monitor().get_hidpi_factor() as f32;
+    let dimensions = event_loop.get_primary_monitor().get_dimensions();
+    let aspect_ratio = dimensions.height / dimensions.width;
+    graphics::set_mode(
+        ctx,
+        ggez::conf::WindowMode::default()
+            .dimensions(dimensions.width as f32, dimensions.height as f32),
+    )
+    .expect("error resizing window");
+
+    graphics::set_screen_coordinates(ctx, graphics::Rect::new(0., 0., SCREEN_X, SCREEN_Y / aspect_ratio as f32)).unwrap();
 
     let main_state = &mut MainState::new(universe, world, ImGuiWrapper::new(ctx, hidpi_factor), hidpi_factor);
     event::run(ctx, event_loop, main_state)
