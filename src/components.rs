@@ -25,6 +25,12 @@ impl Into<ggez::mint::Point2<f32>> for Position {
     }
 }
 
+impl From<[f32; 2]> for Position {
+    fn from(p: [f32; 2]) -> Self {
+        Position(p.into())
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Kinematics {
     pub vel: Vector,

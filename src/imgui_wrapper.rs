@@ -38,10 +38,12 @@ pub struct ImGuiWrapper {
     pub sent_signals: Vec<UiSignal>,
 }
 
-pub fn make_sidepanel(ui: &mut imgui::Ui, handle: Entity) {
+pub fn make_sidepanel(ui: &mut imgui::Ui, handle: &Option<Entity>) {
     // Window
     ui.window(im_str!("Hello world"))
-        .position([100.0, 100.0], imgui::Condition::Appearing)
+        .position([300.0, 0.0], imgui::Condition::Always)
+        .size([300.0, 600.0], imgui::Condition::Appearing)
+        .collapsible(false)
         .build(|| {
             ui.text(im_str!("Hello world!"));
             ui.separator();
@@ -133,6 +135,7 @@ impl ImGuiWrapper {
             for menu in self.shown_menus.clone().iter() {
                 match menu {
                     UiChoice::DefaultUI => make_default_ui(&mut ui),
+                    UiChoice::SideMenu(entity) => make_sidepanel(&mut ui, entity),
                     _ => unimplemented!(),
                 }
             }

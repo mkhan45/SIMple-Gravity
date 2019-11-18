@@ -85,13 +85,31 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == event::MouseButton::Left,
-                button == event::MouseButton::Right,
-                button == event::MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
         
-        self.imgui_wrapper.shown_menus.clear();
-        self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
+        // self.imgui_wrapper.shown_menus.clear();
+        // self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
+
+        match button {
+            MouseButton::Right => {
+                self.imgui_wrapper.shown_menus.clear();
+                let clicked_query = <(Read<Position>, Read<Radius>)>::query();
+                let mut entity: Option<Entity> = None;
+
+                for (e, (pos, rad)) in clicked_query.iter_entities(&self.main_world) {
+                    if pos.dist([x, y].into()) <= rad.0 {
+                        entity = Some(e);
+                        break;
+                    }
+                }
+
+                self.imgui_wrapper.shown_menus.push(UiChoice::SideMenu(entity));
+            },
+            _ => {},
+        }
     }
 
     fn mouse_button_up_event(
