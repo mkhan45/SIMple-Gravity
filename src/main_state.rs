@@ -232,4 +232,15 @@ impl EventHandler for MainState {
     fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
     }
+
+    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
+        let aspect_ratio = height / width;
+        graphics::set_screen_coordinates(
+            ctx,
+            graphics::Rect::new(0., 0., crate::SCREEN_X, crate::SCREEN_Y * aspect_ratio as f32),
+        ).expect("error resizing");
+        let resolution = Vector::new(width, height);
+        self.imgui_wrapper.resolution = resolution;
+        self.resolution = resolution;
+    }
 }

@@ -66,7 +66,8 @@ fn main() -> GameResult {
     graphics::set_mode(
         ctx,
         ggez::conf::WindowMode::default()
-            .dimensions(dimensions.width as f32, dimensions.height as f32),
+            .dimensions(dimensions.width as f32, dimensions.height as f32)
+            .resizable(true),
     )
     .expect("error resizing window");
 
