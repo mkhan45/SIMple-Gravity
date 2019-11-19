@@ -69,8 +69,8 @@ pub fn make_sidepanel(
         )
         .build(ui, || {
             ui.text(im_str!("New Object"));
-            ui.drag_float(im_str!("Mass"), mass).speed(0.1).build();
-            ui.drag_float(im_str!("Radius"), rad).speed(0.1).build();
+            ui.drag_float(im_str!("Mass"), mass).speed(0.01).build();
+            ui.drag_float(im_str!("Radius"), rad).speed(0.01).build();
             if ui.small_button(im_str!("Create Body")) {
                 signals.push(UiSignal::Create);
             }
