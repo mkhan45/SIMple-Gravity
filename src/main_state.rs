@@ -16,6 +16,7 @@ use ggez::{
 use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
 use crate::{imgui_wrapper::*, Draw, Kinematics, Mass, Position, Radius, Vector};
 
+use std::cell::RefCell;
 use std::convert::TryInto;
 
 pub const DT: f32 = 1.0;
@@ -27,8 +28,11 @@ pub struct MainState {
     pub hidpi_factor: f32,
     pub resolution: Vector,
     pub selected_entity: Option<Entity>,
+    pub mass: f32,
+    pub rad: f32,
     pub dt: f32,
-    pub num_iterations: usize,
+    pub num_iterations: i32,
+    pub creating: bool,
 }
 
 impl MainState {
@@ -47,18 +51,16 @@ impl MainState {
             resolution,
             selected_entity: None,
             dt: DT,
+            mass: 1.0,
+            rad: 1.0,
             num_iterations: 1,
+            creating: false,
         }
     }
 }
 
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.dt = self.imgui_wrapper.dt;
-        match self.imgui_wrapper.num_iterations.try_into() {
-            Ok(num) => self.num_iterations = num,
-            Err(_) => self.imgui_wrapper.num_iterations = 1,
-        }
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
         }
@@ -91,7 +93,16 @@ impl EventHandler for MainState {
         // self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
 
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
-        self.imgui_wrapper.render(ctx, self.hidpi_factor);
+        let hidpi_factor = self.hidpi_factor;
+        self.imgui_wrapper.render(
+            ctx,
+            hidpi_factor,
+            &mut self.dt,
+            &mut self.mass,
+            &mut self.rad,
+            &mut self.num_iterations,
+            &mut self.creating,
+        );
 
         ggez::graphics::present(ctx)
     }

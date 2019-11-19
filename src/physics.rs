@@ -1,6 +1,4 @@
-use crate::{
-    new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, G,
-};
+use crate::{new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, G};
 use legion::prelude::*;
 
 use std::collections::HashSet;

@@ -10,8 +10,9 @@ use imgui_gfx_renderer::*;
 
 use legion::prelude::Entity;
 
-use crate::{Vector, Body};
+use crate::{Body, Vector};
 
+use std::cell::RefCell;
 use std::time;
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
@@ -41,10 +42,6 @@ pub struct ImGuiWrapper {
     pub sent_signals: Vec<UiSignal>,
     pub resolution: Vector,
     pub sidemenu: bool,
-    pub mass: f32,
-    pub rad: f32,
-    pub num_iterations: i32,
-    pub dt: f32,
 }
 
 pub fn make_sidepanel(
@@ -74,7 +71,7 @@ pub fn make_sidepanel(
             ui.text(im_str!("New Object"));
             ui.drag_float(im_str!("Mass"), mass).speed(0.1).build();
             ui.drag_float(im_str!("Radius"), rad).speed(0.1).build();
-            if ui.small_button(im_str!("Create Body")){
+            if ui.small_button(im_str!("Create Body")) {
                 signals.push(UiSignal::Create);
             }
             ui.separator();
@@ -152,14 +149,19 @@ impl ImGuiWrapper {
             sent_signals: Vec::with_capacity(1),
             resolution,
             sidemenu: false,
-            mass: 0.0,
-            rad: 0.0,
-            num_iterations: 1,
-            dt,
         }
     }
 
-    pub fn render(&mut self, ctx: &mut Context, hidpi_factor: f32) {
+    pub fn render(
+        &mut self,
+        ctx: &mut Context,
+        hidpi_factor: f32,
+        dt: &mut f32,
+        mass: &mut f32,
+        rad: &mut f32,
+        num_iterations: &mut i32,
+        creating: &mut bool,
+    ) {
         // Update mouse
         self.update_mouse();
 
@@ -186,10 +188,10 @@ impl ImGuiWrapper {
                             &mut ui,
                             self.resolution,
                             &mut self.sidemenu,
-                            &mut self.mass,
-                            &mut self.rad,
-                            &mut self.dt,
-                            &mut self.num_iterations,
+                            mass,
+                            rad,
+                            dt,
+                            num_iterations,
                             &mut self.sent_signals,
                         );
                     }
@@ -218,7 +220,7 @@ impl ImGuiWrapper {
                     UiChoice::SideMenu(_) => false,
                     _ => true,
                 })
-            .cloned()
+                .cloned()
                 .collect();
         }
     }
