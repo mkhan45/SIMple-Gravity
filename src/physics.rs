@@ -1,17 +1,19 @@
-use crate::{main_state::DT, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, G, new_body};
+use crate::{
+    new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, G,
+};
 use legion::prelude::*;
 
 use std::collections::HashSet;
 
-pub fn integrate_positions(world: &World) {
+pub fn integrate_positions(world: &World, dt: f32) {
     let pos_integrate_query = <(Write<Position>, Write<Kinematics>)>::query();
     pos_integrate_query.par_for_each(world, |(pos, kinematics)| {
-        pos.0 += kinematics.vel * DT + (kinematics.accel / 2.0) * DT.powi(2);
+        pos.0 += kinematics.vel * dt + (kinematics.accel / 2.0) * dt.powi(2);
     });
 }
 
 pub fn apply_gravity(world: &World) {
-    //for some reason adding a third component to the query doubles performance 
+    //for some reason adding a third component to the query doubles performance
     let gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
     let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
 
@@ -38,14 +40,14 @@ pub fn apply_gravity(world: &World) {
     });
 }
 
-pub fn integrate_kinematics(world: &World) {
+pub fn integrate_kinematics(world: &World, dt: f32) {
     let kinematics_integrate_query = <(Write<Kinematics>)>::query();
     kinematics_integrate_query.par_for_each(world, |kinematics| {
         let vel = &mut kinematics.vel;
         let accel = kinematics.accel;
         let past_accel = &mut kinematics.past_accel;
 
-        *vel += (accel + *past_accel) / 2.0 * DT;
+        *vel += (accel + *past_accel) / 2.0 * dt;
 
         *past_accel = accel;
     });

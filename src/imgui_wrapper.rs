@@ -10,6 +10,8 @@ use imgui_gfx_renderer::*;
 
 use legion::prelude::Entity;
 
+use crate::{Vector, Body};
+
 use std::time;
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
@@ -27,6 +29,7 @@ pub enum UiChoice {
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum UiSignal {
+    Create,
 }
 
 pub struct ImGuiWrapper {
@@ -36,29 +39,58 @@ pub struct ImGuiWrapper {
     pub mouse_state: MouseState,
     pub shown_menus: Vec<UiChoice>,
     pub sent_signals: Vec<UiSignal>,
+    pub resolution: Vector,
+    pub sidemenu: bool,
+    pub mass: f32,
+    pub rad: f32,
+    pub num_iterations: i32,
+    pub dt: f32,
 }
 
-pub fn make_sidepanel(ui: &mut imgui::Ui, handle: &Option<Entity>) {
+pub fn make_sidepanel(
+    ui: &mut imgui::Ui,
+    resolution: Vector,
+    open_bool: &mut bool,
+    mass: &mut f32,
+    rad: &mut f32,
+    dt: &mut f32,
+    num_iterations: &mut i32,
+    signals: &mut Vec<UiSignal>,
+) {
     // Window
-    ui.window(im_str!("Hello world"))
-        .position([300.0, 0.0], imgui::Condition::Always)
-        .size([300.0, 600.0], imgui::Condition::Appearing)
+    imgui::Window::new(im_str!("Menu"))
+        .position([0.0, 0.0], imgui::Condition::Always)
+        .opened(open_bool)
+        .size(
+            [resolution.x * 0.35, resolution.y],
+            imgui::Condition::Appearing,
+        )
         .collapsible(false)
-        .build(|| {
-            ui.text(im_str!("Hello world!"));
-            ui.separator();
-
-            if ui.small_button(im_str!("small button")) {
-                println!("Small button clicked");
+        .size_constraints(
+            [resolution.x * 0.1, resolution.y],
+            [resolution.x * 0.6, resolution.y],
+        )
+        .build(ui, || {
+            ui.text(im_str!("New Object"));
+            ui.drag_float(im_str!("Mass"), mass).speed(0.1).build();
+            ui.drag_float(im_str!("Radius"), rad).speed(0.1).build();
+            if ui.small_button(im_str!("Create Body")){
+                signals.push(UiSignal::Create);
             }
+            ui.separator();
+            ui.text(im_str!("DT"));
+            ui.drag_float(im_str!(""), dt).speed(0.01).build();
+
+            ui.text(im_str!("Iteration Count"));
+            ui.drag_int(im_str!(" "), num_iterations).min(0).build();
         });
 }
 
 pub fn make_default_ui(ui: &mut imgui::Ui) {
     // Window
-    ui.window(im_str!("Hello world"))
+    imgui::Window::new(im_str!("Hello world"))
         .position([100.0, 100.0], imgui::Condition::Appearing)
-        .build(|| {
+        .build(ui, || {
             ui.text(im_str!("Hello world!"));
             ui.separator();
 
@@ -69,9 +101,16 @@ pub fn make_default_ui(ui: &mut imgui::Ui) {
 }
 
 impl ImGuiWrapper {
-    pub fn new(ctx: &mut ggez::Context, hidpi_factor: f32) -> Self {
+    pub fn new(ctx: &mut ggez::Context, hidpi_factor: f32, dt: f32, resolution: Vector) -> Self {
         // Create the imgui object
         let mut imgui = imgui::Context::create();
+        let style = imgui.style_mut();
+        style.window_rounding = 0.0;
+        style.child_rounding = 0.0;
+        style.popup_rounding = 0.0;
+        style.frame_rounding = 0.0;
+        style.tab_rounding = 0.0;
+        style.grab_rounding = 0.0;
         let (factory, gfx_device, _, _, _) = graphics::gfx_objects(ctx);
 
         // Shaders
@@ -111,6 +150,12 @@ impl ImGuiWrapper {
             mouse_state: MouseState::default(),
             shown_menus: Vec::with_capacity(2),
             sent_signals: Vec::with_capacity(1),
+            resolution,
+            sidemenu: false,
+            mass: 0.0,
+            rad: 0.0,
+            num_iterations: 1,
+            dt,
         }
     }
 
@@ -135,7 +180,19 @@ impl ImGuiWrapper {
             for menu in self.shown_menus.clone().iter() {
                 match menu {
                     UiChoice::DefaultUI => make_default_ui(&mut ui),
-                    UiChoice::SideMenu(entity) => make_sidepanel(&mut ui, entity),
+                    UiChoice::SideMenu(entity) => {
+                        self.sidemenu = true;
+                        make_sidepanel(
+                            &mut ui,
+                            self.resolution,
+                            &mut self.sidemenu,
+                            &mut self.mass,
+                            &mut self.rad,
+                            &mut self.dt,
+                            &mut self.num_iterations,
+                            &mut self.sent_signals,
+                        );
+                    }
                     _ => unimplemented!(),
                 }
             }
@@ -152,6 +209,18 @@ impl ImGuiWrapper {
                 draw_data,
             )
             .unwrap();
+
+        if !self.sidemenu {
+            self.shown_menus = self
+                .shown_menus
+                .iter()
+                .filter(|menu| match menu {
+                    UiChoice::SideMenu(_) => false,
+                    _ => true,
+                })
+            .cloned()
+                .collect();
+        }
     }
 
     fn update_mouse(&mut self) {

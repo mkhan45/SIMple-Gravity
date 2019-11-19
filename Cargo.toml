@@ -12,8 +12,8 @@ legion = "0.1.1"
 
 gfx_core = "0.9"
 gfx_device_gl = "0.16"
-imgui = "0.1.0"
-imgui-gfx-renderer = "0.1.0"
+imgui = "0.2.0"
+imgui-gfx-renderer = "0.2.0"
 
 [profile.dev]
 opt-level = 2

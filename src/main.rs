@@ -9,13 +9,13 @@ use components::{Draw, Kinematics, Mass, Point, Position, Radius, Vector};
 mod main_state;
 use main_state::MainState;
 
-mod physics;
 mod imgui_wrapper;
+mod physics;
 use imgui_wrapper::ImGuiWrapper;
 
-const G: f32 = 66.74;
-const SCREEN_X: f32 = 30.0;
-const SCREEN_Y: f32 = 30.0;
+const G: f32 = 1.2;
+const SCREEN_X: f32 = 300.0;
+const SCREEN_Y: f32 = 300.0;
 
 type Body = (Position, Kinematics, Mass, Draw, Radius);
 
@@ -39,14 +39,14 @@ fn main() -> GameResult {
     let universe = Universe::new(None);
     let mut world = universe.create_world();
 
-        world.insert_from(
-            (),
-            vec![
-                // new_body([28.0, 15.0], [0.3, -0.3], 0.01, 0.5),
-                new_body([15.0, 15.0], [0.0, 0.0], 100.0, 1.0),
-                // new_body([0.0, 0.0], [-0.3, -0.1], 1.0, 0.1),
-            ],
-        );
+    world.insert_from(
+        (),
+        vec![
+            new_body([215.0, 100.0], [-0.0, -0.6], 0.01, 0.8),
+            new_body([150.0, 100.0], [0.0, 0.0], 25.0, 5.0),
+            // new_body([0.0, 0.0], [-0.3, -0.1], 1.0, 0.1),
+        ],
+    );
 
     // world.insert_from(
     //     (),
@@ -61,6 +61,7 @@ fn main() -> GameResult {
     // );
     let hidpi_factor = event_loop.get_primary_monitor().get_hidpi_factor() as f32;
     let dimensions = event_loop.get_primary_monitor().get_dimensions();
+    let dimensions_vec = Vector::new(dimensions.width as f32, dimensions.height as f32);
     let aspect_ratio = dimensions.height / dimensions.width;
     graphics::set_mode(
         ctx,
@@ -69,8 +70,18 @@ fn main() -> GameResult {
     )
     .expect("error resizing window");
 
-    graphics::set_screen_coordinates(ctx, graphics::Rect::new(0., 0., SCREEN_X, SCREEN_Y / aspect_ratio as f32)).unwrap();
+    graphics::set_screen_coordinates(
+        ctx,
+        graphics::Rect::new(0., 0., SCREEN_X, SCREEN_Y * aspect_ratio as f32),
+    )
+    .unwrap();
 
-    let main_state = &mut MainState::new(universe, world, ImGuiWrapper::new(ctx, hidpi_factor), hidpi_factor);
+    let main_state = &mut MainState::new(
+        universe,
+        world,
+        ImGuiWrapper::new(ctx, hidpi_factor, 1.0, dimensions_vec),
+        hidpi_factor,
+        dimensions_vec,
+    );
     event::run(ctx, event_loop, main_state)
 }

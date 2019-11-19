@@ -14,7 +14,9 @@ use ggez::{
 };
 
 use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
-use crate::{Draw, Kinematics, Mass, Position, Radius, imgui_wrapper::*};
+use crate::{imgui_wrapper::*, Draw, Kinematics, Mass, Position, Radius, Vector};
+
+use std::convert::TryInto;
 
 pub const DT: f32 = 1.0;
 
@@ -23,31 +25,48 @@ pub struct MainState {
     pub main_world: World,
     pub imgui_wrapper: ImGuiWrapper,
     pub hidpi_factor: f32,
+    pub resolution: Vector,
     pub selected_entity: Option<Entity>,
+    pub dt: f32,
+    pub num_iterations: usize,
 }
 
 impl MainState {
-    pub fn new(universe: Universe, main_world: World, imgui_wrapper: ImGuiWrapper, hidpi_factor: f32) -> Self {
+    pub fn new(
+        universe: Universe,
+        main_world: World,
+        imgui_wrapper: ImGuiWrapper,
+        hidpi_factor: f32,
+        resolution: Vector,
+    ) -> Self {
         MainState {
             universe,
             main_world,
             imgui_wrapper,
             hidpi_factor,
+            resolution,
             selected_entity: None,
+            dt: DT,
+            num_iterations: 1,
         }
     }
 }
 
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        self.dt = self.imgui_wrapper.dt;
+        match self.imgui_wrapper.num_iterations.try_into() {
+            Ok(num) => self.num_iterations = num,
+            Err(_) => self.imgui_wrapper.num_iterations = 1,
+        }
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
         }
-        for _ in 0..(1.0 / DT) as usize {
+        for _ in 0..self.num_iterations {
             calc_collisions(&mut self.main_world);
-            integrate_positions(&self.main_world);
+            integrate_positions(&self.main_world, self.dt);
             apply_gravity(&self.main_world);
-            integrate_kinematics(&self.main_world);
+            integrate_kinematics(&self.main_world, self.dt);
         }
 
         Ok(())
@@ -85,11 +104,11 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
-        
+
         // self.imgui_wrapper.shown_menus.clear();
         // self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
 
@@ -106,9 +125,11 @@ impl EventHandler for MainState {
                     }
                 }
 
-                self.imgui_wrapper.shown_menus.push(UiChoice::SideMenu(entity));
-            },
-            _ => {},
+                self.imgui_wrapper
+                    .shown_menus
+                    .push(UiChoice::SideMenu(entity));
+            }
+            _ => {}
         }
     }
 
