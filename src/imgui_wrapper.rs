@@ -55,7 +55,7 @@ pub fn make_sidepanel(
     signals: &mut Vec<UiSignal>,
 ) {
     // Window
-    imgui::Window::new(im_str!("Menu"))
+    let win = imgui::Window::new(im_str!("Menu"))
         .position([0.0, 0.0], imgui::Condition::Always)
         .opened(open_bool)
         .size(
@@ -63,24 +63,25 @@ pub fn make_sidepanel(
             imgui::Condition::Appearing,
         )
         .collapsible(false)
+        .movable(false)
         .size_constraints(
             [resolution.x * 0.1, resolution.y],
             [resolution.x * 0.6, resolution.y],
-        )
-        .build(ui, || {
-            ui.text(im_str!("New Object"));
-            ui.drag_float(im_str!("Mass"), mass).speed(0.01).build();
-            ui.drag_float(im_str!("Radius"), rad).speed(0.01).build();
-            if ui.small_button(im_str!("Create Body")) {
-                signals.push(UiSignal::Create);
-            }
-            ui.separator();
-            ui.text(im_str!("DT"));
-            ui.drag_float(im_str!(""), dt).speed(0.01).build();
+        );
+    win.build(ui, || {
+        ui.text(im_str!("New Object"));
+        ui.drag_float(im_str!("Mass"), mass).speed(0.01).build();
+        ui.drag_float(im_str!("Radius"), rad).speed(0.01).build();
+        if ui.small_button(im_str!("Create Body")) {
+            signals.push(UiSignal::Create);
+        }
+        ui.separator();
+        ui.text(im_str!("DT"));
+        ui.drag_float(im_str!(""), dt).speed(0.01).build();
 
-            ui.text(im_str!("Iteration Count"));
-            ui.drag_int(im_str!(" "), num_iterations).min(0).build();
-        });
+        ui.text(im_str!("Iteration Count"));
+        ui.drag_int(im_str!(" "), num_iterations).min(0).build();
+    });
 }
 
 pub fn make_default_ui(ui: &mut imgui::Ui) {
@@ -161,6 +162,7 @@ impl ImGuiWrapper {
         rad: &mut f32,
         num_iterations: &mut i32,
         creating: &mut bool,
+        items_hovered: &mut bool,
     ) {
         // Update mouse
         self.update_mouse();
@@ -199,6 +201,7 @@ impl ImGuiWrapper {
                 }
             }
         }
+        *items_hovered = ui.is_any_item_hovered();
 
         // Render
         let (factory, _, encoder, _, render_target) = graphics::gfx_objects(ctx);

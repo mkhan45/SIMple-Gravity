@@ -36,6 +36,7 @@ pub struct MainState {
     pub num_iterations: i32,
     pub creating: bool,
     pub start_point: Option<Point>,
+    pub items_hovered: bool,
 }
 
 impl MainState {
@@ -59,6 +60,7 @@ impl MainState {
             num_iterations: 1,
             creating: false,
             start_point: None,
+            items_hovered: false,
         }
     }
 }
@@ -145,6 +147,7 @@ impl EventHandler for MainState {
             &mut self.rad,
             &mut self.num_iterations,
             &mut self.creating,
+            &mut self.items_hovered,
         );
 
         ggez::graphics::present(ctx)
@@ -163,36 +166,35 @@ impl EventHandler for MainState {
             button == MouseButton::Middle,
         ));
 
-        // self.imgui_wrapper.shown_menus.clear();
-        // self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
+        if !self.items_hovered {
+            match button {
+                MouseButton::Right => {
+                    self.imgui_wrapper.shown_menus.clear();
+                    let clicked_query = <(Read<Position>, Read<Radius>)>::query();
+                    let mut entity: Option<Entity> = None;
 
-        match button {
-            MouseButton::Right => {
-                self.imgui_wrapper.shown_menus.clear();
-                let clicked_query = <(Read<Position>, Read<Radius>)>::query();
-                let mut entity: Option<Entity> = None;
+                    for (e, (pos, rad)) in clicked_query.iter_entities(&self.main_world) {
+                        if pos.dist([x, y].into()) <= rad.0 {
+                            entity = Some(e);
+                            break;
+                        }
+                    }
 
-                for (e, (pos, rad)) in clicked_query.iter_entities(&self.main_world) {
-                    if pos.dist([x, y].into()) <= rad.0 {
-                        entity = Some(e);
-                        break;
+                    self.imgui_wrapper
+                        .shown_menus
+                        .push(UiChoice::SideMenu(entity));
+                }
+                MouseButton::Left => {
+                    if self.creating {
+                        let mut p = Point::new(x, y);
+                        let coords = ggez::graphics::screen_coordinates(ctx);
+                        p.x *= coords.w / self.resolution.x;
+                        p.y *= coords.h / self.resolution.y;
+                        self.start_point = Some(p);
                     }
                 }
-
-                self.imgui_wrapper
-                    .shown_menus
-                    .push(UiChoice::SideMenu(entity));
+                _ => {}
             }
-            MouseButton::Left => {
-                if self.creating {
-                    let mut p = Point::new(x, y);
-                    let coords = ggez::graphics::screen_coordinates(ctx);
-                    p.x *= coords.w / self.resolution.x;
-                    p.y *= coords.h / self.resolution.y;
-                    self.start_point = Some(p);
-                }
-            }
-            _ => {}
         }
     }
 
@@ -203,29 +205,31 @@ impl EventHandler for MainState {
         x: f32,
         y: f32,
     ) {
-        self.selected_entity = None;
         self.imgui_wrapper.update_mouse_down((false, false, false));
-        match button {
-            MouseButton::Left => {
-                if self.creating && !self.imgui_wrapper.sent_signals.contains(&UiSignal::Create) {
-                    let mut p = Point::new(x, y);
-                    let coords = ggez::graphics::screen_coordinates(ctx);
-                    p.x *= coords.w / self.resolution.x;
-                    p.y *= coords.h / self.resolution.y;
+        if let Some(start_point) = self.start_point {
+            match button {
+                MouseButton::Left => {
+                    if self.creating && !self.imgui_wrapper.sent_signals.contains(&UiSignal::Create)
+                    {
+                        let mut p = Point::new(x, y);
+                        let coords = ggez::graphics::screen_coordinates(ctx);
+                        p.x *= coords.w / self.resolution.x;
+                        p.y *= coords.h / self.resolution.y;
 
-                    self.main_world.insert_from(
-                        (),
-                        vec![new_body(
-                            self.start_point.unwrap(),
-                            (self.start_point.unwrap() - p) * 0.10,
-                            self.mass,
-                            self.rad,
-                        )],
-                    );
-                    self.start_point = None;
+                        self.main_world.insert_from(
+                            (),
+                            vec![new_body(
+                                start_point,
+                                (start_point - p) * 0.10,
+                                self.mass,
+                                self.rad,
+                            )],
+                        );
+                        self.start_point = None;
+                    }
                 }
+                _ => dbg!(),
             }
-            _ => dbg!(),
         }
     }
 
@@ -237,8 +241,14 @@ impl EventHandler for MainState {
         let aspect_ratio = height / width;
         graphics::set_screen_coordinates(
             ctx,
-            graphics::Rect::new(0., 0., crate::SCREEN_X, crate::SCREEN_Y * aspect_ratio as f32),
-        ).expect("error resizing");
+            graphics::Rect::new(
+                0.,
+                0.,
+                crate::SCREEN_X,
+                crate::SCREEN_Y * aspect_ratio as f32,
+            ),
+        )
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.resolution = resolution;

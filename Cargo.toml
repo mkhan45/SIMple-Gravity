@@ -16,4 +16,4 @@ imgui = "0.2.0"
 imgui-gfx-renderer = "0.2.0"
 
 [profile.dev]
-opt-level = 2
+debug=0
