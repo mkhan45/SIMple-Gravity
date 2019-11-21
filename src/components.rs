@@ -31,6 +31,12 @@ impl From<[f32; 2]> for Position {
     }
 }
 
+impl From<Point> for Position {
+    fn from(p: Point) -> Self {
+        Position(p)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Kinematics {
     pub vel: Vector,
