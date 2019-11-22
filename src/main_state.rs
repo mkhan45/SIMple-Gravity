@@ -140,16 +140,35 @@ impl EventHandler for MainState {
 
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         let hidpi_factor = self.hidpi_factor;
-        self.imgui_wrapper.render(
-            ctx,
-            hidpi_factor,
-            &mut self.dt,
-            &mut self.mass,
-            &mut self.rad,
-            &mut self.num_iterations,
-            &mut self.creating,
-            &mut self.items_hovered,
-        );
+        if let Some(e) = self.selected_entity {
+            let mut mass = self.main_world.entity_data_mut::<Mass>(e).unwrap().0;
+            let mut rad = self.main_world.entity_data_mut::<Radius>(e).unwrap().0;
+            self.imgui_wrapper.render(
+                ctx,
+                hidpi_factor,
+                &mut self.dt,
+                &mut mass,
+                &mut rad,
+                &mut self.num_iterations,
+                &mut self.creating,
+                &mut self.items_hovered,
+                self.selected_entity, //TODO Remove this
+            );
+            self.main_world.entity_data_mut::<Mass>(e).unwrap().0 = mass;
+            self.main_world.entity_data_mut::<Radius>(e).unwrap().0 = rad;
+        } else {
+            self.imgui_wrapper.render(
+                ctx,
+                hidpi_factor,
+                &mut self.dt,
+                &mut self.mass,
+                &mut self.rad,
+                &mut self.num_iterations,
+                &mut self.creating,
+                &mut self.items_hovered,
+                self.selected_entity,
+            );
+        }
 
         ggez::graphics::present(ctx)
     }
@@ -172,18 +191,25 @@ impl EventHandler for MainState {
                 MouseButton::Right => {
                     self.imgui_wrapper.shown_menus.clear();
                     let clicked_query = <(Read<Position>, Read<Radius>)>::query();
-                    let mut entity: Option<Entity> = None;
+                    self.selected_entity = None;
+
+                    let coords = ggez::graphics::screen_coordinates(ctx);
+                    let mouse_pos = Point::new(
+                        x * coords.w / self.resolution.x,
+                        y * coords.h / self.resolution.y,
+                    );
 
                     for (e, (pos, rad)) in clicked_query.iter_entities(&self.main_world) {
-                        if pos.dist([x, y].into()) <= rad.0 {
-                            entity = Some(e);
+                        if pos.dist(mouse_pos.into()) <= rad.0 {
+                            self.selected_entity = Some(e);
                             break;
                         }
                     }
 
+                    //TODO Remove selected_entity
                     self.imgui_wrapper
                         .shown_menus
-                        .push(UiChoice::SideMenu(entity));
+                        .push(UiChoice::SideMenu(self.selected_entity));
                 }
                 MouseButton::Left => {
                     if self.creating {

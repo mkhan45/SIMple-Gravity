@@ -53,6 +53,7 @@ pub fn make_sidepanel(
     dt: &mut f32,
     num_iterations: &mut i32,
     signals: &mut Vec<UiSignal>,
+    entity: Option<Entity>,
 ) {
     // Window
     let win = imgui::Window::new(im_str!("Menu"))
@@ -69,9 +70,14 @@ pub fn make_sidepanel(
             [resolution.x * 0.6, resolution.y],
         );
     win.build(ui, || {
-        ui.text(im_str!("New Object"));
-        ui.drag_float(im_str!("Mass"), mass).speed(0.01).build();
-        ui.drag_float(im_str!("Radius"), rad).speed(0.01).build();
+        match entity {
+            Some(_) => ui.text(im_str!("Edit Object")),
+            None => ui.text(im_str!("New Object"))
+        }
+        let mass_speed = *mass * 0.0015;
+        let rad_speed = *rad * 0.0015;
+        ui.drag_float(im_str!("Mass"), mass).speed(mass_speed).build();
+        ui.drag_float(im_str!("Radius"), rad).speed(rad_speed).build();
         if ui.small_button(im_str!("Create Body")) {
             signals.push(UiSignal::Create);
         }
@@ -163,6 +169,7 @@ impl ImGuiWrapper {
         num_iterations: &mut i32,
         creating: &mut bool,
         items_hovered: &mut bool,
+        entity: Option<Entity>,
     ) {
         // Update mouse
         self.update_mouse();
@@ -195,6 +202,7 @@ impl ImGuiWrapper {
                             dt,
                             num_iterations,
                             &mut self.sent_signals,
+                            *entity,
                         );
                     }
                     _ => unimplemented!(),
