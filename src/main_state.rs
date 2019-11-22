@@ -79,6 +79,7 @@ impl EventHandler for MainState {
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
         }
+
         for _ in 0..self.num_iterations {
             calc_collisions(&mut self.main_world);
             integrate_positions(&self.main_world, self.dt);
@@ -100,7 +101,7 @@ impl EventHandler for MainState {
             .iter(&self.main_world)
             .for_each(|(color, pos, rad)| {
                 let point: ggez::mint::Point2<f32> = (*pos).into();
-                builder.circle(DrawMode::fill(), point, rad.0, 0.05, color.0);
+                builder.circle(DrawMode::fill(), point, rad.0, 0.01, color.0);
             });
 
         let p = if let Some(start_pos) = self.start_point {

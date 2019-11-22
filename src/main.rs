@@ -4,7 +4,7 @@ use ggez::*;
 use legion::prelude::*;
 
 mod components;
-use components::{Draw, Kinematics, Mass, Point, Position, Radius, Vector};
+use components::{Draw, Kinematics, Mass, Point, Position, Radius, Vector, Trail};
 
 mod main_state;
 use main_state::MainState;
@@ -47,6 +47,11 @@ fn main() -> GameResult {
             // new_body([0.0, 0.0], [-0.3, -0.1], 1.0, 0.1),
         ],
     );
+
+    world.insert(
+        (),
+        new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
+        );
 
     // world.insert_from(
     //     (),

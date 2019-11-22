@@ -59,3 +59,5 @@ pub struct Static;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Radius(pub f32);
+
+pub struct Trail(pub Vec<Point>);
