@@ -22,6 +22,15 @@ pub const DT: f32 = 1.0;
 
 const CAMERA_SPEED: f32 = 1.5;
 
+pub fn scale_pos(point: Point, coords: graphics::Rect, resolution: Vector) -> Point {
+    let mut np = point;
+    np.x *= coords.w / resolution.x;
+    np.y *= coords.h / resolution.y;
+    np.x += coords.x;
+    np.y += coords.y;
+    np
+}
+
 pub struct MainState {
     pub universe: Universe,
     pub main_world: World,
@@ -81,16 +90,19 @@ impl EventHandler for MainState {
         {
             offset.y -= CAMERA_SPEED;
         }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Down) 
-            || input::keyboard::is_key_pressed(ctx, KeyCode::S) {
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Down)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::S)
+        {
             offset.y += CAMERA_SPEED;
         }
         if input::keyboard::is_key_pressed(ctx, KeyCode::Left)
-            || input::keyboard::is_key_pressed(ctx, KeyCode::A) {
+            || input::keyboard::is_key_pressed(ctx, KeyCode::A)
+        {
             offset.x -= CAMERA_SPEED;
         }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Right) 
-            || input::keyboard::is_key_pressed(ctx, KeyCode::D) {
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Right)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::D)
+        {
             offset.x += CAMERA_SPEED;
         }
         if offset != [0.0, 0.0].into() {
@@ -134,11 +146,9 @@ impl EventHandler for MainState {
         let p = if let Some(start_pos) = self.start_point {
             start_pos
         } else {
-            let mut mouse_pos = ggez::input::mouse::position(ctx);
+            let mouse_pos = ggez::input::mouse::position(ctx);
             let coords = ggez::graphics::screen_coordinates(ctx);
-            mouse_pos.x *= coords.w / self.resolution.x;
-            mouse_pos.y *= coords.h / self.resolution.y;
-            mouse_pos.into()
+            scale_pos(mouse_pos.into(), coords, self.resolution)
         };
 
         if self.creating {
@@ -151,12 +161,11 @@ impl EventHandler for MainState {
             );
 
             if let Some(p) = self.start_point {
-                let mut mouse_pos = ggez::input::mouse::position(ctx);
+                let mouse_pos = ggez::input::mouse::position(ctx);
                 let coords = ggez::graphics::screen_coordinates(ctx);
-                mouse_pos.x *= coords.w / self.resolution.x;
-                mouse_pos.y *= coords.h / self.resolution.y;
+                let scaled_pos = scale_pos(mouse_pos.into(), coords, self.resolution);
                 builder
-                    .line(&[p, mouse_pos.into()], 0.5, graphics::WHITE)
+                    .line(&[p, scaled_pos.into()], 0.5, graphics::WHITE)
                     .expect("not enough points in line");
             }
         }
@@ -222,8 +231,8 @@ impl EventHandler for MainState {
 
                     let coords = ggez::graphics::screen_coordinates(ctx);
                     let mouse_pos = Point::new(
-                        x * coords.w / self.resolution.x,
-                        y * coords.h / self.resolution.y,
+                        x * coords.w / self.resolution.x - coords.x,
+                        y * coords.h / self.resolution.y - coords.y,
                     );
 
                     for (e, (pos, rad)) in clicked_query.iter_entities(&self.main_world) {
@@ -242,9 +251,7 @@ impl EventHandler for MainState {
                     if self.creating {
                         let mut p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
-                        p.x *= coords.w / self.resolution.x;
-                        p.y *= coords.h / self.resolution.y;
-                        self.start_point = Some(p);
+                        self.start_point = Some(scale_pos(p, coords, self.resolution));
                     }
                 }
                 _ => {}
@@ -267,8 +274,7 @@ impl EventHandler for MainState {
                     {
                         let mut p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
-                        p.x *= coords.w / self.resolution.x;
-                        p.y *= coords.h / self.resolution.y;
+                        p = scale_pos(p, coords, self.resolution);
 
                         self.main_world.insert_from(
                             (),
