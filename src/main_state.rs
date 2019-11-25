@@ -22,8 +22,8 @@ pub const DT: f32 = 1.0;
 
 const CAMERA_SPEED: f32 = 1.5;
 
-pub fn scale_pos(point: Point, coords: graphics::Rect, resolution: Vector) -> Point {
-    let mut np = point;
+pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Vector) -> Point {
+    let mut np: Point = point.into();
     np.x *= coords.w / resolution.x;
     np.y *= coords.h / resolution.y;
     np.x += coords.x;
@@ -152,7 +152,7 @@ impl EventHandler for MainState {
         } else {
             let mouse_pos = ggez::input::mouse::position(ctx);
             let coords = ggez::graphics::screen_coordinates(ctx);
-            scale_pos(mouse_pos.into(), coords, self.resolution)
+            scale_pos(mouse_pos, coords, self.resolution)
         };
 
         if self.creating {
@@ -167,7 +167,7 @@ impl EventHandler for MainState {
             if let Some(p) = self.start_point {
                 let mouse_pos = ggez::input::mouse::position(ctx);
                 let coords = ggez::graphics::screen_coordinates(ctx);
-                let scaled_pos = scale_pos(mouse_pos.into(), coords, self.resolution);
+                let scaled_pos = scale_pos(mouse_pos, coords, self.resolution);
                 builder
                     .line(&[p, scaled_pos.into()], 0.5, graphics::WHITE)
                     .expect("not enough points in line");
@@ -234,13 +234,10 @@ impl EventHandler for MainState {
                     self.selected_entity = None;
 
                     let coords = ggez::graphics::screen_coordinates(ctx);
-                    let mouse_pos = Point::new(
-                        x * coords.w / self.resolution.x - coords.x,
-                        y * coords.h / self.resolution.y - coords.y,
-                    );
+                    let mouse_pos = scale_pos([x, y], coords, self.resolution);
 
                     for (e, (pos, rad)) in clicked_query.iter_entities(&self.main_world) {
-                        if pos.dist(mouse_pos.into()) <= rad.0 {
+                        if pos.dist(mouse_pos) <= rad.0 {
                             self.selected_entity = Some(e);
                             break;
                         }

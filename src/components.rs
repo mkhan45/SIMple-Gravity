@@ -8,8 +8,8 @@ pub type Vector = Vector2<f32>;
 pub struct Position(pub Point);
 
 impl Position {
-    pub fn dist(self, p2: Position) -> f32 {
-        (self.0 - p2.0).norm()
+    pub fn dist(self, p2: impl Into<Point>) -> f32 {
+        (self.0 - p2.into()).norm()
     }
 }
 
