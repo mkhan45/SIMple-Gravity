@@ -45,6 +45,7 @@ pub struct MainState {
     pub creating: bool,
     pub start_point: Option<Point>,
     pub items_hovered: bool,
+    pub paused: bool,
 }
 
 impl MainState {
@@ -69,6 +70,7 @@ impl MainState {
             creating: false,
             start_point: None,
             items_hovered: false,
+            paused: false,
         }
     }
 }
@@ -119,11 +121,13 @@ impl EventHandler for MainState {
             dbg!(ggez::timer::fps(ctx));
         }
 
-        for _ in 0..self.num_iterations {
-            calc_collisions(&mut self.main_world);
-            integrate_positions(&self.main_world, self.dt);
-            apply_gravity(&self.main_world);
-            integrate_kinematics(&self.main_world, self.dt);
+        if !self.paused {
+            for _ in 0..self.num_iterations {
+                calc_collisions(&mut self.main_world);
+                integrate_positions(&self.main_world, self.dt);
+                apply_gravity(&self.main_world);
+                integrate_kinematics(&self.main_world, self.dt);
+            }
         }
 
         Ok(())
@@ -323,6 +327,19 @@ impl EventHandler for MainState {
         offset.y -= delta_focus.y;
 
         graphics::set_screen_coordinates(ctx, offset).unwrap_or(());
+    }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {
+        match keycode {
+            KeyCode::Space => self.paused = !self.paused,
+            _ => {}
+        };
     }
 
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
