@@ -181,21 +181,25 @@ impl EventHandler for MainState {
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         let hidpi_factor = self.hidpi_factor;
         if let Some(e) = self.selected_entity {
-            let mut mass = self.main_world.entity_data_mut::<Mass>(e).unwrap().0;
-            let mut rad = self.main_world.entity_data_mut::<Radius>(e).unwrap().0;
-            self.imgui_wrapper.render(
-                ctx,
-                hidpi_factor,
-                &mut self.dt,
-                &mut mass,
-                &mut rad,
-                &mut self.num_iterations,
-                &mut self.creating,
-                &mut self.items_hovered,
-                self.selected_entity, //TODO Remove this
-            );
-            self.main_world.entity_data_mut::<Mass>(e).unwrap().0 = mass;
-            self.main_world.entity_data_mut::<Radius>(e).unwrap().0 = rad;
+            if self.main_world.is_alive(&e) {
+                let mut mass = self.main_world.entity_data_mut::<Mass>(e).unwrap().0;
+                let mut rad = self.main_world.entity_data_mut::<Radius>(e).unwrap().0;
+                self.imgui_wrapper.render(
+                    ctx,
+                    hidpi_factor,
+                    &mut self.dt,
+                    &mut mass,
+                    &mut rad,
+                    &mut self.num_iterations,
+                    &mut self.creating,
+                    &mut self.items_hovered,
+                    self.selected_entity, //TODO Remove this
+                );
+                self.main_world.entity_data_mut::<Mass>(e).unwrap().0 = mass;
+                self.main_world.entity_data_mut::<Radius>(e).unwrap().0 = rad;
+            } else {
+                self.selected_entity = None;
+            }
         } else {
             self.imgui_wrapper.render(
                 ctx,
@@ -221,9 +225,9 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -247,7 +251,7 @@ impl EventHandler for MainState {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     if self.creating {
                         let mut p = Point::new(x, y);
@@ -350,7 +354,7 @@ impl EventHandler for MainState {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.resolution = resolution;
