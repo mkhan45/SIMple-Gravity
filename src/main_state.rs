@@ -18,9 +18,6 @@ use crate::{
     imgui_wrapper::*, new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector,
 };
 
-use std::cell::RefCell;
-use std::convert::TryInto;
-
 pub const DT: f32 = 1.0;
 
 pub struct MainState {
@@ -75,6 +72,27 @@ impl EventHandler for MainState {
                 UiSignal::Create => self.creating = !self.creating,
             });
         self.imgui_wrapper.sent_signals.clear();
+
+        let mut offset: Vector = Vector::new(0.0, 0.0);
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Up) {
+            offset.y -= 1.0;
+        }
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Down) {
+            offset.y += 1.0;
+        }
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Left) {
+            offset.x -= 1.0;
+        }
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Right) {
+            offset.x += 1.0;
+        }
+        if offset != [0.0, 0.0].into() {
+            let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
+            screen_coordinates.x += offset.x;
+            screen_coordinates.y += offset.y;
+
+            ggez::graphics::set_screen_coordinates(ctx, screen_coordinates).unwrap_or(());
+        }
 
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
@@ -262,6 +280,34 @@ impl EventHandler for MainState {
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
+    }
+
+    fn mouse_wheel_event(&mut self, ctx: &mut Context, _x: f32, y: f32) {
+        let mouse_pos = input::mouse::position(ctx);
+        let mut offset = graphics::screen_coordinates(ctx);
+
+        let prev_zoom = offset.w / crate::SCREEN_X;
+        let zoom = prev_zoom * (1.0 - (y * 0.05));
+
+        let focus: Vector = Vector::new(mouse_pos.x, mouse_pos.y);
+
+        let mut scaled_focus1: Vector = focus;
+        scaled_focus1.x *= offset.w / self.resolution.x;
+        scaled_focus1.y *= offset.h / self.resolution.y;
+
+        offset.w = zoom * crate::SCREEN_X;
+        offset.h = zoom * crate::SCREEN_Y / (self.resolution.x / self.resolution.y);
+
+        let mut scaled_focus2: Vector = focus;
+        scaled_focus2.x *= offset.w / self.resolution.x;
+        scaled_focus2.y *= offset.h / self.resolution.y;
+
+        let delta_focus = scaled_focus2 - scaled_focus1;
+
+        offset.x -= delta_focus.x;
+        offset.y -= delta_focus.y;
+
+        graphics::set_screen_coordinates(ctx, offset).unwrap_or(());
     }
 
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {

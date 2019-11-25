@@ -72,12 +72,16 @@ pub fn make_sidepanel(
     win.build(ui, || {
         match entity {
             Some(_) => ui.text(im_str!("Edit Object")),
-            None => ui.text(im_str!("New Object"))
+            None => ui.text(im_str!("New Object")),
         }
         let mass_speed = *mass * 0.0015;
         let rad_speed = *rad * 0.0015;
-        ui.drag_float(im_str!("Mass"), mass).speed(mass_speed).build();
-        ui.drag_float(im_str!("Radius"), rad).speed(rad_speed).build();
+        ui.drag_float(im_str!("Mass"), mass)
+            .speed(mass_speed)
+            .build();
+        ui.drag_float(im_str!("Radius"), rad)
+            .speed(rad_speed)
+            .build();
         if ui.small_button(im_str!("Create Body")) {
             signals.push(UiSignal::Create);
         }
