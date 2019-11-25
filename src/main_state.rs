@@ -20,6 +20,8 @@ use crate::{
 
 pub const DT: f32 = 1.0;
 
+const CAMERA_SPEED: f32 = 1.5;
+
 pub struct MainState {
     pub universe: Universe,
     pub main_world: World,
@@ -74,22 +76,29 @@ impl EventHandler for MainState {
         self.imgui_wrapper.sent_signals.clear();
 
         let mut offset: Vector = Vector::new(0.0, 0.0);
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Up) {
-            offset.y -= 1.0;
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Up)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::W)
+        {
+            offset.y -= CAMERA_SPEED;
         }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Down) {
-            offset.y += 1.0;
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Down) 
+            || input::keyboard::is_key_pressed(ctx, KeyCode::S) {
+            offset.y += CAMERA_SPEED;
         }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Left) {
-            offset.x -= 1.0;
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Left)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::A) {
+            offset.x -= CAMERA_SPEED;
         }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Right) {
-            offset.x += 1.0;
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Right) 
+            || input::keyboard::is_key_pressed(ctx, KeyCode::D) {
+            offset.x += CAMERA_SPEED;
         }
         if offset != [0.0, 0.0].into() {
             let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
-            screen_coordinates.x += offset.x;
-            screen_coordinates.y += offset.y;
+            let zoom = screen_coordinates.w / crate::SCREEN_X;
+
+            screen_coordinates.x += offset.x * zoom;
+            screen_coordinates.y += offset.y * zoom;
 
             ggez::graphics::set_screen_coordinates(ctx, screen_coordinates).unwrap_or(());
         }
