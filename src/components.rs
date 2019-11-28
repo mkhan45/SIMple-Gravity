@@ -5,6 +5,9 @@ pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Preview;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position(pub Point);
 
 impl Position {

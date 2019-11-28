@@ -15,7 +15,7 @@ use ggez::{
 
 use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
 use crate::{
-    imgui_wrapper::*, new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector,
+    imgui_wrapper::*, new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, new_preview, Preview
 };
 
 use std::cell::RefCell;
@@ -95,12 +95,21 @@ impl EventHandler for MainState {
         let mut builder = graphics::MeshBuilder::new();
 
         let draw_query = <(Read<Draw>, Read<Position>, Read<Radius>)>::query();
+        let draw_preview_query = <(Read<Preview>, Read<Position>, Read<Radius>)>::query();
 
         draw_query
             .iter(&self.main_world)
             .for_each(|(color, pos, rad)| {
                 let point: ggez::mint::Point2<f32> = (*pos).into();
                 builder.circle(DrawMode::fill(), point, rad.0, 0.05, color.0);
+            });
+
+        draw_preview_query
+            .iter(&self.main_world)
+            .for_each(|(_, pos, rad)| {
+                let point: ggez::mint::Point2<f32> = (*pos).into();
+                let color = Color::new(0.5, 0.5, 1.0, 1.0);
+                builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
             });
 
         let p = if let Some(start_pos) = self.start_point {
@@ -140,8 +149,8 @@ impl EventHandler for MainState {
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         let hidpi_factor = self.hidpi_factor;
         if let Some(e) = self.selected_entity {
-            let mut mass = self.main_world.entity_data_mut::<Mass>(e).unwrap().0;
-            let mut rad = self.main_world.entity_data_mut::<Radius>(e).unwrap().0;
+            let mut mass = self.main_world.entity_data_mut::<Mass>(e).expect("Error unwrapping mass").0;
+            let mut rad = self.main_world.entity_data_mut::<Radius>(e).expect("Error unwrapping rad").0;
             self.imgui_wrapper.render(
                 ctx,
                 hidpi_factor,
@@ -217,6 +226,11 @@ impl EventHandler for MainState {
                         p.x *= coords.w / self.resolution.x;
                         p.y *= coords.h / self.resolution.y;
                         self.start_point = Some(p);
+
+                        self.main_world.insert_from(
+                            (),
+                            vec![new_preview(p, [0.0, 0.0], self.rad)],
+                            );
                     }
                 }
                 _ => {}

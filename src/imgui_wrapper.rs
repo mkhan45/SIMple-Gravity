@@ -12,7 +12,6 @@ use legion::prelude::Entity;
 
 use crate::{Body, Vector};
 
-use std::cell::RefCell;
 use std::time;
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]

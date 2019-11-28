@@ -4,7 +4,7 @@ use ggez::*;
 use legion::prelude::*;
 
 mod components;
-use components::{Draw, Kinematics, Mass, Point, Position, Radius, Vector};
+use components::{Draw, Kinematics, Mass, Point, Position, Radius, Vector, Preview};
 
 mod main_state;
 use main_state::MainState;
@@ -18,6 +18,7 @@ const SCREEN_X: f32 = 300.0;
 const SCREEN_Y: f32 = 300.0;
 
 type Body = (Position, Kinematics, Mass, Draw, Radius);
+type PreviewBody = (Position, Kinematics, Radius, Preview);
 
 pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f32) -> Body {
     (
@@ -26,6 +27,15 @@ pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f
         Mass(mass),
         Draw(ggez::graphics::WHITE),
         Radius(rad),
+    )
+}
+
+pub fn new_preview(pos: impl Into<Point>, vel: impl Into<Vector>, rad: f32) -> PreviewBody {
+    (
+        Position(pos.into()),
+        Kinematics::new(vel.into()),
+        Radius(rad),
+        Preview,
     )
 }
 
