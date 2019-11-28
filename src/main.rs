@@ -60,6 +60,11 @@ fn main() -> GameResult {
 
     // world.insert_from(
     //     (),
+    //     vec![new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
+    //     );
+
+    // world.insert_from(
+    //     (),
     //     (0..1100).map(|i| {
     //         (new_body(
     //             [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],

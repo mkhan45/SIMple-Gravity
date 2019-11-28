@@ -11,8 +11,8 @@ pub struct Preview;
 pub struct Position(pub Point);
 
 impl Position {
-    pub fn dist(self, p2: Position) -> f32 {
-        (self.0 - p2.0).norm()
+    pub fn dist(self, p2: impl Into<Point>) -> f32 {
+        (self.0 - p2.into()).norm()
     }
 }
 
@@ -68,3 +68,5 @@ pub struct Static;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Radius(pub f32);
+
+pub struct Trail(pub Vec<Point>);

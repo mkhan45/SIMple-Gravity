@@ -18,10 +18,18 @@ use crate::{
     imgui_wrapper::*, new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, new_preview, Preview
 };
 
-use std::cell::RefCell;
-use std::convert::TryInto;
-
 pub const DT: f32 = 1.0;
+
+const CAMERA_SPEED: f32 = 1.5;
+
+pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Vector) -> Point {
+    let mut np: Point = point.into();
+    np.x *= coords.w / resolution.x;
+    np.y *= coords.h / resolution.y;
+    np.x += coords.x;
+    np.y += coords.y;
+    np
+}
 
 pub struct MainState {
     pub universe: Universe,
@@ -37,6 +45,7 @@ pub struct MainState {
     pub creating: bool,
     pub start_point: Option<Point>,
     pub items_hovered: bool,
+    pub paused: bool,
 }
 
 impl MainState {
@@ -61,6 +70,7 @@ impl MainState {
             creating: false,
             start_point: None,
             items_hovered: false,
+            paused: false,
         }
     }
 }
@@ -76,14 +86,48 @@ impl EventHandler for MainState {
             });
         self.imgui_wrapper.sent_signals.clear();
 
+        let mut offset: Vector = Vector::new(0.0, 0.0);
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Up)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::W)
+        {
+            offset.y -= CAMERA_SPEED;
+        }
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Down)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::S)
+        {
+            offset.y += CAMERA_SPEED;
+        }
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Left)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::A)
+        {
+            offset.x -= CAMERA_SPEED;
+        }
+        if input::keyboard::is_key_pressed(ctx, KeyCode::Right)
+            || input::keyboard::is_key_pressed(ctx, KeyCode::D)
+        {
+            offset.x += CAMERA_SPEED;
+        }
+        if offset != [0.0, 0.0].into() {
+            let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
+            let zoom = screen_coordinates.w / crate::SCREEN_X;
+
+            screen_coordinates.x += offset.x * zoom;
+            screen_coordinates.y += offset.y * zoom;
+
+            ggez::graphics::set_screen_coordinates(ctx, screen_coordinates).unwrap_or(());
+        }
+
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
         }
-        for _ in 0..self.num_iterations {
-            calc_collisions(&mut self.main_world);
-            integrate_positions(&self.main_world, self.dt);
-            apply_gravity(&self.main_world);
-            integrate_kinematics(&self.main_world, self.dt);
+
+        if !self.paused {
+            for _ in 0..self.num_iterations {
+                calc_collisions(&mut self.main_world);
+                integrate_positions(&self.main_world, self.dt);
+                apply_gravity(&self.main_world);
+                integrate_kinematics(&self.main_world, self.dt);
+            }
         }
 
         Ok(())
@@ -101,7 +145,7 @@ impl EventHandler for MainState {
             .iter(&self.main_world)
             .for_each(|(color, pos, rad)| {
                 let point: ggez::mint::Point2<f32> = (*pos).into();
-                builder.circle(DrawMode::fill(), point, rad.0, 0.05, color.0);
+                builder.circle(DrawMode::fill(), point, rad.0, 0.01, color.0);
             });
 
         draw_preview_query
@@ -115,11 +159,9 @@ impl EventHandler for MainState {
         let p = if let Some(start_pos) = self.start_point {
             start_pos
         } else {
-            let mut mouse_pos = ggez::input::mouse::position(ctx);
+            let mouse_pos = ggez::input::mouse::position(ctx);
             let coords = ggez::graphics::screen_coordinates(ctx);
-            mouse_pos.x *= coords.w / self.resolution.x;
-            mouse_pos.y *= coords.h / self.resolution.y;
-            mouse_pos.into()
+            scale_pos(mouse_pos, coords, self.resolution)
         };
 
         if self.creating {
@@ -132,12 +174,11 @@ impl EventHandler for MainState {
             );
 
             if let Some(p) = self.start_point {
-                let mut mouse_pos = ggez::input::mouse::position(ctx);
+                let mouse_pos = ggez::input::mouse::position(ctx);
                 let coords = ggez::graphics::screen_coordinates(ctx);
-                mouse_pos.x *= coords.w / self.resolution.x;
-                mouse_pos.y *= coords.h / self.resolution.y;
+                let scaled_pos = scale_pos(mouse_pos, coords, self.resolution);
                 builder
-                    .line(&[p, mouse_pos.into()], 0.5, graphics::WHITE)
+                    .line(&[p, scaled_pos.into()], 0.5, graphics::WHITE)
                     .expect("not enough points in line");
             }
         }
@@ -149,21 +190,25 @@ impl EventHandler for MainState {
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         let hidpi_factor = self.hidpi_factor;
         if let Some(e) = self.selected_entity {
-            let mut mass = self.main_world.entity_data_mut::<Mass>(e).expect("Error unwrapping mass").0;
-            let mut rad = self.main_world.entity_data_mut::<Radius>(e).expect("Error unwrapping rad").0;
-            self.imgui_wrapper.render(
-                ctx,
-                hidpi_factor,
-                &mut self.dt,
-                &mut mass,
-                &mut rad,
-                &mut self.num_iterations,
-                &mut self.creating,
-                &mut self.items_hovered,
-                self.selected_entity, //TODO Remove this
-            );
-            self.main_world.entity_data_mut::<Mass>(e).unwrap().0 = mass;
-            self.main_world.entity_data_mut::<Radius>(e).unwrap().0 = rad;
+            if self.main_world.is_alive(&e) {
+                let mut mass = self.main_world.entity_data_mut::<Mass>(e).unwrap().0;
+                let mut rad = self.main_world.entity_data_mut::<Radius>(e).unwrap().0;
+                self.imgui_wrapper.render(
+                    ctx,
+                    hidpi_factor,
+                    &mut self.dt,
+                    &mut mass,
+                    &mut rad,
+                    &mut self.num_iterations,
+                    &mut self.creating,
+                    &mut self.items_hovered,
+                    self.selected_entity, //TODO Remove this
+                );
+                self.main_world.entity_data_mut::<Mass>(e).unwrap().0 = mass;
+                self.main_world.entity_data_mut::<Radius>(e).unwrap().0 = rad;
+            } else {
+                self.selected_entity = None;
+            }
         } else {
             self.imgui_wrapper.render(
                 ctx,
@@ -189,9 +234,9 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -202,13 +247,10 @@ impl EventHandler for MainState {
                     self.selected_entity = None;
 
                     let coords = ggez::graphics::screen_coordinates(ctx);
-                    let mouse_pos = Point::new(
-                        x * coords.w / self.resolution.x,
-                        y * coords.h / self.resolution.y,
-                    );
+                    let mouse_pos = scale_pos([x, y], coords, self.resolution);
 
                     for (e, (pos, rad)) in clicked_query.iter_entities(&self.main_world) {
-                        if pos.dist(mouse_pos.into()) <= rad.0 {
+                        if pos.dist(mouse_pos) <= rad.0 {
                             self.selected_entity = Some(e);
                             break;
                         }
@@ -218,19 +260,17 @@ impl EventHandler for MainState {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     if self.creating {
                         let mut p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
-                        p.x *= coords.w / self.resolution.x;
-                        p.y *= coords.h / self.resolution.y;
-                        self.start_point = Some(p);
+                        self.start_point = Some(scale_pos(p, coords, self.resolution));
 
                         self.main_world.insert_from(
                             (),
                             vec![new_preview(p, [0.0, 0.0], self.rad)],
-                            );
+                        );
                     }
                 }
                 _ => {}
@@ -253,8 +293,7 @@ impl EventHandler for MainState {
                     {
                         let mut p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
-                        p.x *= coords.w / self.resolution.x;
-                        p.y *= coords.h / self.resolution.y;
+                        p = scale_pos(p, coords, self.resolution);
 
                         self.main_world.insert_from(
                             (),
@@ -277,6 +316,47 @@ impl EventHandler for MainState {
         self.imgui_wrapper.update_mouse_pos(x, y);
     }
 
+    fn mouse_wheel_event(&mut self, ctx: &mut Context, _x: f32, y: f32) {
+        let mouse_pos = input::mouse::position(ctx);
+        let mut offset = graphics::screen_coordinates(ctx);
+
+        let prev_zoom = offset.w / crate::SCREEN_X;
+        let zoom = prev_zoom * (1.0 - (y * 0.05));
+
+        let focus: Vector = Vector::new(mouse_pos.x, mouse_pos.y);
+
+        let mut scaled_focus1: Vector = focus;
+        scaled_focus1.x *= offset.w / self.resolution.x;
+        scaled_focus1.y *= offset.h / self.resolution.y;
+
+        offset.w = zoom * crate::SCREEN_X;
+        offset.h = zoom * crate::SCREEN_Y / (self.resolution.x / self.resolution.y);
+
+        let mut scaled_focus2: Vector = focus;
+        scaled_focus2.x *= offset.w / self.resolution.x;
+        scaled_focus2.y *= offset.h / self.resolution.y;
+
+        let delta_focus = scaled_focus2 - scaled_focus1;
+
+        offset.x -= delta_focus.x;
+        offset.y -= delta_focus.y;
+
+        graphics::set_screen_coordinates(ctx, offset).unwrap_or(());
+    }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {
+        match keycode {
+            KeyCode::Space => self.paused = !self.paused,
+            _ => {}
+        };
+    }
+
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
         let aspect_ratio = height / width;
         graphics::set_screen_coordinates(
@@ -288,7 +368,7 @@ impl EventHandler for MainState {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.resolution = resolution;
