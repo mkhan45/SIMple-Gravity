@@ -89,7 +89,10 @@ pub fn make_sidepanel(
         ui.drag_float(im_str!(""), dt).speed(0.01).build();
 
         ui.text(im_str!("Iteration Count"));
-        ui.drag_int(im_str!(" "), num_iterations).min(0).speed(0.05).build();
+        ui.drag_int(im_str!(" "), num_iterations)
+            .min(0)
+            .speed(0.05)
+            .build();
     });
 }
 

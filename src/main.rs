@@ -4,7 +4,7 @@ use ggez::*;
 use legion::prelude::*;
 
 mod components;
-use components::{Draw, Kinematics, Mass, Point, Position, Radius, Vector, Preview};
+use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Vector};
 
 mod main_state;
 use main_state::MainState;

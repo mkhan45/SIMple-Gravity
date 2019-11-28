@@ -15,8 +15,11 @@ use ggez::{
 
 use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
 use crate::{
-    imgui_wrapper::*, new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, new_preview, Preview
+    imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
+    Preview, Radius, Vector,
 };
+
+use std::collections::HashSet;
 
 pub const DT: f32 = 1.0;
 
@@ -152,7 +155,7 @@ impl EventHandler for MainState {
             .iter(&self.main_world)
             .for_each(|(_, pos, rad)| {
                 let point: ggez::mint::Point2<f32> = (*pos).into();
-                let color = Color::new(0.5, 0.5, 1.0, 1.0);
+                let color = Color::new(0.1, 1.0, 0.2, 1.0);
                 builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
             });
 
@@ -234,9 +237,9 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -260,17 +263,15 @@ impl EventHandler for MainState {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     if self.creating {
-                        let mut p = Point::new(x, y);
+                        let p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
                         self.start_point = Some(scale_pos(p, coords, self.resolution));
 
-                        self.main_world.insert_from(
-                            (),
-                            vec![new_preview(p, [0.0, 0.0], self.rad)],
-                        );
+                        self.main_world
+                            .insert_from((), vec![new_preview(p, [0.0, 0.0], self.rad)]);
                     }
                 }
                 _ => {}
@@ -310,10 +311,46 @@ impl EventHandler for MainState {
                 _ => dbg!(),
             }
         }
+
+        let preview_query = <(Read<Preview>)>::query();
+        let mut delset: HashSet<Entity> = HashSet::new();
+
+        preview_query
+            .iter_entities(&self.main_world)
+            .for_each(|(entity, _)| {
+                delset.insert(entity);
+            });
+
+        delset.iter().for_each(|entity| {
+            self.main_world.delete(*entity);
+        });
     }
 
-    fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32) {
+    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
+
+        let preview_query = <(Read<Preview>)>::query();
+        let mut delset: HashSet<Entity> = HashSet::new();
+
+        preview_query
+            .iter_entities(&self.main_world)
+            .for_each(|(entity, _)| {
+                delset.insert(entity);
+            });
+
+        delset.iter().for_each(|entity| {
+            self.main_world.delete(*entity);
+        });
+
+        if let Some(start_point) = self.start_point {
+            let coords = ggez::graphics::screen_coordinates(ctx);
+            let p = scale_pos([x, y], coords, self.resolution);
+
+            self.main_world.insert_from(
+                (),
+                vec![new_preview(start_point, (start_point - p) * 0.1, self.rad)],
+            );
+        }
     }
 
     fn mouse_wheel_event(&mut self, ctx: &mut Context, _x: f32, y: f32) {
@@ -368,7 +405,7 @@ impl EventHandler for MainState {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.resolution = resolution;
