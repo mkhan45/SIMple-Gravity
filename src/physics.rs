@@ -1,4 +1,4 @@
-use crate::{new_body, Body, Draw, Kinematics, Mass, Point, Position, Radius, Vector, G};
+use crate::{new_body, Body, Draw, Kinematics, Mass, Point, Position, Preview, Radius, Vector, G};
 use legion::prelude::*;
 
 use std::collections::HashSet;
@@ -51,7 +51,12 @@ pub fn integrate_kinematics(world: &World, dt: f32) {
     });
 }
 
-pub fn calc_collisions(world: &mut World) {
+pub fn calc_collisions(
+    world: &mut World,
+    start_point: Option<Point>,
+    ctx: &ggez::Context,
+    resolution: Vector,
+) {
     let collision_query = <(Read<Position>, Read<Radius>, Read<Mass>, Read<Kinematics>)>::query();
 
     let mut removal_set: HashSet<Entity> = HashSet::new();
@@ -92,6 +97,31 @@ pub fn calc_collisions(world: &mut World) {
                     }
                 });
         });
+
+    let collide_preview_query = <(Read<Preview>, Read<Position>, Read<Radius>)>::query();
+    let collide_inner_query = <(Read<Position>, Read<Radius>)>::query();
+
+    let mut del_prev_rad: Option<f32> = None;
+
+    collide_preview_query
+        .iter_entities(&world)
+        .for_each(|(e, (_, p1, r1))| {
+            collide_inner_query.iter(&world).for_each(|(p2, r2)| {
+                if p1 != p2 && p1.dist(*p2) <= r1.0 + r2.0 {
+                    removal_set.insert(e);
+                    del_prev_rad = Some(r1.0);
+                }
+            });
+        });
+
+    if let Some(r1) = del_prev_rad {
+        if let Some(sp) = start_point {
+            let coords = ggez::graphics::screen_coordinates(ctx);
+            let mouse_pos = ggez::input::mouse::position(ctx);
+            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution);
+            world.insert_from((), vec![crate::new_preview(sp, (sp - mouse_pos) * 0.1, r1)]);
+        }
+    }
 
     removal_set.drain().for_each(|entity| {
         world.delete(entity);

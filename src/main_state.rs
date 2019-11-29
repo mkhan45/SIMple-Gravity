@@ -126,7 +126,7 @@ impl EventHandler for MainState {
 
         if !self.paused {
             for _ in 0..self.num_iterations {
-                calc_collisions(&mut self.main_world);
+                calc_collisions(&mut self.main_world, self.start_point, ctx, self.resolution);
                 integrate_positions(&self.main_world, self.dt);
                 apply_gravity(&self.main_world);
                 integrate_kinematics(&self.main_world, self.dt);
