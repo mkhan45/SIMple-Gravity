@@ -81,8 +81,8 @@ fn main() -> GameResult {
     graphics::set_mode(
         ctx,
         ggez::conf::WindowMode::default()
-            .dimensions(dimensions.width as f32, dimensions.height as f32)
-            .resizable(true),
+            .resizable(true)
+            .fullscreen_type(ggez::conf::FullscreenType::Desktop)
     )
     .expect("error resizing window");
 
