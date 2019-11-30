@@ -326,7 +326,7 @@ impl EventHandler for MainState {
         });
     }
 
-    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32) {
+    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
 
         let preview_query = <(Read<Preview>)>::query();
@@ -342,8 +342,9 @@ impl EventHandler for MainState {
             self.main_world.delete(*entity);
         });
 
+
+        let mut coords = ggez::graphics::screen_coordinates(ctx);
         if let Some(start_point) = self.start_point {
-            let coords = ggez::graphics::screen_coordinates(ctx);
             let p = scale_pos([x, y], coords, self.resolution);
 
             self.main_world.insert_from(
@@ -351,6 +352,17 @@ impl EventHandler for MainState {
                 vec![new_preview(start_point, (start_point - p) * 0.1, self.rad)],
             );
         }
+
+        if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle) {
+            let mut offset = Vector::new(dx, dy);
+            dbg!(coords.w / self.resolution.x);
+            offset.x *= coords.w / self.resolution.x;
+            offset.y *= coords.h / self.resolution.y;
+            coords.x -= offset.x;
+            coords.y -= offset.y;
+            graphics::set_screen_coordinates(ctx, coords).expect("error moving my mclick");
+        }
+
     }
 
     fn mouse_wheel_event(&mut self, ctx: &mut Context, _x: f32, y: f32) {
@@ -405,7 +417,7 @@ impl EventHandler for MainState {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.resolution = resolution;
