@@ -95,7 +95,7 @@ fn main() -> GameResult {
     let main_state = &mut MainState::new(
         universe,
         world,
-        ImGuiWrapper::new(ctx, hidpi_factor, 1.0, dimensions_vec),
+        ImGuiWrapper::new(ctx, hidpi_factor, dimensions_vec),
         hidpi_factor,
         dimensions_vec,
     );

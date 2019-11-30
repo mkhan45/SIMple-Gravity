@@ -10,7 +10,7 @@ use imgui_gfx_renderer::*;
 
 use legion::prelude::Entity;
 
-use crate::{Body, Vector};
+use crate::{Vector};
 
 use std::time;
 
@@ -22,6 +22,7 @@ pub struct MouseState {
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[allow(dead_code)]
 pub enum UiChoice {
     DefaultUI,
     SideMenu(Option<Entity>),
@@ -52,7 +53,7 @@ pub fn make_sidepanel(
     dt: &mut f32,
     num_iterations: &mut i32,
     signals: &mut Vec<UiSignal>,
-    entity: Option<Entity>,
+    selected_entity: bool,
 ) {
     // Window
     let win = imgui::Window::new(im_str!("Menu"))
@@ -69,10 +70,13 @@ pub fn make_sidepanel(
             [resolution.x * 0.6, resolution.y],
         );
     win.build(ui, || {
-        match entity {
-            Some(_) => ui.text(im_str!("Edit Object")),
-            None => ui.text(im_str!("New Object")),
+
+        if selected_entity {
+            ui.text(im_str!("Edit Object"));
+        } else {
+            ui.text(im_str!("New Object"));
         }
+
         let mass_speed = (*mass * 0.0015).max(0.01);
         let rad_speed = (*rad * 0.0015).max(0.01);
         ui.drag_float(im_str!("Mass"), mass)
@@ -111,8 +115,8 @@ pub fn make_default_ui(ui: &mut imgui::Ui) {
 }
 
 impl ImGuiWrapper {
-    pub fn new(ctx: &mut ggez::Context, hidpi_factor: f32, dt: f32, resolution: Vector) -> Self {
-        // Create the imgui object
+    pub fn new(ctx: &mut ggez::Context, hidpi_factor: f32, resolution: Vector) -> Self {
+        // Create the imgui objectdt: f32, 
         let mut imgui = imgui::Context::create();
         let style = imgui.style_mut();
         style.window_rounding = 0.0;
@@ -173,9 +177,8 @@ impl ImGuiWrapper {
         mass: &mut f32,
         rad: &mut f32,
         num_iterations: &mut i32,
-        creating: &mut bool,
         items_hovered: &mut bool,
-        entity: Option<Entity>,
+        selected_entity: bool,
     ) {
         // Update mouse
         self.update_mouse();
@@ -195,9 +198,10 @@ impl ImGuiWrapper {
 
         {
             for menu in self.shown_menus.clone().iter() {
+                #[allow(unreachable_patterns)]
                 match menu {
                     UiChoice::DefaultUI => make_default_ui(&mut ui),
-                    UiChoice::SideMenu(entity) => {
+                    UiChoice::SideMenu(_entity) => {
                         self.sidemenu = true;
                         make_sidepanel(
                             &mut ui,
@@ -208,7 +212,7 @@ impl ImGuiWrapper {
                             dt,
                             num_iterations,
                             &mut self.sent_signals,
-                            *entity,
+                            selected_entity,
                         );
                     }
                     _ => unimplemented!(),

@@ -4,7 +4,7 @@ use ggez::{
     event,
     event::EventHandler,
     graphics,
-    graphics::{Color, DrawMode, DrawParam},
+    graphics::{Color, DrawMode},
     input,
     input::{
         keyboard::{KeyCode, KeyMods},
@@ -14,6 +14,7 @@ use ggez::{
 };
 
 use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
+#[allow(unused_imports)]
 use crate::{
     imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
     Preview, Radius, Vector,
@@ -181,7 +182,7 @@ impl EventHandler for MainState {
                 let coords = ggez::graphics::screen_coordinates(ctx);
                 let scaled_pos = scale_pos(mouse_pos, coords, self.resolution);
                 builder
-                    .line(&[p, scaled_pos.into()], 0.5, graphics::WHITE)
+                    .line(&[p, scaled_pos], 0.5, graphics::WHITE)
                     .expect("not enough points in line");
             }
         }
@@ -203,9 +204,8 @@ impl EventHandler for MainState {
                     &mut mass,
                     &mut rad,
                     &mut self.num_iterations,
-                    &mut self.creating,
                     &mut self.items_hovered,
-                    self.selected_entity, //TODO Remove this
+                    true,
                 );
                 self.main_world.entity_data_mut::<Mass>(e).unwrap().0 = mass;
                 self.main_world.entity_data_mut::<Radius>(e).unwrap().0 = rad;
@@ -220,9 +220,8 @@ impl EventHandler for MainState {
                 &mut self.mass,
                 &mut self.rad,
                 &mut self.num_iterations,
-                &mut self.creating,
                 &mut self.items_hovered,
-                self.selected_entity,
+                false,
             );
         }
 
@@ -400,6 +399,7 @@ impl EventHandler for MainState {
         _keymods: KeyMods,
         _repeat: bool,
     ) {
+        #[allow(clippy::single_match)]
         match keycode {
             KeyCode::Space => self.paused = !self.paused,
             _ => {}
