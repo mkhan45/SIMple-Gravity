@@ -4,7 +4,7 @@ use ggez::*;
 use legion::prelude::*;
 
 mod components;
-use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Vector};
+use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
 mod main_state;
 use main_state::MainState;
@@ -17,8 +17,8 @@ const G: f32 = 1.2;
 const SCREEN_X: f32 = 300.0;
 const SCREEN_Y: f32 = 300.0;
 
-type Body = (Position, Kinematics, Mass, Draw, Radius);
-type PreviewBody = (Position, Kinematics, Radius, Preview);
+type Body = (Position, Kinematics, Mass, Draw, Radius, Trail);
+type PreviewBody = (Position, Kinematics, Radius, Preview, Draw);
 
 pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f32) -> Body {
     (
@@ -27,6 +27,7 @@ pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f
         Mass(mass),
         Draw(ggez::graphics::WHITE),
         Radius(rad),
+        Trail(Vec::with_capacity(250)),
     )
 }
 
@@ -36,6 +37,7 @@ pub fn new_preview(pos: impl Into<Point>, vel: impl Into<Vector>, rad: f32) -> P
         Kinematics::new(vel.into()),
         Radius(rad),
         Preview,
+        Draw(graphics::Color::new(0.1, 1.0, 0.2, 0.8)),
     )
 }
 
@@ -46,26 +48,22 @@ fn main() -> GameResult {
         .build()
         .expect("error building context");
 
-    let universe = Universe::new(None);
+    let universe = Universe::new();
     let mut world = universe.create_world();
 
-    world.insert_from(
+    let data = vec![
+        new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
+        new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
+    ];
+
+    world.insert(
         (),
-        vec![
-            new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
-            new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
-            // new_body([0.0, 0.0], [-0.3, -0.1], 1.0, 0.1),
-        ],
+        data,
     );
 
-    // world.insert_from(
+    // world.insert(
     //     (),
-    //     vec![new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
-    //     );
-
-    // world.insert_from(
-    //     (),
-    //     (0..1100).map(|i| {
+    //     (0..1000).map(|i| {
     //         (new_body(
     //             [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
     //             [0.0, 0.0],
@@ -82,7 +80,7 @@ fn main() -> GameResult {
         ctx,
         ggez::conf::WindowMode::default()
             .resizable(true)
-            .fullscreen_type(ggez::conf::FullscreenType::Desktop)
+            .fullscreen_type(ggez::conf::FullscreenType::Desktop),
     )
     .expect("error resizing window");
 

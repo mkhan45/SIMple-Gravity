@@ -3,51 +3,49 @@ use legion::prelude::*;
 
 use std::collections::HashSet;
 
-pub fn integrate_positions(world: &World, dt: f32) {
-    let pos_integrate_query = <(Write<Position>, Write<Kinematics>)>::query();
-    pos_integrate_query.par_for_each(world, |(pos, kinematics)| {
+pub fn integrate_positions(world: &mut World, dt: f32) {
+    let mut pos_integrate_query = <(Write<Position>, Read<Kinematics>)>::query();
+    pos_integrate_query.par_for_each(world, |(mut pos, kinematics)| {
         pos.0 += kinematics.vel * dt + (kinematics.accel / 2.0) * dt.powi(2);
     });
 }
 
-pub fn apply_gravity(world: &World) {
+pub fn apply_gravity(world: &mut World) {
     //for some reason adding a third component to the query doubles performance
-    let gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
-    let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
+    let mut gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
 
-    gravity_query.par_for_each(world, |(current_pos, kinematics, _)| {
-        kinematics.accel.x = 0.0;
-        kinematics.accel.y = 0.0;
+    unsafe {
+        gravity_query.par_for_each_unchecked(world, |(current_pos, mut kinematics, _)| {
+            let mut inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
+            kinematics.accel = inner_query.iter_immutable(world).fold(
+                Vector::new(0.0, 0.0),
+                |grav_accel_acc, (other_pos, other_mass, _)| {
+                    if current_pos != other_pos {
+                        let dist_vec = other_pos.0 - current_pos.0;
+                        let dist_mag_sqr = dist_vec.norm_squared();
+                        let dist_mag = dist_mag_sqr.powf(0.5);
+                        let dist_comp = dist_vec / dist_mag;
 
-        inner_query
-            .iter(world)
-            .for_each(|(other_pos, other_mass, _)| {
-                let dist_vec = other_pos.0 - current_pos.0;
-                let dist_mag_sqr = dist_vec.norm_squared();
-                let dist_mag = dist_mag_sqr.powf(0.5);
+                        let grav_accel_mag = other_mass.0 / dist_mag_sqr * G;
+                        let grav_accel: Vector = dist_comp * grav_accel_mag;
 
-                if current_pos != other_pos {
-                    let dist_comp = dist_vec / dist_mag;
-
-                    let grav_accel_mag = other_mass.0 / dist_mag_sqr * G;
-                    let grav_accel: Vector = dist_comp * grav_accel_mag;
-
-                    kinematics.accel += grav_accel
-                }
-            });
-    });
+                        grav_accel_acc + grav_accel
+                    } else {
+                        grav_accel_acc
+                    }
+                },
+            );
+        });
+    }
 }
 
-pub fn integrate_kinematics(world: &World, dt: f32) {
-    let kinematics_integrate_query = <(Write<Kinematics>)>::query();
-    kinematics_integrate_query.par_for_each(world, |kinematics| {
-        let vel = &mut kinematics.vel;
-        let accel = kinematics.accel;
-        let past_accel = &mut kinematics.past_accel;
-
-        *vel += (accel + *past_accel) / 2.0 * dt;
-
-        *past_accel = accel;
+pub fn integrate_kinematics(world: &mut World, dt: f32) {
+    let mut kinematics_integrate_query = <(Write<Kinematics>)>::query();
+    kinematics_integrate_query.par_for_each(world, |mut kinematics| {
+        let accel = kinematics.accel.clone();
+        let past_accel = kinematics.accel.clone();
+        kinematics.vel += (accel + past_accel) / 2.0 * dt;
+        kinematics.past_accel = kinematics.accel;
     });
 }
 
@@ -57,16 +55,18 @@ pub fn calc_collisions(
     ctx: &ggez::Context,
     resolution: Vector,
 ) {
-    let collision_query = <(Read<Position>, Read<Radius>, Read<Mass>, Read<Kinematics>)>::query();
+    let mut collision_query =
+        <(Read<Position>, Read<Radius>, Read<Mass>, Read<Kinematics>)>::query();
 
     let mut removal_set: HashSet<Entity> = HashSet::new();
     let mut create_set: Vec<Body> = Vec::new();
 
     collision_query
-        .iter_entities(&world)
+        .clone()
+        .iter_entities_immutable(world)
         .for_each(|(id1, (pos1, r1, m1, k1))| {
             collision_query
-                .iter_entities(&world)
+                .iter_entities_immutable(world)
                 .for_each(|(id2, (pos2, r2, m2, k2))| {
                     if id1 != id2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
@@ -98,20 +98,22 @@ pub fn calc_collisions(
                 });
         });
 
-    let collide_preview_query = <(Read<Preview>, Read<Position>, Read<Radius>)>::query();
-    let collide_inner_query = <(Read<Position>, Read<Radius>)>::query();
+    let mut collide_preview_query = <(Read<Preview>, Read<Position>, Read<Radius>)>::query();
+    let mut collide_inner_query = <(Read<Position>, Read<Radius>)>::query();
 
     let mut del_prev_rad: Option<f32> = None;
 
     collide_preview_query
-        .iter_entities(&world)
+        .iter_entities_immutable(world)
         .for_each(|(e, (_, p1, r1))| {
-            collide_inner_query.iter(&world).for_each(|(p2, r2)| {
-                if p1 != p2 && p1.dist(*p2) <= r1.0 + r2.0 {
-                    removal_set.insert(e);
-                    del_prev_rad = Some(r1.0);
-                }
-            });
+            collide_inner_query
+                .iter_immutable(world)
+                .for_each(|(p2, r2)| {
+                    if p1 != p2 && p1.dist(*p2) <= r1.0 + r2.0 {
+                        removal_set.insert(e);
+                        del_prev_rad = Some(r1.0);
+                    }
+                });
         });
 
     if let Some(r1) = del_prev_rad {
@@ -119,7 +121,7 @@ pub fn calc_collisions(
             let coords = ggez::graphics::screen_coordinates(ctx);
             let mouse_pos = ggez::input::mouse::position(ctx);
             let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution);
-            world.insert_from((), vec![crate::new_preview(sp, (sp - mouse_pos) * 0.1, r1)]);
+            world.insert((), vec![crate::new_preview(sp, (sp - mouse_pos) * 0.1, r1)]);
         }
     }
 
@@ -127,5 +129,5 @@ pub fn calc_collisions(
         world.delete(entity);
     });
 
-    world.insert_from((), create_set);
+    world.insert((), create_set);
 }
