@@ -42,9 +42,7 @@ pub fn apply_gravity(world: &mut World) {
 pub fn integrate_kinematics(world: &mut World, dt: f32) {
     let mut kinematics_integrate_query = <(Write<Kinematics>)>::query();
     kinematics_integrate_query.par_for_each(world, |mut kinematics| {
-        let accel = kinematics.accel.clone();
-        let past_accel = kinematics.accel.clone();
-        kinematics.vel += (accel + past_accel) / 2.0 * dt;
+        *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
         kinematics.past_accel = kinematics.accel;
     });
 }

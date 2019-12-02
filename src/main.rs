@@ -56,10 +56,7 @@ fn main() -> GameResult {
         new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
     ];
 
-    world.insert(
-        (),
-        data,
-    );
+    world.insert((), data);
 
     // world.insert(
     //     (),
@@ -72,6 +69,7 @@ fn main() -> GameResult {
     //         ))
     //     }),
     // );
+
     let hidpi_factor = event_loop.get_primary_monitor().get_hidpi_factor() as f32;
     let dimensions = event_loop.get_primary_monitor().get_dimensions();
     let dimensions_vec = Vector::new(dimensions.width as f32, dimensions.height as f32);
