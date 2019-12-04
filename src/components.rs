@@ -1,6 +1,8 @@
 use ggez::graphics::Color;
 use ggez::nalgebra::{Point2, Vector2};
 
+use std::collections::VecDeque;
+
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
 
@@ -69,4 +71,4 @@ pub struct Static;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Radius(pub f32);
 
-pub struct Trail(pub Vec<Point>);
+pub struct Trail(pub VecDeque<Point>);

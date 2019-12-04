@@ -14,11 +14,14 @@ use ggez::{
 };
 
 use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
+use crate::trails::update_trails;
 #[allow(unused_imports)]
 use crate::{
     imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
-    Preview, Radius, Vector,
+    Preview, Radius, Trail, Vector,
 };
+
+static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
 
 use std::collections::HashSet;
 
@@ -131,6 +134,7 @@ impl EventHandler for MainState {
                 integrate_positions(&mut self.main_world, self.dt);
                 apply_gravity(&mut self.main_world);
                 integrate_kinematics(&mut self.main_world, self.dt);
+                update_trails(&mut self.main_world);
             }
         }
 
@@ -145,6 +149,8 @@ impl EventHandler for MainState {
         let mut draw_query = <(Read<Draw>, Read<Position>, Read<Radius>)>::query();
         let mut draw_preview_query = <(Read<Preview>, Read<Position>, Read<Radius>)>::query();
 
+        let mut trail_query = <(Read<Trail>, Read<Radius>)>::query();
+
         draw_query
             .iter(&mut self.main_world)
             .for_each(|(color, pos, rad)| {
@@ -153,11 +159,27 @@ impl EventHandler for MainState {
             });
 
         draw_preview_query
-            .iter(&mut self.main_world)
+            .iter_immutable(&self.main_world)
             .for_each(|(_, pos, rad)| {
                 let point: ggez::mint::Point2<f32> = (*pos).into();
                 let color = Color::new(0.1, 1.0, 0.2, 1.0);
                 builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
+            });
+
+        trail_query
+            .iter_immutable(&self.main_world)
+            .for_each(|(trail, radius)| {
+                let slices = trail.0.as_slices();
+                if slices.0.len() >= 2 {
+                    if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
+                        dbg!(e);
+                    };
+                }
+                if slices.1.len() >= 2 {
+                    if let Err(e) = builder.line(slices.1, 0.25 * radius.0, TRAIL_COLOR) {
+                        dbg!(e);
+                    };
+                }
             });
 
         let p = if let Some(start_pos) = self.start_point {

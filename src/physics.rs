@@ -17,7 +17,7 @@ pub fn apply_gravity(world: &mut World) {
     unsafe {
         gravity_query.par_for_each_unchecked(world, |(current_pos, mut kinematics, _)| {
             let mut inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
-            kinematics.accel = inner_query.iter_immutable(world).fold(
+            kinematics.accel = inner_query.iter_immutable(&world).fold(
                 Vector::new(0.0, 0.0),
                 |grav_accel_acc, (other_pos, other_mass, _)| {
                     if current_pos != other_pos {

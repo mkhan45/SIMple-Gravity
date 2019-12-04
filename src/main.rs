@@ -1,6 +1,8 @@
 extern crate ggez;
 use ggez::*;
 
+use std::collections::VecDeque;
+
 use legion::prelude::*;
 
 mod components;
@@ -11,6 +13,7 @@ use main_state::MainState;
 
 mod imgui_wrapper;
 mod physics;
+mod trails;
 use imgui_wrapper::ImGuiWrapper;
 
 const G: f32 = 1.2;
@@ -18,7 +21,7 @@ const SCREEN_X: f32 = 300.0;
 const SCREEN_Y: f32 = 300.0;
 
 type Body = (Position, Kinematics, Mass, Draw, Radius, Trail);
-type PreviewBody = (Position, Kinematics, Radius, Preview, Draw);
+type PreviewBody = (Position, Kinematics, Radius, Preview, Draw, Trail);
 
 pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f32) -> Body {
     (
@@ -27,7 +30,7 @@ pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f
         Mass(mass),
         Draw(ggez::graphics::WHITE),
         Radius(rad),
-        Trail(Vec::with_capacity(250)),
+        Trail(VecDeque::with_capacity(50)),
     )
 }
 
@@ -38,6 +41,7 @@ pub fn new_preview(pos: impl Into<Point>, vel: impl Into<Vector>, rad: f32) -> P
         Radius(rad),
         Preview,
         Draw(graphics::Color::new(0.1, 1.0, 0.2, 0.8)),
+        Trail(VecDeque::with_capacity(50)),
     )
 }
 
