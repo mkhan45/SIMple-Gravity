@@ -420,6 +420,7 @@ impl EventHandler for MainState {
         #[allow(clippy::single_match)]
         match keycode {
             KeyCode::Space => self.paused = !self.paused,
+            KeyCode::Escape => self.imgui_wrapper.shown_menus.clear(),
             _ => {}
         };
     }
