@@ -1,10 +1,26 @@
 use crate::{new_body, Body, Kinematics, Mass, Point, Position, Preview, Radius, Vector, G};
+use crate::resources::{Resolution, PreviewIterations, MainIterations, StartPoint, MousePos, DT};
+use crate::trails::update_trails;
 use legion::prelude::*;
 
 use std::collections::HashSet;
 
-pub fn integrate_positions(world: &mut World, dt: f32) {
+pub fn do_physics(world: &mut World, ctx: &mut ggez::Context) {
+    let num_iterations = world.resources.get_or_insert::<MainIterations>(MainIterations(1)).unwrap().0;
+
+    (0..num_iterations).for_each(|_|{
+        calc_collisions(world, ctx);
+        integrate_positions(world);
+        apply_gravity(world);
+        integrate_kinematics(world);
+        update_trails(world);
+    });
+}
+
+pub fn integrate_positions(world: &mut World) {
+    let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
     let mut pos_integrate_query = <(Write<Position>, Read<Kinematics>)>::query();
+
     pos_integrate_query.par_for_each(world, |(mut pos, kinematics)| {
         pos.0 += kinematics.vel * dt + (kinematics.accel / 2.0) * dt.powi(2);
     });
@@ -13,11 +29,12 @@ pub fn integrate_positions(world: &mut World, dt: f32) {
 pub fn apply_gravity(world: &mut World) {
     //for some reason adding a third component to the query doubles performance
     let mut gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
+    let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
 
     unsafe {
         gravity_query.par_for_each_unchecked(world, |(current_pos, mut kinematics, _)| {
-            let mut inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
-            kinematics.accel = inner_query.iter_immutable(&world).fold(
+            // kinematics.accel = inner_query.iter_immutable(&world).fold(
+            kinematics.accel = inner_query.clone().iter_immutable(&world).fold(
                 Vector::new(0.0, 0.0),
                 |grav_accel_acc, (other_pos, other_mass, _)| {
                     if current_pos != other_pos {
@@ -39,7 +56,8 @@ pub fn apply_gravity(world: &mut World) {
     }
 }
 
-pub fn integrate_kinematics(world: &mut World, dt: f32) {
+pub fn integrate_kinematics(world: &mut World) {
+    let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
     let mut kinematics_integrate_query = <(Write<Kinematics>)>::query();
     kinematics_integrate_query.par_for_each(world, |mut kinematics| {
         *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
@@ -49,10 +67,11 @@ pub fn integrate_kinematics(world: &mut World, dt: f32) {
 
 pub fn calc_collisions(
     world: &mut World,
-    start_point: Option<Point>,
     ctx: &ggez::Context,
-    resolution: Vector,
 ) {
+    let start_point = world.resources.get::<StartPoint>().expect("error getting start point").clone();
+    let resolution = world.resources.get::<Resolution>().expect("error getting resolution").clone();
+
     let mut collision_query =
         <(Read<Position>, Read<Radius>, Read<Mass>, Read<Kinematics>)>::query();
 
@@ -68,8 +87,8 @@ pub fn calc_collisions(
                 .for_each(|(id2, (pos2, r2, m2, k2))| {
                     if id1 != id2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                        && !removal_set.contains(&id1)
-                        && !removal_set.contains(&id2)
+                            && !removal_set.contains(&id1)
+                            && !removal_set.contains(&id2)
                     {
                         removal_set.insert(id1);
                         removal_set.insert(id2);
@@ -115,10 +134,10 @@ pub fn calc_collisions(
         });
 
     if let Some(r1) = del_prev_rad {
-        if let Some(sp) = start_point {
+        if let Some(sp) = start_point.0 {
             let coords = ggez::graphics::screen_coordinates(ctx);
             let mouse_pos = ggez::input::mouse::position(ctx);
-            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution);
+            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution.0);
             world.insert((), vec![crate::new_preview(sp, (sp - mouse_pos) * 0.1, r1)]);
         }
     }

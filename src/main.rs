@@ -8,6 +8,9 @@ use legion::prelude::*;
 mod components;
 use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
+mod resources;
+use resources::{PreviewIterations};
+
 mod main_state;
 use main_state::MainState;
 
@@ -61,6 +64,8 @@ fn main() -> GameResult {
     ];
 
     world.insert((), data);
+
+    world.resources.insert(PreviewIterations(25));
 
     // world.insert(
     //     (),

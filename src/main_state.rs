@@ -13,7 +13,8 @@ use ggez::{
     Context, GameResult,
 };
 
-use crate::physics::{apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
+use crate::physics::{do_physics, apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
+use crate::resources::{MousePos, DT, Resolution, StartPoint, MainIterations};
 use crate::trails::update_trails;
 #[allow(unused_imports)]
 use crate::{
@@ -24,8 +25,6 @@ use crate::{
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
 
 use std::collections::HashSet;
-
-pub const DT: f32 = 1.0;
 
 const CAMERA_SPEED: f32 = 1.5;
 
@@ -53,6 +52,7 @@ pub struct MainState {
     pub start_point: Option<Point>,
     pub items_hovered: bool,
     pub paused: bool,
+    pub preview_iterations: usize,
 }
 
 impl MainState {
@@ -70,7 +70,7 @@ impl MainState {
             hidpi_factor,
             resolution,
             selected_entity: None,
-            dt: DT,
+            dt: 1.0,
             mass: 0.1,
             rad: 1.0,
             num_iterations: 1,
@@ -78,6 +78,7 @@ impl MainState {
             start_point: None,
             items_hovered: false,
             paused: false,
+            preview_iterations: 25,
         }
     }
 }
@@ -129,13 +130,23 @@ impl EventHandler for MainState {
         }
 
         if !self.paused {
-            for _ in 0..self.num_iterations {
-                calc_collisions(&mut self.main_world, self.start_point, ctx, self.resolution);
-                integrate_positions(&mut self.main_world, self.dt);
-                apply_gravity(&mut self.main_world);
-                integrate_kinematics(&mut self.main_world, self.dt);
-                update_trails(&mut self.main_world);
-            }
+            // for _ in 0..self.num_iterations {
+            //     calc_collisions(&mut self.main_world, self.start_point, ctx, self.resolution);
+            //     integrate_positions(&mut self.main_world, self.dt);
+            //     apply_gravity(&mut self.main_world);
+            //     integrate_kinematics(&mut self.main_world, self.dt);
+            //     update_trails(&mut self.main_world);
+            // }
+            let mouse_pos = ggez::input::mouse::position(ctx);
+            let coords = ggez::graphics::screen_coordinates(ctx);
+            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, self.resolution);
+
+            self.main_world.resources.insert::<StartPoint>(StartPoint(self.start_point));
+            self.main_world.resources.insert::<MousePos>(MousePos(mouse_pos));
+            self.main_world.resources.insert::<DT>(DT(self.dt));
+            self.main_world.resources.insert::<Resolution>(Resolution(self.resolution));
+            self.main_world.resources.insert::<MainIterations>(MainIterations(self.num_iterations as usize));
+            do_physics(&mut self.main_world, ctx);
         }
 
         Ok(())
