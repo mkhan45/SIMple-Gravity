@@ -14,6 +14,8 @@ use crate::Vector;
 
 use std::time;
 
+use std::convert::TryInto;
+
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
 pub struct MouseState {
     pos: (i32, i32),
@@ -51,7 +53,7 @@ pub fn make_sidepanel(
     mass: &mut f32,
     rad: &mut f32,
     dt: &mut f32,
-    num_iterations: &mut i32,
+    num_iterations: &mut usize,
     signals: &mut Vec<UiSignal>,
     selected_entity: bool,
 ) {
@@ -92,10 +94,12 @@ pub fn make_sidepanel(
         ui.drag_float(im_str!(""), dt).speed(0.01).build();
 
         ui.text(im_str!("Iteration Count"));
-        ui.drag_int(im_str!(" "), num_iterations)
+        let mut num_iterations_i32: i32 = *num_iterations as i32;
+        ui.drag_int(im_str!(" "), &mut num_iterations_i32)
             .min(0)
             .speed(0.05)
             .build();
+        *num_iterations = num_iterations_i32 as usize;
     });
 }
 
@@ -175,7 +179,7 @@ impl ImGuiWrapper {
         dt: &mut f32,
         mass: &mut f32,
         rad: &mut f32,
-        num_iterations: &mut i32,
+        num_iterations: &mut usize,
         items_hovered: &mut bool,
         selected_entity: bool,
     ) {

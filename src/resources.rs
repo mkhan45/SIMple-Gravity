@@ -17,4 +17,3 @@ pub struct MousePos(pub Point);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DT(pub f32);
-

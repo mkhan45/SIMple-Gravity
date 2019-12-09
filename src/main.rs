@@ -9,7 +9,7 @@ mod components;
 use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
 mod resources;
-use resources::{PreviewIterations};
+use resources::{MainIterations, PreviewIterations};
 
 mod main_state;
 use main_state::MainState;
@@ -66,6 +66,7 @@ fn main() -> GameResult {
     world.insert((), data);
 
     world.resources.insert(PreviewIterations(25));
+    world.resources.insert::<MainIterations>(MainIterations(1));
 
     // world.insert(
     //     (),

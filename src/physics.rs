@@ -1,14 +1,18 @@
-use crate::{new_body, Body, Kinematics, Mass, Point, Position, Preview, Radius, Vector, G};
-use crate::resources::{Resolution, PreviewIterations, MainIterations, StartPoint, MousePos, DT};
+use crate::resources::{MainIterations, MousePos, PreviewIterations, Resolution, StartPoint, DT};
 use crate::trails::update_trails;
+use crate::{new_body, Body, Kinematics, Mass, Point, Position, Preview, Radius, Vector, G};
 use legion::prelude::*;
 
 use std::collections::HashSet;
 
 pub fn do_physics(world: &mut World, ctx: &mut ggez::Context) {
-    let num_iterations = world.resources.get_or_insert::<MainIterations>(MainIterations(1)).unwrap().0;
+    let num_iterations = world
+        .resources
+        .get_or_insert::<MainIterations>(MainIterations(1))
+        .unwrap()
+        .0;
 
-    (0..num_iterations).for_each(|_|{
+    (0..num_iterations).for_each(|_| {
         calc_collisions(world, ctx);
         integrate_positions(world);
         apply_gravity(world);
@@ -65,12 +69,17 @@ pub fn integrate_kinematics(world: &mut World) {
     });
 }
 
-pub fn calc_collisions(
-    world: &mut World,
-    ctx: &ggez::Context,
-) {
-    let start_point = world.resources.get::<StartPoint>().expect("error getting start point").clone();
-    let resolution = world.resources.get::<Resolution>().expect("error getting resolution").clone();
+pub fn calc_collisions(world: &mut World, ctx: &ggez::Context) {
+    let start_point = world
+        .resources
+        .get::<StartPoint>()
+        .expect("error getting start point")
+        .clone();
+    let resolution = world
+        .resources
+        .get::<Resolution>()
+        .expect("error getting resolution")
+        .clone();
 
     let mut collision_query =
         <(Read<Position>, Read<Radius>, Read<Mass>, Read<Kinematics>)>::query();
@@ -87,8 +96,8 @@ pub fn calc_collisions(
                 .for_each(|(id2, (pos2, r2, m2, k2))| {
                     if id1 != id2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                            && !removal_set.contains(&id1)
-                            && !removal_set.contains(&id2)
+                        && !removal_set.contains(&id1)
+                        && !removal_set.contains(&id2)
                     {
                         removal_set.insert(id1);
                         removal_set.insert(id2);

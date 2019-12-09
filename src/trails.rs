@@ -1,4 +1,4 @@
-use crate::{Position, Preview, Trail, PreviewIterations};
+use crate::{Position, Preview, PreviewIterations, Trail};
 use legion::prelude::*;
 
 pub fn update_trails(world: &mut World) {

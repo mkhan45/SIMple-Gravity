@@ -13,8 +13,10 @@ use ggez::{
     Context, GameResult,
 };
 
-use crate::physics::{do_physics, apply_gravity, calc_collisions, integrate_kinematics, integrate_positions};
-use crate::resources::{MousePos, DT, Resolution, StartPoint, MainIterations};
+use crate::physics::{
+    apply_gravity, calc_collisions, do_physics, integrate_kinematics, integrate_positions,
+};
+use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT};
 use crate::trails::update_trails;
 #[allow(unused_imports)]
 use crate::{
@@ -141,11 +143,15 @@ impl EventHandler for MainState {
             let coords = ggez::graphics::screen_coordinates(ctx);
             let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, self.resolution);
 
-            self.main_world.resources.insert::<StartPoint>(StartPoint(self.start_point));
-            self.main_world.resources.insert::<MousePos>(MousePos(mouse_pos));
-            self.main_world.resources.insert::<DT>(DT(self.dt));
-            self.main_world.resources.insert::<Resolution>(Resolution(self.resolution));
-            self.main_world.resources.insert::<MainIterations>(MainIterations(self.num_iterations as usize));
+            self.main_world
+                .resources
+                .insert::<StartPoint>(StartPoint(self.start_point));
+            self.main_world
+                .resources
+                .insert::<MousePos>(MousePos(mouse_pos));
+            self.main_world
+                .resources
+                .insert::<Resolution>(Resolution(self.resolution));
             do_physics(&mut self.main_world, ctx);
         }
 
@@ -226,17 +232,26 @@ impl EventHandler for MainState {
 
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         let hidpi_factor = self.hidpi_factor;
+        let mut dt = self.main_world.resources.get_or_insert(DT(1.0)).unwrap().0;
+        let mut main_iter = self
+            .main_world
+            .resources
+            .get_or_insert(MainIterations(1))
+            .unwrap()
+            .0;
+
         if let Some(e) = self.selected_entity {
+            let mut mass = self.main_world.get_component::<Mass>(e).unwrap().0;
+            let mut rad = self.main_world.get_component::<Radius>(e).unwrap().0;
+
             if self.main_world.is_alive(e) {
-                let mut mass = self.main_world.get_component::<Mass>(e).unwrap().0;
-                let mut rad = self.main_world.get_component::<Radius>(e).unwrap().0;
                 self.imgui_wrapper.render(
                     ctx,
                     hidpi_factor,
-                    &mut self.dt,
+                    &mut dt,
                     &mut mass,
                     &mut rad,
-                    &mut self.num_iterations,
+                    &mut main_iter,
                     &mut self.items_hovered,
                     true,
                 );
@@ -249,14 +264,18 @@ impl EventHandler for MainState {
             self.imgui_wrapper.render(
                 ctx,
                 hidpi_factor,
-                &mut self.dt,
+                &mut dt,
                 &mut self.mass,
                 &mut self.rad,
-                &mut self.num_iterations,
+                &mut main_iter,
                 &mut self.items_hovered,
                 false,
             );
         }
+        self.main_world
+            .resources
+            .insert::<MainIterations>(MainIterations(main_iter));
+        self.main_world.resources.insert::<DT>(DT(dt));
 
         ggez::graphics::present(ctx)
     }
