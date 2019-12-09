@@ -97,7 +97,8 @@ pub fn make_sidepanel(
         let mut num_iterations_i32: i32 = *num_iterations as i32;
         ui.drag_int(im_str!(" "), &mut num_iterations_i32)
             .min(0)
-            .speed(0.05)
+            .speed(0.05 * (*num_iterations as f32).powf(1.0 / 3.0))
+            .max(1000)
             .build();
         *num_iterations = num_iterations_i32 as usize;
     });

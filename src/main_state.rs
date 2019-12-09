@@ -17,7 +17,6 @@ use crate::physics::{
     apply_gravity, calc_collisions, do_physics, integrate_kinematics, integrate_positions,
 };
 use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT};
-use crate::trails::update_trails;
 #[allow(unused_imports)]
 use crate::{
     imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
@@ -85,6 +84,33 @@ impl MainState {
     }
 }
 
+fn calc_offset(ctx: &Context) -> Vector {
+    let mut offset: Vector = Vector::new(0.0, 0.0);
+
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Up)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::W)
+    {
+        offset.y -= CAMERA_SPEED;
+    }
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Down)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::S)
+    {
+        offset.y += CAMERA_SPEED;
+    }
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Left)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::A)
+    {
+        offset.x -= CAMERA_SPEED;
+    }
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Right)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::D)
+    {
+        offset.x += CAMERA_SPEED;
+    }
+
+    offset
+}
+
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         self.imgui_wrapper
@@ -96,27 +122,7 @@ impl EventHandler for MainState {
             });
         self.imgui_wrapper.sent_signals.clear();
 
-        let mut offset: Vector = Vector::new(0.0, 0.0);
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Up)
-            || input::keyboard::is_key_pressed(ctx, KeyCode::W)
-        {
-            offset.y -= CAMERA_SPEED;
-        }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Down)
-            || input::keyboard::is_key_pressed(ctx, KeyCode::S)
-        {
-            offset.y += CAMERA_SPEED;
-        }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Left)
-            || input::keyboard::is_key_pressed(ctx, KeyCode::A)
-        {
-            offset.x -= CAMERA_SPEED;
-        }
-        if input::keyboard::is_key_pressed(ctx, KeyCode::Right)
-            || input::keyboard::is_key_pressed(ctx, KeyCode::D)
-        {
-            offset.x += CAMERA_SPEED;
-        }
+        let offset = calc_offset(ctx);
         if offset != [0.0, 0.0].into() {
             let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
             let zoom = screen_coordinates.w / crate::SCREEN_X;
@@ -132,13 +138,6 @@ impl EventHandler for MainState {
         }
 
         if !self.paused {
-            // for _ in 0..self.num_iterations {
-            //     calc_collisions(&mut self.main_world, self.start_point, ctx, self.resolution);
-            //     integrate_positions(&mut self.main_world, self.dt);
-            //     apply_gravity(&mut self.main_world);
-            //     integrate_kinematics(&mut self.main_world, self.dt);
-            //     update_trails(&mut self.main_world);
-            // }
             let mouse_pos = ggez::input::mouse::position(ctx);
             let coords = ggez::graphics::screen_coordinates(ctx);
             let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, self.resolution);
