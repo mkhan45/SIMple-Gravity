@@ -2,6 +2,10 @@ use crate::resources::{MainIterations, MousePos, PreviewIterations, Resolution, 
 use crate::trails::update_trails;
 use crate::{new_body, Body, Kinematics, Mass, Point, Position, Preview, Radius, Vector, G};
 use legion::prelude::*;
+use legion::borrow::{Exclusive, Ref, RefMut, Shared};
+
+type LegionBorrowEx<'a, C> = RefMut<'a, Exclusive<'a>, C>;
+type LegionBorrowShare<'a, C> = Ref<'a, Shared<'a>, C>;
 
 use std::collections::HashSet;
 
@@ -12,28 +16,57 @@ pub fn do_physics(world: &mut World, ctx: &mut ggez::Context) {
         .unwrap()
         .0;
 
-    (0..num_iterations).for_each(|_| {
+    let preview_iterations = world
+        .resources
+        .get_or_insert::<PreviewIterations>(PreviewIterations(25))
+        .unwrap()
+        .0;
+
+    (0..preview_iterations).for_each(|i| {
+        let preview_only = i >= num_iterations;
         calc_collisions(world, ctx);
-        integrate_positions(world);
-        apply_gravity(world);
+        integrate_positions(world, preview_only);
+        apply_gravity(world, preview_only);
         integrate_kinematics(world);
         update_trails(world);
     });
 }
 
-pub fn integrate_positions(world: &mut World) {
+pub fn integrate_positions(world: &mut World, preview_only: bool) {
     let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
+
     let mut pos_integrate_query = <(Write<Position>, Read<Kinematics>)>::query();
 
-    pos_integrate_query.par_for_each(world, |(mut pos, kinematics)| {
+
+    let int_closure = |(mut pos, kinematics): (
+        LegionBorrowEx<'_, Position>,
+        LegionBorrowShare<'_, Kinematics>,
+    )| {
         pos.0 += kinematics.vel * dt + (kinematics.accel / 2.0) * dt.powi(2);
-    });
+    };
+
+    // pos_integrate_query.par_for_each(world, |(mut pos, kinematics)| {
+    //     pos.0 += kinematics.vel * dt + (kinematics.accel / 2.0) * dt.powi(2);
+    // })
+
+    if !preview_only {
+        pos_integrate_query.par_for_each(world, int_closure);
+    } else {
+        pos_integrate_query.filter(component::<Preview>()).par_for_each(world, int_closure);
+    }
 }
 
-pub fn apply_gravity(world: &mut World) {
+pub fn apply_gravity(world: &mut World, preview_only: bool) {
     //for some reason adding a third component to the query doubles performance
     let mut gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
     let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
+
+    let grav_closure = |(current_pos, mut kinematics, _) : (
+        LegionBorrowShare<'_, Position>,
+        LegionBorrowEx<'_, Kinematics>,
+        LegionBorrowShare<'_, Radius>,
+    ) | {
+    };
 
     unsafe {
         gravity_query.par_for_each_unchecked(world, |(current_pos, mut kinematics, _)| {
@@ -96,8 +129,8 @@ pub fn calc_collisions(world: &mut World, ctx: &ggez::Context) {
                 .for_each(|(id2, (pos2, r2, m2, k2))| {
                     if id1 != id2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                        && !removal_set.contains(&id1)
-                        && !removal_set.contains(&id2)
+                            && !removal_set.contains(&id1)
+                            && !removal_set.contains(&id2)
                     {
                         removal_set.insert(id1);
                         removal_set.insert(id2);
