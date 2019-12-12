@@ -14,7 +14,7 @@ use ggez::{
 };
 
 use crate::physics::{
-    apply_gravity, calc_collisions, do_physics, integrate_kinematics, integrate_positions,
+    do_physics
 };
 use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT};
 #[allow(unused_imports)]

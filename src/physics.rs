@@ -32,7 +32,7 @@ pub fn do_physics(world: &mut World, ctx: &mut ggez::Context) {
     });
 }
 
-pub fn integrate_positions(world: &mut World, preview_only: bool) {
+fn integrate_positions(world: &mut World, preview_only: bool) {
     let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
 
     let mut pos_integrate_query = <(Write<Position>, Read<Kinematics>)>::query();
@@ -56,7 +56,7 @@ pub fn integrate_positions(world: &mut World, preview_only: bool) {
     }
 }
 
-pub fn apply_gravity(world: &mut World, preview_only: bool) {
+fn apply_gravity(world: &mut World, preview_only: bool) {
     //for some reason adding a third component to the query doubles performance
     let mut gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
     let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
@@ -93,7 +93,7 @@ pub fn apply_gravity(world: &mut World, preview_only: bool) {
     }
 }
 
-pub fn integrate_kinematics(world: &mut World) {
+fn integrate_kinematics(world: &mut World) {
     let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
     let mut kinematics_integrate_query = <(Write<Kinematics>)>::query();
     kinematics_integrate_query.par_for_each(world, |mut kinematics| {
@@ -102,7 +102,7 @@ pub fn integrate_kinematics(world: &mut World) {
     });
 }
 
-pub fn calc_collisions(world: &mut World, ctx: &ggez::Context) {
+fn calc_collisions(world: &mut World, ctx: &ggez::Context) {
     let start_point = world
         .resources
         .get::<StartPoint>()
