@@ -27,7 +27,7 @@ pub fn do_physics(world: &mut World, ctx: &mut ggez::Context) {
         calc_collisions(world, ctx);
         integrate_positions(world, preview_only);
         apply_gravity(world, preview_only);
-        integrate_kinematics(world);
+        integrate_kinematics(world, preview_only);
         update_trails(world);
     });
 }
@@ -36,7 +36,6 @@ fn integrate_positions(world: &mut World, preview_only: bool) {
     let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
 
     let mut pos_integrate_query = <(Write<Position>, Read<Kinematics>)>::query();
-
 
     let int_closure = |(mut pos, kinematics): (
         LegionBorrowEx<'_, Position>,
@@ -59,49 +58,67 @@ fn integrate_positions(world: &mut World, preview_only: bool) {
 fn apply_gravity(world: &mut World, preview_only: bool) {
     //for some reason adding a third component to the query doubles performance
     let mut gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
-    let inner_query = <(Read<Position>, Read<Mass>, Read<Radius>)>::query();
+    let inner_query_vec:
+        Vec<(LegionBorrowShare<'_, Position>, 
+            LegionBorrowShare<'_, Mass>,
+            LegionBorrowShare<'_, Radius>)>
+        = <(Read<Position>, Read<Mass>, Read<Radius>)>::query().iter_immutable(&world).collect();
 
     let grav_closure = |(current_pos, mut kinematics, _) : (
         LegionBorrowShare<'_, Position>,
         LegionBorrowEx<'_, Kinematics>,
         LegionBorrowShare<'_, Radius>,
     ) | {
+        // kinematics.accel = inner_query.iter_immutable(&world).fold(
+        kinematics.accel = inner_query_vec.iter().fold(
+            Vector::new(0.0, 0.0),
+            |grav_accel_acc, (other_pos, other_mass, _)| {
+                if current_pos != *other_pos {
+                    let dist_vec = other_pos.0 - current_pos.0;
+                    let dist_mag_sqr = dist_vec.norm_squared();
+                    let dist_mag = dist_mag_sqr.powf(0.5);
+                    let dist_comp = dist_vec / dist_mag;
+
+                    let grav_accel_mag = other_mass.0 / dist_mag_sqr * G;
+                    let grav_accel: Vector = dist_comp * grav_accel_mag;
+
+                    grav_accel_acc + grav_accel
+                } else {
+                    grav_accel_acc
+                }
+            },
+        );
     };
 
     unsafe {
-        gravity_query.par_for_each_unchecked(world, |(current_pos, mut kinematics, _)| {
-            // kinematics.accel = inner_query.iter_immutable(&world).fold(
-            kinematics.accel = inner_query.clone().iter_immutable(&world).fold(
-                Vector::new(0.0, 0.0),
-                |grav_accel_acc, (other_pos, other_mass, _)| {
-                    if current_pos != other_pos {
-                        let dist_vec = other_pos.0 - current_pos.0;
-                        let dist_mag_sqr = dist_vec.norm_squared();
-                        let dist_mag = dist_mag_sqr.powf(0.5);
-                        let dist_comp = dist_vec / dist_mag;
-
-                        let grav_accel_mag = other_mass.0 / dist_mag_sqr * G;
-                        let grav_accel: Vector = dist_comp * grav_accel_mag;
-
-                        grav_accel_acc + grav_accel
-                    } else {
-                        grav_accel_acc
-                    }
-                },
-            );
-        });
+        if !preview_only {
+            gravity_query.par_for_each_unchecked(world, grav_closure);
+        } else {
+            gravity_query.filter(component::<Preview>()).par_for_each_unchecked(world, grav_closure);
+        }
     }
 }
 
-fn integrate_kinematics(world: &mut World) {
+fn integrate_kinematics(world: &mut World, preview_only: bool) {
     let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
     let mut kinematics_integrate_query = <(Write<Kinematics>)>::query();
-    kinematics_integrate_query.par_for_each(world, |mut kinematics| {
+
+    let kine_int_closure = |mut kinematics : (LegionBorrowEx<'_, Kinematics>)| {
         *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
         kinematics.past_accel = kinematics.accel;
-    });
+    };
+
+    if !preview_only {
+        kinematics_integrate_query.par_for_each(world, kine_int_closure);
+    } else {
+        kinematics_integrate_query.filter(component::<Preview>()).par_for_each(world, kine_int_closure);
+    }
+    // *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
+    // kinematics.past_accel = kinematics.accel;
 }
 
+
+//TODO Make this accept preview_only
 fn calc_collisions(world: &mut World, ctx: &ggez::Context) {
     let start_point = world
         .resources
