@@ -22,8 +22,9 @@ pub fn do_physics(world: &mut World, ctx: &mut ggez::Context) {
         .unwrap()
         .0;
 
-    (0..preview_iterations).for_each(|i| {
-        let preview_only = i >= num_iterations;
+    let mut preview_only = false;
+    (0..std::cmp::max(preview_iterations, num_iterations)).for_each(|i| {
+        preview_only = i >= num_iterations;
         calc_collisions(world, ctx);
         integrate_positions(world, preview_only);
         apply_gravity(world, preview_only);

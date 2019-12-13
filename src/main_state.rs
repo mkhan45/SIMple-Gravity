@@ -16,7 +16,7 @@ use ggez::{
 use crate::physics::{
     do_physics
 };
-use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT};
+use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT, PreviewIterations};
 #[allow(unused_imports)]
 use crate::{
     imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
@@ -238,6 +238,12 @@ impl EventHandler for MainState {
             .get_or_insert(MainIterations(1))
             .unwrap()
             .0;
+        let mut preview_iter = self
+            .main_world
+            .resources
+            .get_or_insert(PreviewIterations(25))
+            .unwrap()
+            .0;
 
         if let Some(e) = self.selected_entity {
             let mut mass = self.main_world.get_component::<Mass>(e).unwrap().0;
@@ -251,6 +257,7 @@ impl EventHandler for MainState {
                     &mut mass,
                     &mut rad,
                     &mut main_iter,
+                    &mut preview_iter,
                     &mut self.items_hovered,
                     true,
                 );
@@ -267,6 +274,7 @@ impl EventHandler for MainState {
                 &mut self.mass,
                 &mut self.rad,
                 &mut main_iter,
+                &mut preview_iter,
                 &mut self.items_hovered,
                 false,
             );
@@ -274,6 +282,9 @@ impl EventHandler for MainState {
         self.main_world
             .resources
             .insert::<MainIterations>(MainIterations(main_iter));
+        self.main_world
+            .resources
+            .insert::<PreviewIterations>(PreviewIterations(preview_iter));
         self.main_world.resources.insert::<DT>(DT(dt));
 
         ggez::graphics::present(ctx)

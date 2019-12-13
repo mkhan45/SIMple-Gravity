@@ -54,6 +54,7 @@ pub fn make_sidepanel(
     rad: &mut f32,
     dt: &mut f32,
     num_iterations: &mut usize,
+    preview_iterations: &mut usize,
     signals: &mut Vec<UiSignal>,
     selected_entity: bool,
 ) {
@@ -100,7 +101,17 @@ pub fn make_sidepanel(
             .speed(0.05 * (*num_iterations as f32).powf(1.0 / 3.0))
             .max(1000)
             .build();
+
+        ui.text(im_str!("Preview Iteration Count"));
+        let mut preview_iterations_i32: i32 = *preview_iterations as i32;
+        ui.drag_int(im_str!("  "), &mut preview_iterations_i32)
+            .min(0)
+            .speed(0.05 * (*preview_iterations as f32).powf(1.0 / 3.0))
+            .max(1000)
+            .build();
+
         *num_iterations = num_iterations_i32 as usize;
+        *preview_iterations = preview_iterations_i32 as usize;
     });
 }
 
@@ -181,6 +192,7 @@ impl ImGuiWrapper {
         mass: &mut f32,
         rad: &mut f32,
         num_iterations: &mut usize,
+        preview_iterations: &mut usize,
         items_hovered: &mut bool,
         selected_entity: bool,
     ) {
@@ -215,6 +227,7 @@ impl ImGuiWrapper {
                             rad,
                             dt,
                             num_iterations,
+                            preview_iterations,
                             &mut self.sent_signals,
                             selected_entity,
                         );
