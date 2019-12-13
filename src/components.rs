@@ -3,13 +3,18 @@ use ggez::nalgebra::{Point2, Vector2};
 
 use std::collections::VecDeque;
 
+use specs::prelude::*;
+use specs::Component;
+
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[storage(FlaggedStorage)]
 pub struct Preview;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[storage(DenseVecStorage)]
 pub struct Position(pub Point);
 
 impl Position {
@@ -42,7 +47,8 @@ impl From<Point> for Position {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[storage(DenseVecStorage)]
 pub struct Kinematics {
     pub vel: Vector,
     pub accel: Vector,
@@ -59,16 +65,22 @@ impl Kinematics {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[storage(DenseVecStorage)]
 pub struct Mass(pub f32);
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[storage(DenseVecStorage)]
 pub struct Draw(pub Color);
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[storage(DenseVecStorage)]
 pub struct Static;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[storage(DenseVecStorage)]
 pub struct Radius(pub f32);
 
+#[derive(Clone, Debug, PartialEq, Component)]
+#[storage(DenseVecStorage)]
 pub struct Trail(pub VecDeque<Point>);

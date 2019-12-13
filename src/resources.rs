@@ -17,3 +17,12 @@ pub struct MousePos(pub Point);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DT(pub f32);
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Paused(pub bool);
+
+impl Paused {
+    pub fn invert(&mut self) {
+        self.0 = !self.0;
+    }
+}

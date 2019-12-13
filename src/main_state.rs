@@ -1,4 +1,4 @@
-use legion::prelude::*;
+use specs::prelude::*;
 
 use ggez::{
     event,
@@ -16,7 +16,7 @@ use ggez::{
 use crate::physics::{
     do_physics
 };
-use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT, PreviewIterations};
+use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT, PreviewIterations, Paused};
 #[allow(unused_imports)]
 use crate::{
     imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
@@ -39,47 +39,31 @@ pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Ve
 }
 
 pub struct MainState {
-    pub universe: Universe,
-    pub main_world: World,
+    pub world: World,
     pub imgui_wrapper: ImGuiWrapper,
     pub hidpi_factor: f32,
-    pub resolution: Vector,
     pub selected_entity: Option<Entity>,
     pub mass: f32,
     pub rad: f32,
-    pub dt: f32,
-    pub num_iterations: i32,
     pub creating: bool,
-    pub start_point: Option<Point>,
     pub items_hovered: bool,
-    pub paused: bool,
-    pub preview_iterations: usize,
 }
 
 impl MainState {
     pub fn new(
-        universe: Universe,
-        main_world: World,
+        world: World,
         imgui_wrapper: ImGuiWrapper,
         hidpi_factor: f32,
-        resolution: Vector,
     ) -> Self {
         MainState {
-            universe,
-            main_world,
+            world,
             imgui_wrapper,
             hidpi_factor,
-            resolution,
             selected_entity: None,
-            dt: 1.0,
             mass: 0.1,
             rad: 1.0,
-            num_iterations: 1,
             creating: false,
-            start_point: None,
             items_hovered: false,
-            paused: false,
-            preview_iterations: 25,
         }
     }
 }
@@ -162,48 +146,51 @@ impl EventHandler for MainState {
 
         let mut builder = graphics::MeshBuilder::new();
 
-        let mut draw_query = <(Read<Draw>, Read<Position>, Read<Radius>)>::query();
-        let mut draw_preview_query = <(Read<Preview>, Read<Position>, Read<Radius>)>::query();
+        // let mut draw_query = <(Read<Draw>, Read<Position>, Read<Radius>)>::query();
+        // let mut draw_preview_query = <(Read<Preview>, Read<Position>, Read<Radius>)>::query();
 
-        let mut trail_query = <(Read<Trail>, Read<Radius>)>::query();
+        // let mut trail_query = <(Read<Trail>, Read<Radius>)>::query();
 
-        draw_query
-            .iter(&mut self.main_world)
-            .for_each(|(color, pos, rad)| {
-                let point: ggez::mint::Point2<f32> = (*pos).into();
-                builder.circle(DrawMode::fill(), point, rad.0, 0.01, color.0);
-            });
+        let draws = self.world.read_storage::<Draw>();
+        let positions = self.world.read_storage::<Position>();
+        let radii = self.world.read_storage::<Radius>();
+        let previews = self.world.read_storage::<Preview>();
+        let trails = self.world.read_storage::<Trail>();
 
-        draw_preview_query
-            .iter_immutable(&self.main_world)
-            .for_each(|(_, pos, rad)| {
-                let point: ggez::mint::Point2<f32> = (*pos).into();
-                let color = Color::new(0.1, 1.0, 0.2, 1.0);
-                builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
-            });
+        (&draws, &positions, &radii).join().for_each(|(color, pos, rad)|{
+            let point: ggez::mint::Point2<f32> = (*pos).into();
+            builder.circle(DrawMode::fill(), point, rad.0, 0.01, color.0);
+        });
 
-        trail_query
-            .iter_immutable(&self.main_world)
-            .for_each(|(trail, radius)| {
-                let slices = trail.0.as_slices();
-                if slices.0.len() >= 2 {
-                    if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
-                        dbg!(e);
-                    };
-                }
-                if slices.1.len() >= 2 {
-                    if let Err(e) = builder.line(slices.1, 0.25 * radius.0, TRAIL_COLOR) {
-                        dbg!(e);
-                    };
-                }
-            });
+        (&previews, &positions, &radii).join().for_each(|(_, pos, rad)|{
+            let point: ggez::mint::Point2<f32> = (*pos).into();
+            let color = Color::new(0.1, 1.0, 0.2, 1.0);
+            builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
+        });
 
-        let p = if let Some(start_pos) = self.start_point {
-            start_pos
+        (&trails, &radii).join().for_each(|(trail, radius)|{
+            let slices = trail.0.as_slices();
+            if slices.0.len() >= 2 {
+                if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
+                    dbg!(e);
+                };
+            }
+            if slices.1.len() >= 2 {
+                if let Err(e) = builder.line(slices.1, 0.25 * radius.0, TRAIL_COLOR) {
+                    dbg!(e);
+                };
+            }
+        });
+
+        let start_point = self.world.try_fetch::<StartPoint>();
+        let resolution = self.world.fetch::<Resolution>();
+
+        let p = if let Some(start_pos) = start_point {
+            start_pos.0.unwrap()
         } else {
             let mouse_pos = ggez::input::mouse::position(ctx);
             let coords = ggez::graphics::screen_coordinates(ctx);
-            scale_pos(mouse_pos, coords, self.resolution)
+            scale_pos(mouse_pos, coords, resolution.0)
         };
 
         if self.creating {
@@ -215,12 +202,12 @@ impl EventHandler for MainState {
                 Color::new(1.0, 1.0, 1.0, 0.5),
             );
 
-            if let Some(p) = self.start_point {
+            if let Some(p) = start_point {
                 let mouse_pos = ggez::input::mouse::position(ctx);
                 let coords = ggez::graphics::screen_coordinates(ctx);
-                let scaled_pos = scale_pos(mouse_pos, coords, self.resolution);
+                let scaled_pos = scale_pos(mouse_pos, coords, resolution.0);
                 builder
-                    .line(&[p, scaled_pos], 0.5, graphics::WHITE)
+                    .line(&[p.0.unwrap(), scaled_pos], 0.5, graphics::WHITE)
                     .expect("not enough points in line");
             }
         }
@@ -231,7 +218,13 @@ impl EventHandler for MainState {
 
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         let hidpi_factor = self.hidpi_factor;
-        let mut dt = self.main_world.resources.get_or_insert(DT(1.0)).unwrap().0;
+        let mut dt = match self.world.try_fetch::<DT>() {
+            Some(dt) => dt.0,
+            None => {
+                self.world.insert(DT(1.0));
+                1.0
+            },
+        };
         let mut main_iter = self
             .main_world
             .resources
@@ -298,9 +291,9 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -323,7 +316,7 @@ impl EventHandler for MainState {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     if self.creating {
                         let p = Point::new(x, y);
@@ -403,8 +396,9 @@ impl EventHandler for MainState {
         });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
-        if let Some(start_point) = self.start_point {
-            let p = scale_pos([x, y], coords, self.resolution);
+        if let Some(start_point) = self.world.fetch::<StartPoint>().0 {
+            let resolution = self.world.fetch::<Resolution>().0;
+            let p = scale_pos([x, y], coords, resolution);
 
             self.main_world.insert(
                 (),
@@ -414,8 +408,9 @@ impl EventHandler for MainState {
 
         if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle) {
             let mut offset = Vector::new(dx, dy);
-            offset.x *= coords.w / self.resolution.x;
-            offset.y *= coords.h / self.resolution.y;
+            let resolution = self.world.fetch::<Resolution>().0;
+            offset.x *= coords.w / resolution.x;
+            offset.y *= coords.h / resolution.y;
             coords.x -= offset.x;
             coords.y -= offset.y;
             graphics::set_screen_coordinates(ctx, coords).expect("error moving my mclick");
@@ -429,18 +424,20 @@ impl EventHandler for MainState {
         let prev_zoom = offset.w / crate::SCREEN_X;
         let zoom = prev_zoom * (1.0 - (y * 0.05));
 
+        let resolution = self.world.fetch::<Resolution>().0;
+
         let focus: Vector = Vector::new(mouse_pos.x, mouse_pos.y);
 
         let mut scaled_focus1: Vector = focus;
-        scaled_focus1.x *= offset.w / self.resolution.x;
-        scaled_focus1.y *= offset.h / self.resolution.y;
+        scaled_focus1.x *= offset.w / resolution.x;
+        scaled_focus1.y *= offset.h / resolution.y;
 
         offset.w = zoom * crate::SCREEN_X;
-        offset.h = zoom * crate::SCREEN_Y / (self.resolution.x / self.resolution.y);
+        offset.h = zoom * crate::SCREEN_Y / (resolution.x / resolution.y);
 
         let mut scaled_focus2: Vector = focus;
-        scaled_focus2.x *= offset.w / self.resolution.x;
-        scaled_focus2.y *= offset.h / self.resolution.y;
+        scaled_focus2.x *= offset.w / resolution.x;
+        scaled_focus2.y *= offset.h / resolution.y;
 
         let delta_focus = scaled_focus2 - scaled_focus1;
 
@@ -459,7 +456,7 @@ impl EventHandler for MainState {
     ) {
         #[allow(clippy::single_match)]
         match keycode {
-            KeyCode::Space => self.paused = !self.paused,
+            KeyCode::Space => self.world.get_mut::<Paused>().unwrap().invert(),
             KeyCode::Escape => self.imgui_wrapper.shown_menus.clear(),
             _ => {}
         };
@@ -476,9 +473,9 @@ impl EventHandler for MainState {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
-        self.resolution = resolution;
+        self.world.insert(Resolution(resolution));
     }
 }

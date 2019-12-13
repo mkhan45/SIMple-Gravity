@@ -3,13 +3,14 @@ use ggez::*;
 
 use std::collections::VecDeque;
 
-use legion::prelude::*;
+extern crate specs;
+use specs::prelude::*;
 
 mod components;
 use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
 mod resources;
-use resources::{MainIterations, PreviewIterations};
+use resources::{MainIterations, PreviewIterations, Resolution, DT};
 
 mod main_state;
 use main_state::MainState;
@@ -55,18 +56,32 @@ fn main() -> GameResult {
         .build()
         .expect("error building context");
 
-    let universe = Universe::new();
-    let mut world = universe.create_world();
+    // let universe = Universe::new();
+    // let mut world = universe.create_world();
+    let mut world = World::new();
+    world.register::<Position>();
+    world.register::<Kinematics>();
+    world.register::<Mass>();
+    world.register::<Draw>();
+    world.register::<Radius>();
+    world.register::<Trail>();
 
     let data = vec![
         new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
         new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
     ];
 
-    world.insert((), data);
+    for (pos, kine, mass, draw, rad, trail) in data {
+        world.create_entity()
+            .with(pos)
+            .with(kine)
+            .with(mass)
+            .with(draw)
+            .with(rad)
+            .with(trail)
+            .build();
+    }
 
-    world.resources.insert(PreviewIterations(25));
-    world.resources.insert::<MainIterations>(MainIterations(1));
 
     // world.insert(
     //     (),
@@ -84,6 +99,12 @@ fn main() -> GameResult {
     let dimensions = event_loop.get_primary_monitor().get_dimensions();
     let dimensions_vec = Vector::new(dimensions.width as f32, dimensions.height as f32);
     let aspect_ratio = dimensions.height / dimensions.width;
+
+    world.insert(MainIterations(1));
+    world.insert(PreviewIterations(25));
+    world.insert(Resolution(dimensions_vec));
+    world.insert(DT(1.0));
+
     graphics::set_mode(
         ctx,
         ggez::conf::WindowMode::default()
@@ -99,11 +120,9 @@ fn main() -> GameResult {
     .unwrap();
 
     let main_state = &mut MainState::new(
-        universe,
         world,
         ImGuiWrapper::new(ctx, hidpi_factor, dimensions_vec),
         hidpi_factor,
-        dimensions_vec,
     );
     event::run(ctx, event_loop, main_state)
 }

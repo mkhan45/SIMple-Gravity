@@ -8,13 +8,15 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5.1"
-# legion = "0.1.1"
-legion = { path = "legion" }
 
 gfx_core = "0.9"
 gfx_device_gl = "0.16"
 imgui = "0.2.0"
 imgui-gfx-renderer = "0.2.0"
+
+[dependencies.specs]
+version = "0.15.1"
+features = ["specs-derive"]
 
 [profile.dev]
 debug=0
