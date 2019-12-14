@@ -13,14 +13,14 @@ use ggez::{
     Context, GameResult,
 };
 
-use crate::physics::{
-    do_physics
+use crate::physics::do_physics;
+use crate::resources::{
+    MainIterations, MousePos, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
-use crate::resources::{MainIterations, MousePos, Resolution, StartPoint, DT, PreviewIterations, Paused};
 #[allow(unused_imports)]
 use crate::{
     imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
-    Preview, Radius, Trail, Vector,
+    Preview, PreviewBody, Radius, Trail, Vector,
 };
 
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
@@ -28,6 +28,29 @@ static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
 use std::collections::HashSet;
 
 const CAMERA_SPEED: f32 = 1.5;
+
+fn create_body(world: &mut World, body: Body) -> Entity {
+    world
+        .create_entity()
+        .with(body.0)
+        .with(body.1)
+        .with(body.2)
+        .with(body.3)
+        .with(body.4)
+        .with(body.5)
+        .build()
+}
+fn create_preview(world: &mut World, body: PreviewBody) -> Entity {
+    world
+        .create_entity()
+        .with(body.0)
+        .with(body.1)
+        .with(body.2)
+        .with(body.3)
+        .with(body.4)
+        .with(body.5)
+        .build()
+}
 
 pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Vector) -> Point {
     let mut np: Point = point.into();
@@ -50,11 +73,7 @@ pub struct MainState {
 }
 
 impl MainState {
-    pub fn new(
-        world: World,
-        imgui_wrapper: ImGuiWrapper,
-        hidpi_factor: f32,
-    ) -> Self {
+    pub fn new(world: World, imgui_wrapper: ImGuiWrapper, hidpi_factor: f32) -> Self {
         MainState {
             world,
             imgui_wrapper,
@@ -121,21 +140,13 @@ impl EventHandler for MainState {
             dbg!(ggez::timer::fps(ctx));
         }
 
-        if !self.paused {
+        if !self.world.fetch::<Paused>().0 {
             let mouse_pos = ggez::input::mouse::position(ctx);
             let coords = ggez::graphics::screen_coordinates(ctx);
-            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, self.resolution);
+            let resolution = self.world.fetch::<Resolution>();
+            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution);
 
-            self.main_world
-                .resources
-                .insert::<StartPoint>(StartPoint(self.start_point));
-            self.main_world
-                .resources
-                .insert::<MousePos>(MousePos(mouse_pos));
-            self.main_world
-                .resources
-                .insert::<Resolution>(Resolution(self.resolution));
-            do_physics(&mut self.main_world, ctx);
+            do_physics(&mut self.world, ctx);
         }
 
         Ok(())
@@ -157,18 +168,22 @@ impl EventHandler for MainState {
         let previews = self.world.read_storage::<Preview>();
         let trails = self.world.read_storage::<Trail>();
 
-        (&draws, &positions, &radii).join().for_each(|(color, pos, rad)|{
-            let point: ggez::mint::Point2<f32> = (*pos).into();
-            builder.circle(DrawMode::fill(), point, rad.0, 0.01, color.0);
-        });
+        (&draws, &positions, &radii)
+            .join()
+            .for_each(|(color, pos, rad)| {
+                let point: ggez::mint::Point2<f32> = (*pos).into();
+                builder.circle(DrawMode::fill(), point, rad.0, 0.01, color.0);
+            });
 
-        (&previews, &positions, &radii).join().for_each(|(_, pos, rad)|{
-            let point: ggez::mint::Point2<f32> = (*pos).into();
-            let color = Color::new(0.1, 1.0, 0.2, 1.0);
-            builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
-        });
+        (&previews, &positions, &radii)
+            .join()
+            .for_each(|(_, pos, rad)| {
+                let point: ggez::mint::Point2<f32> = (*pos).into();
+                let color = Color::new(0.1, 1.0, 0.2, 1.0);
+                builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
+            });
 
-        (&trails, &radii).join().for_each(|(trail, radius)|{
+        (&trails, &radii).join().for_each(|(trail, radius)| {
             let slices = trail.0.as_slices();
             if slices.0.len() >= 2 {
                 if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
@@ -223,7 +238,7 @@ impl EventHandler for MainState {
             None => {
                 self.world.insert(DT(1.0));
                 1.0
-            },
+            }
         };
         let mut main_iter = self
             .main_world
@@ -239,10 +254,14 @@ impl EventHandler for MainState {
             .0;
 
         if let Some(e) = self.selected_entity {
-            let mut mass = self.main_world.get_component::<Mass>(e).unwrap().0;
-            let mut rad = self.main_world.get_component::<Radius>(e).unwrap().0;
+            let (mut mass, mut rad) = {
+                let masses = self.world.read_storage::<Mass>();
+                let radii = self.world.read_storage::<Radius>();
 
-            if self.main_world.is_alive(e) {
+                (masses.get(e).unwrap().0, radii.get(e).unwrap().0)
+            };
+
+            if self.world.is_alive(e) {
                 self.imgui_wrapper.render(
                     ctx,
                     hidpi_factor,
@@ -254,8 +273,16 @@ impl EventHandler for MainState {
                     &mut self.items_hovered,
                     true,
                 );
-                self.main_world.get_component_mut::<Mass>(e).unwrap().0 = mass;
-                self.main_world.get_component_mut::<Radius>(e).unwrap().0 = rad;
+
+                {
+                    let masses_mut = self.world.write_storage::<Mass>();
+                    let radii_mut = self.world.write_storage::<Radius>();
+
+                    masses_mut.insert(e, Mass(mass));
+                    radii_mut.insert(e, Radius(rad));
+                }
+
+                self.world.entities().entity(e.id());
             } else {
                 self.selected_entity = None;
             }
@@ -272,13 +299,10 @@ impl EventHandler for MainState {
                 false,
             );
         }
-        self.main_world
-            .resources
-            .insert::<MainIterations>(MainIterations(main_iter));
-        self.main_world
-            .resources
-            .insert::<PreviewIterations>(PreviewIterations(preview_iter));
-        self.main_world.resources.insert::<DT>(DT(dt));
+
+        self.world.insert(MainIterations(main_iter));
+        self.world.insert(PreviewIterations(preview_iter));
+        self.world.insert(DT(dt));
 
         ggez::graphics::present(ctx)
     }
@@ -291,9 +315,9 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -316,15 +340,16 @@ impl EventHandler for MainState {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     if self.creating {
                         let p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
-                        self.start_point = Some(scale_pos(p, coords, self.resolution));
+                        let resolution = self.world.fetch::<Resolution>();
+                        self.world
+                            .insert(StartPoint(Some(scale_pos(p, coords, resolution.0))));
 
-                        self.main_world
-                            .insert((), vec![new_preview(p, [0.0, 0.0], self.rad)]);
+                        create_preview(&mut self.world, new_preview(p, [0.0, 0.0], self.rad));
                     }
                 }
                 _ => {}
@@ -340,59 +365,49 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((false, false, false));
-        if let Some(start_point) = self.start_point {
+        let start_point = self.world.try_fetch::<StartPoint>();
+        let resolution = self.world.fetch::<Resolution>();
+
+        if let Some(start_point) = start_point {
             match button {
                 MouseButton::Left => {
                     if self.creating && !self.imgui_wrapper.sent_signals.contains(&UiSignal::Create)
                     {
                         let mut p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
-                        p = scale_pos(p, coords, self.resolution);
+                        p = scale_pos(p, coords, resolution.0);
 
-                        self.main_world.insert(
-                            (),
-                            vec![new_body(
-                                start_point,
-                                (start_point - p) * 0.10,
+                        create_body(
+                            &mut self.world,
+                            new_body(
+                                start_point.0.unwrap(),
+                                (start_point.0.unwrap() - p) * 0.1,
                                 self.mass,
                                 self.rad,
-                            )],
+                            ),
                         );
-                        self.start_point = None;
+                        self.world.insert(StartPoint(None));
                     }
                 }
                 _ => dbg!(),
             }
         }
 
-        let mut preview_query = <(Read<Preview>)>::query();
-        let mut delset: HashSet<Entity> = HashSet::new();
-
-        preview_query
-            .iter_entities(&mut self.main_world)
-            .for_each(|(entity, _)| {
-                delset.insert(entity);
-            });
-
-        delset.iter().for_each(|entity| {
-            self.main_world.delete(*entity);
+        let previews = self.world.read_storage::<Preview>();
+        let entities = self.world.entities();
+        (&entities, &previews).join().for_each(|(entity, _)| {
+            self.world.delete_entity(entity);
         });
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
 
-        let mut preview_query = <(Read<Preview>)>::query();
-        let mut delset: HashSet<Entity> = HashSet::new();
+        let previews = self.world.read_storage::<Preview>();
+        let entities = self.world.entities();
 
-        preview_query
-            .iter_entities(&mut self.main_world)
-            .for_each(|(entity, _)| {
-                delset.insert(entity);
-            });
-
-        delset.iter().for_each(|entity| {
-            self.main_world.delete(*entity);
+        (&entities, &previews).join().for_each(|(entity, _)| {
+            self.world.delete_entity(entity);
         });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
@@ -400,9 +415,9 @@ impl EventHandler for MainState {
             let resolution = self.world.fetch::<Resolution>().0;
             let p = scale_pos([x, y], coords, resolution);
 
-            self.main_world.insert(
-                (),
-                vec![new_preview(start_point, (start_point - p) * 0.1, self.rad)],
+            create_preview(
+                &mut self.world,
+                new_preview(start_point, (start_point - p) * 0.1, self.rad),
             );
         }
 
@@ -473,7 +488,7 @@ impl EventHandler for MainState {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

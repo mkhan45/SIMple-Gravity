@@ -72,7 +72,8 @@ fn main() -> GameResult {
     ];
 
     for (pos, kine, mass, draw, rad, trail) in data {
-        world.create_entity()
+        world
+            .create_entity()
             .with(pos)
             .with(kine)
             .with(mass)
@@ -81,7 +82,6 @@ fn main() -> GameResult {
             .with(trail)
             .build();
     }
-
 
     // world.insert(
     //     (),

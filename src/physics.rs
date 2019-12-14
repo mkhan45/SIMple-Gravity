@@ -1,8 +1,8 @@
 use crate::resources::{MainIterations, MousePos, PreviewIterations, Resolution, StartPoint, DT};
 use crate::trails::update_trails;
 use crate::{new_body, Body, Kinematics, Mass, Point, Position, Preview, Radius, Vector, G};
-use legion::prelude::*;
 use legion::borrow::{Exclusive, Ref, RefMut, Shared};
+use legion::prelude::*;
 
 type LegionBorrowEx<'a, C> = RefMut<'a, Exclusive<'a>, C>;
 type LegionBorrowShare<'a, C> = Ref<'a, Shared<'a>, C>;
@@ -52,24 +52,28 @@ fn integrate_positions(world: &mut World, preview_only: bool) {
     if !preview_only {
         pos_integrate_query.par_for_each(world, int_closure);
     } else {
-        pos_integrate_query.filter(component::<Preview>()).par_for_each(world, int_closure);
+        pos_integrate_query
+            .filter(component::<Preview>())
+            .par_for_each(world, int_closure);
     }
 }
 
 fn apply_gravity(world: &mut World, preview_only: bool) {
     //for some reason adding a third component to the query doubles performance
     let mut gravity_query = <(Read<Position>, Write<Kinematics>, Read<Radius>)>::query();
-    let inner_query_vec:
-        Vec<(LegionBorrowShare<'_, Position>, 
-            LegionBorrowShare<'_, Mass>,
-            LegionBorrowShare<'_, Radius>)>
-        = <(Read<Position>, Read<Mass>, Read<Radius>)>::query().iter_immutable(&world).collect();
+    let inner_query_vec: Vec<(
+        LegionBorrowShare<'_, Position>,
+        LegionBorrowShare<'_, Mass>,
+        LegionBorrowShare<'_, Radius>,
+    )> = <(Read<Position>, Read<Mass>, Read<Radius>)>::query()
+        .iter_immutable(&world)
+        .collect();
 
-    let grav_closure = |(current_pos, mut kinematics, _) : (
+    let grav_closure = |(current_pos, mut kinematics, _): (
         LegionBorrowShare<'_, Position>,
         LegionBorrowEx<'_, Kinematics>,
         LegionBorrowShare<'_, Radius>,
-    ) | {
+    )| {
         // kinematics.accel = inner_query.iter_immutable(&world).fold(
         kinematics.accel = inner_query_vec.iter().fold(
             Vector::new(0.0, 0.0),
@@ -95,7 +99,9 @@ fn apply_gravity(world: &mut World, preview_only: bool) {
         if !preview_only {
             gravity_query.par_for_each_unchecked(world, grav_closure);
         } else {
-            gravity_query.filter(component::<Preview>()).par_for_each_unchecked(world, grav_closure);
+            gravity_query
+                .filter(component::<Preview>())
+                .par_for_each_unchecked(world, grav_closure);
         }
     }
 }
@@ -104,7 +110,7 @@ fn integrate_kinematics(world: &mut World, preview_only: bool) {
     let dt = world.resources.get_or_insert::<DT>(DT(1.0)).unwrap().0;
     let mut kinematics_integrate_query = <(Write<Kinematics>)>::query();
 
-    let kine_int_closure = |mut kinematics : (LegionBorrowEx<'_, Kinematics>)| {
+    let kine_int_closure = |mut kinematics: (LegionBorrowEx<'_, Kinematics>)| {
         *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
         kinematics.past_accel = kinematics.accel;
     };
@@ -112,12 +118,13 @@ fn integrate_kinematics(world: &mut World, preview_only: bool) {
     if !preview_only {
         kinematics_integrate_query.par_for_each(world, kine_int_closure);
     } else {
-        kinematics_integrate_query.filter(component::<Preview>()).par_for_each(world, kine_int_closure);
+        kinematics_integrate_query
+            .filter(component::<Preview>())
+            .par_for_each(world, kine_int_closure);
     }
     // *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
     // kinematics.past_accel = kinematics.accel;
 }
-
 
 //TODO Make this accept preview_only
 fn calc_collisions(world: &mut World, ctx: &ggez::Context) {
@@ -147,8 +154,8 @@ fn calc_collisions(world: &mut World, ctx: &ggez::Context) {
                 .for_each(|(id2, (pos2, r2, m2, k2))| {
                     if id1 != id2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                            && !removal_set.contains(&id1)
-                            && !removal_set.contains(&id2)
+                        && !removal_set.contains(&id1)
+                        && !removal_set.contains(&id2)
                     {
                         removal_set.insert(id1);
                         removal_set.insert(id2);

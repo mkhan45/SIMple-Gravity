@@ -1,5 +1,5 @@
 use crate::{Position, Preview, PreviewIterations, Trail};
-use legion::prelude::*;
+use specs::prelude::*;
 
 pub fn update_trails(world: &mut World) {
     let mut trail_query = <(Read<Position>, Write<Trail>)>::query();
