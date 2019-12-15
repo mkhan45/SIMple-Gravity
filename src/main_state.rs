@@ -61,8 +61,9 @@ pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Ve
     np
 }
 
-pub struct MainState {
+pub struct MainState<'a, 'b> {
     pub world: World,
+    pub dispatcher: Dispatcher<'a, 'b>,
     pub imgui_wrapper: ImGuiWrapper,
     pub hidpi_factor: f32,
     pub selected_entity: Option<Entity>,
@@ -72,10 +73,11 @@ pub struct MainState {
     pub items_hovered: bool,
 }
 
-impl MainState {
-    pub fn new(world: World, imgui_wrapper: ImGuiWrapper, hidpi_factor: f32) -> Self {
+impl<'a, 'b> MainState<'a, 'b> {
+    pub fn new(world: World, dispatcher: Dispatcher<'a, 'b>, imgui_wrapper: ImGuiWrapper, hidpi_factor: f32) -> Self {
         MainState {
             world,
+            dispatcher,
             imgui_wrapper,
             hidpi_factor,
             selected_entity: None,
@@ -114,7 +116,7 @@ fn calc_offset(ctx: &Context) -> Vector {
     offset
 }
 
-impl EventHandler for MainState {
+impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         self.world
             .insert(MousePos(input::mouse::position(ctx).into()));
@@ -146,10 +148,11 @@ impl EventHandler for MainState {
         if !self.world.fetch::<Paused>().0 {
             let mouse_pos = ggez::input::mouse::position(ctx);
             let coords = ggez::graphics::screen_coordinates(ctx);
-            let resolution = self.world.fetch::<Resolution>();
-            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution.0);
+            let resolution = self.world.fetch::<Resolution>().0;
+            let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution);
 
             // do_physics(&mut self.world, ctx);
+            self.dispatcher.dispatch(&mut self.world);
         }
 
         Ok(())

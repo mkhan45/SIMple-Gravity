@@ -16,6 +16,7 @@ mod main_state;
 use main_state::MainState;
 
 mod physics_systems;
+use physics_systems::PhysicsSys;
 
 mod imgui_wrapper;
 // mod physics;
@@ -108,6 +109,12 @@ fn main() -> GameResult {
     world.insert(Paused(false));
     world.insert(StartPoint(None));
 
+    let mut dispatcher = DispatcherBuilder::new()
+        .with(PhysicsSys, "physics_system", &[])
+        .build();
+
+    dispatcher.setup(&mut world);
+
     graphics::set_mode(
         ctx,
         ggez::conf::WindowMode::default()
@@ -124,6 +131,7 @@ fn main() -> GameResult {
 
     let main_state = &mut MainState::new(
         world,
+        dispatcher,
         ImGuiWrapper::new(ctx, hidpi_factor, dimensions_vec),
         hidpi_factor,
     );
