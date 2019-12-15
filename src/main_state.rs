@@ -116,6 +116,8 @@ fn calc_offset(ctx: &Context) -> Vector {
 
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        self.world.insert(MousePos(input::mouse::position(ctx).into()));
+
         self.imgui_wrapper
             .sent_signals
             .clone()

@@ -16,7 +16,7 @@ imgui-gfx-renderer = "0.2.0"
 
 [dependencies.specs]
 version = "0.15.1"
-features = ["specs-derive"]
+features = ["specs-derive", "nightly"]
 
 [profile.dev]
 debug=0

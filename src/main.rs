@@ -10,7 +10,7 @@ mod components;
 use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
 mod resources;
-use resources::{MainIterations, PreviewIterations, Resolution, DT};
+use resources::{MainIterations, PreviewIterations, Resolution, DT, Paused, StartPoint};
 
 mod main_state;
 use main_state::MainState;
@@ -51,37 +51,36 @@ pub fn new_preview(pos: impl Into<Point>, vel: impl Into<Vector>, rad: f32) -> P
 
 fn main() -> GameResult {
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Mikail Khan")
-        // .window_setup(ggez::conf::WindowSetup::default().title("Gravity"))
-        // .window_mode(ggez::conf::WindowMode::default().dimensions(600.0, 600.0))
+        .window_setup(ggez::conf::WindowSetup::default().title("Gravity"))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(600.0, 600.0))
         .build()
         .expect("error building context");
 
-    // let universe = Universe::new();
-    // let mut world = universe.create_world();
     let mut world = World::new();
-    // world.register::<Position>();
-    // world.register::<Kinematics>();
-    // world.register::<Mass>();
-    // world.register::<Draw>();
-    // world.register::<Radius>();
-    // world.register::<Trail>();
+    world.register::<Position>();
+    world.register::<Preview>();
+    world.register::<Kinematics>();
+    world.register::<Mass>();
+    world.register::<Draw>();
+    world.register::<Radius>();
+    world.register::<Trail>();
 
-    // let data = vec![
-    //     new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
-    //     new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
-    // ];
+    let data = vec![
+        new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
+        new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
+    ];
 
-    // for (pos, kine, mass, draw, rad, trail) in data {
-    //     world
-    //         .create_entity()
-    //         .with(pos)
-    //         .with(kine)
-    //         .with(mass)
-    //         .with(draw)
-    //         .with(rad)
-    //         .with(trail)
-    //         .build();
-    // }
+    for (pos, kine, mass, draw, rad, trail) in data {
+        world
+            .create_entity()
+            .with(pos)
+            .with(kine)
+            .with(mass)
+            .with(draw)
+            .with(rad)
+            .with(trail)
+            .build();
+    }
 
     // world.insert(
     //     (),
@@ -100,24 +99,26 @@ fn main() -> GameResult {
     let dimensions_vec = Vector::new(dimensions.width as f32, dimensions.height as f32);
     let aspect_ratio = dimensions.height / dimensions.width;
 
-    // world.insert(MainIterations(1));
-    // world.insert(PreviewIterations(25));
-    // world.insert(Resolution(dimensions_vec));
-    // world.insert(DT(1.0));
+    world.insert(MainIterations(1));
+    world.insert(PreviewIterations(25));
+    world.insert(Resolution(dimensions_vec));
+    world.insert(DT(1.0));
+    world.insert(Paused(false));
+    world.insert(StartPoint(None));
 
-    // graphics::set_mode(
-    //     ctx,
-    //     ggez::conf::WindowMode::default()
-    //         .resizable(true)
-    //         .fullscreen_type(ggez::conf::FullscreenType::Desktop),
-    // )
-    // .expect("error resizing window");
+    graphics::set_mode(
+        ctx,
+        ggez::conf::WindowMode::default()
+            .resizable(true)
+            .fullscreen_type(ggez::conf::FullscreenType::Desktop),
+    )
+    .expect("error resizing window");
 
-    // graphics::set_screen_coordinates(
-    //     ctx,
-    //     graphics::Rect::new(0., 0., SCREEN_X, SCREEN_Y * aspect_ratio as f32),
-    // )
-    // .unwrap();
+    graphics::set_screen_coordinates(
+        ctx,
+        graphics::Rect::new(0., 0., SCREEN_X, SCREEN_Y * aspect_ratio as f32),
+    )
+    .unwrap();
 
     let main_state = &mut MainState::new(
         world,
