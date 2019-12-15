@@ -116,7 +116,8 @@ fn calc_offset(ctx: &Context) -> Vector {
 
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.world.insert(MousePos(input::mouse::position(ctx).into()));
+        self.world
+            .insert(MousePos(input::mouse::position(ctx).into()));
 
         self.imgui_wrapper
             .sent_signals
@@ -305,9 +306,9 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -334,7 +335,7 @@ impl EventHandler for MainState {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     if self.creating {
                         let p = Point::new(x, y);
@@ -373,12 +374,7 @@ impl EventHandler for MainState {
 
                         create_body(
                             &mut self.world,
-                            new_body(
-                                start_point,
-                                (start_point - p) * 0.1,
-                                self.mass,
-                                self.rad,
-                            ),
+                            new_body(start_point, (start_point - p) * 0.1, self.mass, self.rad),
                         );
                         self.world.insert(StartPoint(None));
                     }
@@ -398,14 +394,13 @@ impl EventHandler for MainState {
             });
         }
 
-        delset.drain().for_each(|entity|{
+        delset.drain().for_each(|entity| {
             self.world.delete_entity(entity);
         })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
-
 
         let mut delset: HashSet<Entity> = HashSet::new();
 
@@ -418,7 +413,7 @@ impl EventHandler for MainState {
             });
         }
 
-        delset.drain().for_each(|entity|{
+        delset.drain().for_each(|entity| {
             self.world.delete_entity(entity);
         });
 
@@ -429,10 +424,7 @@ impl EventHandler for MainState {
             let resolution = self.world.fetch::<Resolution>().0;
             let p = scale_pos([x, y], coords, resolution);
 
-            create_preview(
-                &mut self.world,
-                new_preview(sp, (sp - p) * 0.1, self.rad),
-            );
+            create_preview(&mut self.world, new_preview(sp, (sp - p) * 0.1, self.rad));
         }
 
         if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle) {
@@ -502,7 +494,7 @@ impl EventHandler for MainState {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

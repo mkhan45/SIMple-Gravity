@@ -10,10 +10,12 @@ mod components;
 use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
 mod resources;
-use resources::{MainIterations, PreviewIterations, Resolution, DT, Paused, StartPoint};
+use resources::{MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT};
 
 mod main_state;
 use main_state::MainState;
+
+mod physics_systems;
 
 mod imgui_wrapper;
 // mod physics;
