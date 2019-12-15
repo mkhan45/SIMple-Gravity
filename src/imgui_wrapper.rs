@@ -8,13 +8,11 @@ extern crate imgui;
 use imgui::*;
 use imgui_gfx_renderer::*;
 
-use legion::prelude::Entity;
-
 use crate::Vector;
 
-use std::time;
+use specs::prelude::*;
 
-use std::convert::TryInto;
+use std::time;
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
 pub struct MouseState {
