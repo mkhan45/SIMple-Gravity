@@ -10,13 +10,15 @@ mod components;
 use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
 mod resources;
-use resources::{MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT};
+use resources::{MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT, CreateVec, DelSet};
 
 mod main_state;
 use main_state::MainState;
 
 mod physics_systems;
 use physics_systems::PhysicsSys;
+
+use std::collections::HashSet;
 
 mod imgui_wrapper;
 // mod physics;
@@ -68,33 +70,21 @@ fn main() -> GameResult {
     world.register::<Radius>();
     world.register::<Trail>();
 
-    // let data = vec![
-    //     new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
-    //     new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
-    // ];
+    let data = vec![
+        new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
+        new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
+    ];
 
-    // world.insert(
-    //     (),
-    //     (0..1000).map(|i| {
-    //         (new_body(
+    // let data = (0..1100)
+    //     .map(|i| {
+    //         new_body(
     //             [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
     //             [0.0, 0.0],
     //             -0.1,
     //             5.0,
-    //         ))
-    //     }),
-    // );
-
-    let data = (0..1200)
-        .map(|i| {
-            new_body(
-                [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
-                [0.0, 0.0],
-                -0.1,
-                5.0,
-            )
-        })
-        .collect::<Vec<Body>>();
+    //         )
+    //     })
+    //     .collect::<Vec<Body>>();
 
     for (pos, kine, mass, draw, rad, trail) in data {
         world
@@ -119,6 +109,8 @@ fn main() -> GameResult {
     world.insert(DT(1.0));
     world.insert(Paused(false));
     world.insert(StartPoint(None));
+    world.insert(CreateVec(Vec::new()));
+    world.insert(DelSet(HashSet::new()));
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])

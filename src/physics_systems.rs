@@ -1,8 +1,8 @@
 use specs::prelude::*;
 
 use crate::components::{Kinematics, Mass, Position, Preview, Radius};
-use crate::resources::{MainIterations, PreviewIterations, Resolution, StartPoint, DT};
-use crate::{Body, Vector, G};
+use crate::resources::{MainIterations, PreviewIterations, Resolution, StartPoint, DT, CreateVec, DelSet};
+use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
 
@@ -13,12 +13,15 @@ impl<'a> System<'a> for PhysicsSys {
         WriteStorage<'a, Position>,
         WriteStorage<'a, Kinematics>,
         ReadStorage<'a, Preview>,
-        ReadStorage<'a, Radius>,
-        ReadStorage<'a, Mass>,
+        WriteStorage<'a, Radius>,
+        WriteStorage<'a, Mass>,
+        Entities<'a>,
         Read<'a, MainIterations>,
         Read<'a, PreviewIterations>,
         Read<'a, StartPoint>,
         Read<'a, DT>,
+        Write<'a, CreateVec>,
+        Write<'a, DelSet>,
     );
 
     fn run(
@@ -29,10 +32,13 @@ impl<'a> System<'a> for PhysicsSys {
             previews,
             radii,
             masses,
+            entities,
             main_iterations,
             preview_iterations,
             start_point,
             dt,
+            mut create_vec,
+            mut del_set,
         ): Self::SystemData,
     ) {
         let mut preview_only = false;
@@ -48,6 +54,9 @@ impl<'a> System<'a> for PhysicsSys {
                 preview_only,
             );
             integrate_kinematics(&mut kinematics, &previews, preview_only, dt.0);
+            let (c_vec, delete_set) = calc_collisions(&positions, &kinematics, &masses, &radii, &entities);
+            create_vec.0 = c_vec;
+            del_set.0 = delete_set;
         });
     }
 }
@@ -79,8 +88,8 @@ fn integrate_positions(
 fn apply_gravity(
     positions: &WriteStorage<'_, Position>,
     kinematics: &mut WriteStorage<'_, Kinematics>,
-    radii: &ReadStorage<'_, Radius>,
-    masses: &ReadStorage<'_, Mass>,
+    radii: &WriteStorage<'_, Radius>,
+    masses: &WriteStorage<'_, Mass>,
     previews: &ReadStorage<'_, Preview>,
     preview_only: bool,
 ) {
@@ -141,11 +150,9 @@ fn calc_collisions(
     masses: &WriteStorage<'_, Mass>,
     radii: &WriteStorage<'_, Radius>,
     entities: &Entities,
-    start_point: StartPoint,
-    resolution: Resolution,
-) -> (HashSet<Body>, HashSet<Entity>) {
-    let create_set: HashSet<Body> = HashSet::new();
-    let delete_set: HashSet<Entity> = HashSet::new();
+) -> (Vec<Body>, HashSet<Entity>) {
+    let mut create_vec: Vec<Body> = Vec::new();
+    let mut delete_set: HashSet<Entity> = HashSet::new();
 
     (positions, radii, masses, kinematics, entities)
         .join()
@@ -155,11 +162,33 @@ fn calc_collisions(
                 .for_each(|(pos2, r2, m2, k2, e2)| {
                     if e1 != e2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                        && !delete_set.contains(&e1)
-                        && !delete_set.contains(&e2)
-                    {}
+                            && !delete_set.contains(&e1)
+                            && !delete_set.contains(&e2)
+                    {
+                        delete_set.insert(e1);
+                        delete_set.insert(e2);
+
+                        let p1 = k1.vel * m1.0;
+                        let p2 = k2.vel * m2.0;
+                        let ptotal = p1 + p2;
+
+                        let mtotal = m1.0 + m2.0;
+
+                        let new_vel = ptotal / mtotal;
+                        let new_rad = (r1.0.powi(3) + r2.0.powi(3)).powf(1. / 3.);
+                        let new_pos = {
+                            let weighted_p1 = pos1.0 * m1.0;
+                            let weighted_p2 = pos2.0 * m2.0;
+                            let sum_weighted = Point::new(
+                                weighted_p1.x + weighted_p2.x,
+                                weighted_p1.y + weighted_p2.y,
+                            );
+                            sum_weighted / mtotal
+                        };
+                        create_vec.push(new_body(new_pos, new_vel, mtotal, new_rad));
+                    }
                 });
         });
 
-    (create_vec, delete_vec)
+    (create_vec, delete_set)
 }

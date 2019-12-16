@@ -15,7 +15,7 @@ use ggez::{
 
 // use crate::physics::do_physics;
 use crate::resources::{
-    MainIterations, MousePos, Paused, PreviewIterations, Resolution, StartPoint, DT,
+    MainIterations, MousePos, Paused, PreviewIterations, Resolution, StartPoint, DT, CreateVec, DelSet,
 };
 #[allow(unused_imports)]
 use crate::{
@@ -29,7 +29,7 @@ use std::collections::HashSet;
 
 const CAMERA_SPEED: f32 = 1.5;
 
-fn create_body(world: &mut World, body: Body) -> Entity {
+pub fn create_body(world: &mut World, body: Body) -> Entity {
     world
         .create_entity()
         .with(body.0)
@@ -148,6 +148,21 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
+        }
+
+        {
+            let create_vec = self.world.fetch::<CreateVec>().0.clone();
+
+            create_vec.iter().for_each(|body|{
+                create_body(&mut self.world, body.clone());
+            });
+        }
+        {
+            let del_set = &self.world.fetch::<DelSet>().0.clone();
+
+            del_set.iter().for_each(|e|{
+                self.world.delete_entity(*e).expect("error deleting collided entity");
+            });
         }
 
         if !self.world.fetch::<Paused>().0 {
@@ -314,9 +329,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -343,7 +358,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     if self.creating {
                         let p = Point::new(x, y);
@@ -502,7 +517,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

@@ -1,4 +1,8 @@
-use crate::{Point, Vector};
+use crate::{Body, Point, Vector};
+
+use std::collections::HashSet;
+
+use specs::prelude::Entity;
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct PreviewIterations(pub usize);
@@ -42,3 +46,9 @@ impl Paused {
         self.0 = !self.0;
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct CreateVec(pub Vec<Body>);
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct DelSet(pub HashSet<Entity>);
