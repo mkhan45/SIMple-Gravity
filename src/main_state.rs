@@ -74,7 +74,12 @@ pub struct MainState<'a, 'b> {
 }
 
 impl<'a, 'b> MainState<'a, 'b> {
-    pub fn new(world: World, dispatcher: Dispatcher<'a, 'b>, imgui_wrapper: ImGuiWrapper, hidpi_factor: f32) -> Self {
+    pub fn new(
+        world: World,
+        dispatcher: Dispatcher<'a, 'b>,
+        imgui_wrapper: ImGuiWrapper,
+        hidpi_factor: f32,
+    ) -> Self {
         MainState {
             world,
             dispatcher,
