@@ -412,7 +412,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
                         create_body(
                             &mut self.world,
-                            new_body(start_point, (start_point - p) * 0.1, self.mass, self.rad),
+                            new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
                         );
                         self.world.insert(StartPoint(None));
                     }
@@ -466,7 +466,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             let resolution = self.world.fetch::<Resolution>().0;
             let p = scale_pos([x, y], coords, resolution);
 
-            create_preview(&mut self.world, new_preview(sp, (sp - p) * 0.1, self.rad));
+            create_preview(&mut self.world, new_preview(sp, (sp - p) * 0.025, self.rad));
         }
 
         if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle) {
