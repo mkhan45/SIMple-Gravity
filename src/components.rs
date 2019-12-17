@@ -14,7 +14,7 @@ pub type Vector = Vector2<f32>;
 pub struct Preview;
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(DenseVecStorage)]
+#[storage(VecStorage)]
 pub struct Position(pub Point);
 
 impl Position {
@@ -48,7 +48,7 @@ impl From<Point> for Position {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(DenseVecStorage)]
+#[storage(VecStorage)]
 pub struct Kinematics {
     pub vel: Vector,
     pub accel: Vector,
@@ -74,13 +74,13 @@ pub struct Mass(pub f32);
 pub struct Draw(pub Color);
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(DenseVecStorage)]
+#[storage(HashMapStorage)]
 pub struct Static;
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(DenseVecStorage)]
+#[storage(VecStorage)]
 pub struct Radius(pub f32);
 
 #[derive(Clone, Debug, PartialEq, Component)]
-#[storage(DenseVecStorage)]
+#[storage(VecStorage)]
 pub struct Trail(pub VecDeque<Point>);

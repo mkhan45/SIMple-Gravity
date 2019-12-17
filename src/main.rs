@@ -75,21 +75,21 @@ fn main() -> GameResult {
     world.register::<Radius>();
     world.register::<Trail>();
 
-    let data = vec![
-        new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
-        new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
-    ];
+    // let data = vec![
+    //     new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
+    //     new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
+    // ];
 
-    // let data = (0..500)
-    //     .map(|i| {
-    //         new_body(
-    //             [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
-    //             [0.0, 0.0],
-    //             -0.1,
-    //             5.0,
-    //         )
-    //     })
-    //     .collect::<Vec<Body>>();
+    let data = (0..900)
+        .map(|i| {
+            new_body(
+                [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
+                [0.0, 0.0],
+                -0.1,
+                5.0,
+            )
+        })
+        .collect::<Vec<Body>>();
 
     for (pos, kine, mass, draw, rad, trail) in data {
         world
