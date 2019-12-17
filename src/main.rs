@@ -10,13 +10,18 @@ mod components;
 use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
 
 mod resources;
-use resources::{MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT, CreateVec, DelSet};
+use resources::{
+    CreateVec, DelSet, MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT,
+};
 
 mod main_state;
 use main_state::MainState;
 
 mod physics_systems;
-use physics_systems::PhysicsSys;
+use physics_systems::{PhysicsSys, PreviewPhysicsSys};
+
+mod trail_sys;
+use trail_sys::{PreviewTrailSys, TrailSys};
 
 use std::collections::HashSet;
 
@@ -75,7 +80,7 @@ fn main() -> GameResult {
         new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
     ];
 
-    // let data = (0..1100)
+    // let data = (0..500)
     //     .map(|i| {
     //         new_body(
     //             [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
@@ -112,11 +117,22 @@ fn main() -> GameResult {
     world.insert(CreateVec(Vec::new()));
     world.insert(DelSet(HashSet::new()));
 
-    let mut dispatcher = DispatcherBuilder::new()
+    let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
+        .with(TrailSys, "trail_system", &["physics_system"])
         .build();
 
-    dispatcher.setup(&mut world);
+    let mut preview_dispatcher = DispatcherBuilder::new()
+        .with(PreviewPhysicsSys, "preview_physics_system", &[])
+        .with(
+            PreviewTrailSys,
+            "preview_trail_system",
+            &["preview_physics_system"],
+        )
+        .build();
+
+    main_dispatcher.setup(&mut world);
+    preview_dispatcher.setup(&mut world);
 
     graphics::set_mode(
         ctx,
@@ -134,7 +150,8 @@ fn main() -> GameResult {
 
     let main_state = &mut MainState::new(
         world,
-        dispatcher,
+        main_dispatcher,
+        preview_dispatcher,
         ImGuiWrapper::new(ctx, hidpi_factor, dimensions_vec),
         hidpi_factor,
     );

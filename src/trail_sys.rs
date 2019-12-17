@@ -1,24 +1,45 @@
 use crate::{Position, Preview, PreviewIterations, Trail};
 use specs::prelude::*;
 
-pub fn update_trails(world: &mut World) {
-    let mut trail_query = <(Read<Position>, Write<Trail>)>::query();
-    let mut trail_limited_query = <Write<Trail>>::query().filter(!component::<Preview>());
-
-    trail_query.par_for_each(world, |(pos, mut trail)| {
-        trail.0.push_back(pos.0);
-    });
-
-    trail_limited_query.par_for_each(world, |mut trail| {
-        while trail.0.len() >= 50 {
-            trail.0.pop_front();
-        }
-    });
-}
-
-struct TrailSys;
+pub struct TrailSys;
 
 impl<'a> System<'a> for TrailSys {
     type SystemData = (
-        );
+        ReadStorage<'a, Position>,
+        WriteStorage<'a, Trail>,
+        Entities<'a>,
+        ReadStorage<'a, Preview>,
+    );
+
+    fn run(&mut self, (positions, mut trails, entities, previews): Self::SystemData) {
+        (&positions, &mut trails, &entities)
+            .par_join()
+            .for_each(|(pos, trail, entity)| {
+                if previews.get(entity).is_none() {
+                    trail.0.push_back(pos.0);
+
+                    while trail.0.len() >= 35 {
+                        trail.0.pop_front();
+                    }
+                }
+            });
+    }
+}
+
+pub struct PreviewTrailSys;
+
+impl<'a> System<'a> for PreviewTrailSys {
+    type SystemData = (
+        ReadStorage<'a, Position>,
+        WriteStorage<'a, Trail>,
+        ReadStorage<'a, Preview>,
+    );
+
+    fn run(&mut self, (positions, mut trails, previews): Self::SystemData) {
+        (&positions, &mut trails, &previews)
+            .par_join()
+            .for_each(|(pos, trail, _)| {
+                trail.0.push_back(pos.0);
+            });
+    }
 }

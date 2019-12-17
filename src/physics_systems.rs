@@ -1,7 +1,9 @@
 use specs::prelude::*;
 
 use crate::components::{Kinematics, Mass, Position, Preview, Radius};
-use crate::resources::{MainIterations, PreviewIterations, Resolution, StartPoint, DT, CreateVec, DelSet};
+use crate::resources::{
+    CreateVec, DelSet, MainIterations, PreviewIterations, Resolution, StartPoint, DT,
+};
 use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
@@ -41,23 +43,68 @@ impl<'a> System<'a> for PhysicsSys {
             mut del_set,
         ): Self::SystemData,
     ) {
-        let mut preview_only = false;
-        (0..std::cmp::max(preview_iterations.0, main_iterations.0)).for_each(|i| {
-            preview_only = i >= main_iterations.0;
-            integrate_positions(&mut positions, &kinematics, &previews, preview_only, dt.0);
-            apply_gravity(
-                &positions,
-                &mut kinematics,
-                &radii,
-                &masses,
-                &previews,
-                preview_only,
-            );
-            integrate_kinematics(&mut kinematics, &previews, preview_only, dt.0);
-            let (c_vec, delete_set) = calc_collisions(&positions, &kinematics, &masses, &radii, &entities);
-            create_vec.0 = c_vec;
-            del_set.0 = delete_set;
-        });
+        integrate_positions(&mut positions, &kinematics, &previews, false, dt.0);
+        apply_gravity(
+            &positions,
+            &mut kinematics,
+            &radii,
+            &masses,
+            &previews,
+            false,
+        );
+        integrate_kinematics(&mut kinematics, &previews, false, dt.0);
+        let (c_vec, delete_set) =
+            calc_collisions(&positions, &kinematics, &masses, &radii, &entities);
+        create_vec.0 = c_vec;
+        del_set.0 = delete_set;
+    }
+}
+
+pub struct PreviewPhysicsSys;
+
+impl<'a> System<'a> for PreviewPhysicsSys {
+    type SystemData = (
+        WriteStorage<'a, Position>,
+        WriteStorage<'a, Kinematics>,
+        ReadStorage<'a, Preview>,
+        WriteStorage<'a, Radius>,
+        WriteStorage<'a, Mass>,
+        Entities<'a>,
+        Read<'a, MainIterations>,
+        Read<'a, PreviewIterations>,
+        Read<'a, StartPoint>,
+        Read<'a, DT>,
+        Write<'a, CreateVec>,
+        Write<'a, DelSet>,
+    );
+
+    fn run(
+        &mut self,
+        (
+            mut positions,
+            mut kinematics,
+            previews,
+            radii,
+            masses,
+            entities,
+            main_iterations,
+            preview_iterations,
+            start_point,
+            dt,
+            mut create_vec,
+            mut del_set,
+        ): Self::SystemData,
+    ) {
+        integrate_positions(&mut positions, &kinematics, &previews, true, dt.0);
+        apply_gravity(
+            &positions,
+            &mut kinematics,
+            &radii,
+            &masses,
+            &previews,
+            true,
+        );
+        integrate_kinematics(&mut kinematics, &previews, true, dt.0);
     }
 }
 
@@ -75,7 +122,7 @@ fn integrate_positions(
     };
 
     if !preview_only {
-        (positions, kinematics).join().for_each(int_closure);
+        (positions, kinematics).par_join().for_each(int_closure);
     } else {
         (positions, kinematics, previews)
             .join()
@@ -116,7 +163,9 @@ fn apply_gravity(
     };
 
     if !preview_only {
-        (positions, kinematics, radii).join().for_each(grav_closure);
+        (positions, kinematics, radii)
+            .par_join()
+            .for_each(grav_closure);
     } else {
         (positions, kinematics, radii, previews)
             .join()
@@ -136,7 +185,7 @@ fn integrate_kinematics(
     };
 
     if !preview_only {
-        (kinematics).join().for_each(kine_int_closure);
+        (kinematics).par_join().for_each(kine_int_closure);
     } else {
         (kinematics, previews).join().for_each(|(kine, _)| {
             kine_int_closure(kine);
@@ -162,8 +211,8 @@ fn calc_collisions(
                 .for_each(|(pos2, r2, m2, k2, e2)| {
                     if e1 != e2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                            && !delete_set.contains(&e1)
-                            && !delete_set.contains(&e2)
+                        && !delete_set.contains(&e1)
+                        && !delete_set.contains(&e2)
                     {
                         delete_set.insert(e1);
                         delete_set.insert(e2);
