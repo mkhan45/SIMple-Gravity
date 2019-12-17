@@ -1,4 +1,4 @@
-use crate::{Position, Preview, PreviewIterations, Trail};
+use crate::{Position, Preview, Trail};
 use specs::prelude::*;
 
 pub struct TrailSys;

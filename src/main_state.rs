@@ -307,8 +307,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     let mut masses_mut = self.world.write_storage::<Mass>();
                     let mut radii_mut = self.world.write_storage::<Radius>();
 
-                    masses_mut.insert(e, Mass(mass));
-                    radii_mut.insert(e, Radius(rad));
+                    masses_mut.insert(e, Mass(mass)).unwrap_or(None);
+                    radii_mut.insert(e, Radius(rad)).unwrap_or(None);
                 }
 
                 self.world.entities().entity(e.id());
@@ -433,7 +433,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         }
 
         delset.drain().for_each(|entity| {
-            self.world.delete_entity(entity);
+            self.world
+                .delete_entity(entity)
+                .expect("error deleting collided entity");
         })
     }
 
@@ -452,7 +454,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         }
 
         delset.drain().for_each(|entity| {
-            self.world.delete_entity(entity);
+            self.world
+                .delete_entity(entity)
+                .expect("error deleting collided entity");
         });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);

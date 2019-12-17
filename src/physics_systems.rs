@@ -1,9 +1,7 @@
 use specs::prelude::*;
 
 use crate::components::{Kinematics, Mass, Position, Preview, Radius};
-use crate::resources::{
-    CreateVec, DelSet, MainIterations, PreviewIterations, Resolution, StartPoint, DT,
-};
+use crate::resources::{CreateVec, DelSet, DT};
 use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
@@ -18,9 +16,6 @@ impl<'a> System<'a> for PhysicsSys {
         WriteStorage<'a, Radius>,
         WriteStorage<'a, Mass>,
         Entities<'a>,
-        Read<'a, MainIterations>,
-        Read<'a, PreviewIterations>,
-        Read<'a, StartPoint>,
         Read<'a, DT>,
         Write<'a, CreateVec>,
         Write<'a, DelSet>,
@@ -35,9 +30,6 @@ impl<'a> System<'a> for PhysicsSys {
             radii,
             masses,
             entities,
-            main_iterations,
-            preview_iterations,
-            start_point,
             dt,
             mut create_vec,
             mut del_set,
@@ -69,31 +61,12 @@ impl<'a> System<'a> for PreviewPhysicsSys {
         ReadStorage<'a, Preview>,
         WriteStorage<'a, Radius>,
         WriteStorage<'a, Mass>,
-        Entities<'a>,
-        Read<'a, MainIterations>,
-        Read<'a, PreviewIterations>,
-        Read<'a, StartPoint>,
         Read<'a, DT>,
-        Write<'a, CreateVec>,
-        Write<'a, DelSet>,
     );
 
     fn run(
         &mut self,
-        (
-            mut positions,
-            mut kinematics,
-            previews,
-            radii,
-            masses,
-            entities,
-            main_iterations,
-            preview_iterations,
-            start_point,
-            dt,
-            mut create_vec,
-            mut del_set,
-        ): Self::SystemData,
+        (mut positions, mut kinematics, previews, radii, masses, dt): Self::SystemData,
     ) {
         integrate_positions(&mut positions, &kinematics, &previews, true, dt.0);
         apply_gravity(
@@ -179,7 +152,7 @@ fn integrate_kinematics(
     preview_only: bool,
     dt: f32,
 ) {
-    let kine_int_closure = |kinematics: (&mut Kinematics)| {
+    let kine_int_closure = |kinematics: &mut Kinematics| {
         *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
         kinematics.past_accel = kinematics.accel;
     };
