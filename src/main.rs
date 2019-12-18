@@ -67,6 +67,7 @@ fn main() -> GameResult {
         .expect("error building context");
 
     let mut world = World::new();
+
     world.register::<Position>();
     world.register::<Preview>();
     world.register::<Kinematics>();

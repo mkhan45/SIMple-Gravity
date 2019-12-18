@@ -171,6 +171,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             });
         }
 
+        let preview_iterations = self.world.fetch::<PreviewIterations>().0;
         if !self.world.fetch::<Paused>().0 {
             // let mouse_pos = ggez::input::mouse::position(ctx);
             // let coords = ggez::graphics::screen_coordinates(ctx);
@@ -178,7 +179,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             // let mouse_pos = crate::main_state::scale_pos(mouse_pos, coords, resolution);
             //
             let main_iterations = self.world.fetch::<MainIterations>().0;
-            let preview_iterations = self.world.fetch::<PreviewIterations>().0;
 
             // do_physics(&mut self.world, ctx);
             (0..main_iterations).for_each(|_| {
@@ -186,6 +186,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             });
 
             (main_iterations..preview_iterations).for_each(|_| {
+                self.preview_dispatcher.dispatch(&mut self.world);
+            });
+        } else {
+            (0..preview_iterations).for_each(|_| {
                 self.preview_dispatcher.dispatch(&mut self.world);
             });
         }
@@ -344,9 +348,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -373,7 +377,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     if self.creating {
                         let p = Point::new(x, y);
@@ -436,7 +440,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            })
+        })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -457,7 +461,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            });
+        });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -536,7 +540,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

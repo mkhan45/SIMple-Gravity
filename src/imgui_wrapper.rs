@@ -243,7 +243,7 @@ impl ImGuiWrapper {
             .render(
                 &mut *factory,
                 encoder,
-                &mut RenderTargetView::new(render_target.clone()),
+                &mut RenderTargetView::new(render_target),
                 draw_data,
             )
             .unwrap();
