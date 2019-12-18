@@ -205,6 +205,20 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             let previews = self.world.read_storage::<Preview>();
             let trails = self.world.read_storage::<Trail>();
 
+            (&trails, &radii).join().for_each(|(trail, radius)| {
+                let slices = trail.0.as_slices();
+                if slices.0.len() >= 2 {
+                    if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
+                        dbg!(e);
+                    };
+                }
+                if slices.1.len() >= 2 {
+                    if let Err(e) = builder.line(slices.1, 0.25 * radius.0, TRAIL_COLOR) {
+                        dbg!(e);
+                    };
+                }
+            });
+
             (&draws, &positions, &radii)
                 .join()
                 .for_each(|(color, pos, rad)| {
@@ -219,20 +233,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     let color = Color::new(0.1, 1.0, 0.2, 1.0);
                     builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
                 });
-
-            (&trails, &radii).join().for_each(|(trail, radius)| {
-                let slices = trail.0.as_slices();
-                if slices.0.len() >= 2 {
-                    if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
-                        dbg!(e);
-                    };
-                }
-                if slices.1.len() >= 2 {
-                    if let Err(e) = builder.line(slices.1, 0.25 * radius.0, TRAIL_COLOR) {
-                        dbg!(e);
-                    };
-                }
-            });
         }
 
         let start_point = self.world.fetch::<StartPoint>().0;
@@ -344,9 +344,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -373,7 +373,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     if self.creating {
                         let p = Point::new(x, y);
@@ -436,7 +436,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        })
+            })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -457,7 +457,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        });
+            });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -536,7 +536,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));
