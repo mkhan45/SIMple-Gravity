@@ -84,3 +84,7 @@ pub struct Radius(pub f32);
 #[derive(Clone, Debug, PartialEq, Component)]
 #[storage(VecStorage)]
 pub struct Trail(pub VecDeque<Point>);
+
+#[derive(Clone, Debug, PartialEq, Component)]
+#[storage(HashMapStorage)]
+pub struct SpeedGraph(pub Vec<f32>);

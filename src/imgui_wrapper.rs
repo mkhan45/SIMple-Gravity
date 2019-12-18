@@ -22,16 +22,22 @@ pub struct MouseState {
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
+pub enum GraphType {
+    Speed,
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
 #[allow(dead_code)]
 pub enum UiChoice {
     DefaultUI,
     SideMenu(Option<Entity>),
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum UiSignal {
     Create,
     Delete,
+    AddGraph(GraphType),
 }
 
 pub struct ImGuiWrapper {
@@ -91,6 +97,10 @@ pub fn make_sidepanel(
         }
 
         if selected_entity {
+            if ui.small_button(im_str!("Graph Speed")) {
+                signals.push(UiSignal::AddGraph(GraphType::Speed));
+            }
+
             if ui.small_button(im_str!("Delete Body")) {
                 signals.push(UiSignal::Delete);
             }

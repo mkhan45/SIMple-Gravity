@@ -7,7 +7,9 @@ extern crate specs;
 use specs::prelude::*;
 
 mod components;
-use components::{Draw, Kinematics, Mass, Point, Position, Preview, Radius, Trail, Vector};
+use components::{
+    Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector,
+};
 
 mod resources;
 use resources::{
@@ -22,6 +24,9 @@ use physics_systems::{PhysicsSys, PreviewPhysicsSys};
 
 mod trail_sys;
 use trail_sys::{PreviewTrailSys, TrailSys};
+
+mod graph_sys;
+use graph_sys::SpeedGraphSys;
 
 use std::collections::HashSet;
 
@@ -75,6 +80,7 @@ fn main() -> GameResult {
     world.register::<Draw>();
     world.register::<Radius>();
     world.register::<Trail>();
+    world.register::<SpeedGraph>();
 
     let data = vec![
         new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
@@ -121,6 +127,7 @@ fn main() -> GameResult {
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
         .with(TrailSys, "trail_system", &["physics_system"])
+        .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
         .build();
 
     let mut preview_dispatcher = DispatcherBuilder::new()
