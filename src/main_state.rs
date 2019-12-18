@@ -13,9 +13,6 @@ use ggez::{
     Context, GameResult,
 };
 
-use std::collections::VecDeque;
-
-// use crate::physics::do_physics;
 use crate::resources::{
     CreateVec, DelSet, MainIterations, MousePos, Paused, PreviewIterations, Resolution, StartPoint,
     DT,
@@ -199,15 +196,15 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
             // do_physics(&mut self.world, ctx);
             (0..main_iterations).for_each(|_| {
-                self.main_dispatcher.dispatch(&mut self.world);
+                self.main_dispatcher.dispatch(&self.world);
             });
 
             (main_iterations..preview_iterations).for_each(|_| {
-                self.preview_dispatcher.dispatch(&mut self.world);
+                self.preview_dispatcher.dispatch(&self.world);
             });
         } else {
             (0..preview_iterations).for_each(|_| {
-                self.preview_dispatcher.dispatch(&mut self.world);
+                self.preview_dispatcher.dispatch(&self.world);
             });
         }
 
@@ -353,7 +350,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let mut graph_builder = graphics::MeshBuilder::new();
         crate::graph_sys::draw_graphs(&mut graph_builder, &self.world);
         let mesh = graph_builder.build(ctx).expect("error building mesh");
-        ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing graph mesh");
+        ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new())
+            .expect("error drawing graph mesh");
 
         graphics::present(ctx)
     }

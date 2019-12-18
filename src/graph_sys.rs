@@ -1,6 +1,6 @@
 use crate::{Kinematics, SpeedGraph};
+use ggez::graphics::{Color, DrawMode, MeshBuilder, Rect};
 use specs::prelude::*;
-use ggez::graphics::{MeshBuilder, Rect, Color, DrawMode};
 
 pub struct SpeedGraphSys;
 
@@ -9,8 +9,8 @@ static GRAPH_RECT: Rect = Rect::new(199.0, 1.0, 100.0, 60.0);
 impl<'a> System<'a> for SpeedGraphSys {
     type SystemData = (ReadStorage<'a, Kinematics>, WriteStorage<'a, SpeedGraph>);
 
-    fn run(&mut self, (kinematics, mut graphs) : Self::SystemData) {
-        (&kinematics, &mut graphs).join().for_each(|(kine, graph)|{
+    fn run(&mut self, (kinematics, mut graphs): Self::SystemData) {
+        (&kinematics, &mut graphs).join().for_each(|(kine, graph)| {
             graph.0.push(kine.vel.norm());
         });
     }
@@ -19,8 +19,14 @@ impl<'a> System<'a> for SpeedGraphSys {
 pub fn draw_graphs(graph_builder: &mut MeshBuilder, world: &World) {
     let speed_graphs = world.read_storage::<SpeedGraph>();
     graph_builder.rectangle(DrawMode::stroke(1.0), GRAPH_RECT, ggez::graphics::WHITE);
-    (&speed_graphs).join().for_each(|graph|{
-        draw_line(graph_builder, graph.0.as_slice(), 0.0, 10.0, ggez::graphics::Color::new(1.0, 0.0, 0.0, 1.0));
+    (&speed_graphs).join().for_each(|graph| {
+        draw_line(
+            graph_builder,
+            graph.0.as_slice(),
+            0.0,
+            10.0,
+            ggez::graphics::Color::new(1.0, 0.0, 0.0, 1.0),
+        );
     });
 }
 
