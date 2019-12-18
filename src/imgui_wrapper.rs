@@ -31,6 +31,7 @@ pub enum UiChoice {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum UiSignal {
     Create,
+    Delete,
 }
 
 pub struct ImGuiWrapper {
@@ -87,6 +88,12 @@ pub fn make_sidepanel(
             .build();
         if ui.small_button(im_str!("Toggle Create Body")) {
             signals.push(UiSignal::Create);
+        }
+
+        if selected_entity {
+            if ui.small_button(im_str!("Delete Body")) {
+                signals.push(UiSignal::Delete);
+            }
         }
         ui.separator();
         ui.text(im_str!("DT"));

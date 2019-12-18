@@ -136,6 +136,12 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             .drain(..)
             .for_each(|signal| match signal {
                 UiSignal::Create => self.creating = !self.creating,
+                UiSignal::Delete => {
+                    if let Some(e) = self.selected_entity {
+                        self.world.delete_entity(e).expect("error deleting selected_entity");
+                        self.selected_entity = None;
+                    }
+                },
             });
         self.imgui_wrapper.sent_signals.clear();
 
@@ -168,7 +174,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.world
                     .delete_entity(*e)
                     .expect("error deleting collided entity");
-            });
+                });
         }
 
         let preview_iterations = self.world.fetch::<PreviewIterations>().0;
@@ -348,9 +354,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -377,7 +383,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     if self.creating {
                         let p = Point::new(x, y);
@@ -440,7 +446,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        })
+            })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -461,7 +467,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        });
+            });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -540,7 +546,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));
