@@ -46,3 +46,6 @@ impl Paused {
         self.0 = !self.0;
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub struct NewPreview(pub bool);

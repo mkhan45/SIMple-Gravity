@@ -1,7 +1,7 @@
 use specs::prelude::*;
 
 use crate::components::{Kinematics, Mass, Position, Preview, Radius, Draw, Trail};
-use crate::resources::DT;
+use crate::resources::{DT, NewPreview};
 use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
@@ -77,11 +77,12 @@ impl<'a> System<'a> for PreviewPhysicsSys {
         WriteStorage<'a, Radius>,
         WriteStorage<'a, Mass>,
         Read<'a, DT>,
+        Write<'a, NewPreview>,
     );
 
     fn run(
         &mut self,
-        (mut positions, mut kinematics, previews, radii, masses, dt): Self::SystemData,
+        (mut positions, mut kinematics, previews, radii, masses, dt, mut new_preview): Self::SystemData,
     ) {
         integrate_positions(&mut positions, &kinematics, &previews, true, dt.0);
         apply_gravity(
@@ -92,6 +93,15 @@ impl<'a> System<'a> for PreviewPhysicsSys {
             &previews,
             true,
         );
+
+        (&positions, &radii).join().for_each(|(pos1, rad1)|{
+            (&positions, &radii).join().for_each(|(pos2, rad2)|{
+                if pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0 {
+                    new_preview.0 = true;
+                }
+            });
+        });
+
         integrate_kinematics(&mut kinematics, &previews, true, dt.0);
     }
 }
@@ -154,10 +164,10 @@ fn apply_gravity(
         (positions, kinematics, radii)
             .par_join()
             .for_each(grav_closure);
-    } else {
-        (positions, kinematics, radii, previews)
-            .join()
-            .for_each(|(p, k, r, _)| grav_closure((p, k, r)));
+        } else {
+            (positions, kinematics, radii, previews)
+                .join()
+                .for_each(|(p, k, r, _)| grav_closure((p, k, r)));
     }
 }
 
@@ -199,8 +209,8 @@ fn calc_collisions(
                 .for_each(|(pos2, r2, m2, k2, e2)| {
                     if e1 != e2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                        && !delete_set.contains(&e1)
-                        && !delete_set.contains(&e2)
+                            && !delete_set.contains(&e1)
+                            && !delete_set.contains(&e2)
                     {
                         delete_set.insert(e1);
                         delete_set.insert(e2);

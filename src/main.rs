@@ -15,7 +15,7 @@ use components::{
 
 mod resources;
 use resources::{
-    MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT,
+    MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT, NewPreview
 };
 
 mod main_state;
@@ -123,6 +123,7 @@ fn main() -> GameResult {
     world.insert(DT(1.0));
     world.insert(Paused(false));
     world.insert(StartPoint(None));
+    world.insert(NewPreview(false));
 
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
