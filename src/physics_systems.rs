@@ -1,7 +1,7 @@
 use specs::prelude::*;
 
-use crate::components::{Kinematics, Mass, Position, Preview, Radius};
-use crate::resources::{CreateVec, DelSet, DT};
+use crate::components::{Kinematics, Mass, Position, Preview, Radius, Draw, Trail};
+use crate::resources::DT;
 use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
@@ -17,8 +17,8 @@ impl<'a> System<'a> for PhysicsSys {
         WriteStorage<'a, Mass>,
         Entities<'a>,
         Read<'a, DT>,
-        Write<'a, CreateVec>,
-        Write<'a, DelSet>,
+        WriteStorage<'a, Draw>,
+        WriteStorage<'a, Trail>,
     );
 
     fn run(
@@ -26,13 +26,13 @@ impl<'a> System<'a> for PhysicsSys {
         (
             mut positions,
             mut kinematics,
-            previews,
-            radii,
-            masses,
+            mut previews,
+            mut radii,
+            mut masses,
             entities,
             dt,
-            mut create_vec,
-            mut del_set,
+            mut draws,
+            mut trails,
         ): Self::SystemData,
     ) {
         integrate_positions(&mut positions, &kinematics, &previews, false, dt.0);
@@ -45,10 +45,25 @@ impl<'a> System<'a> for PhysicsSys {
             false,
         );
         integrate_kinematics(&mut kinematics, &previews, false, dt.0);
-        let (c_vec, delete_set) =
+        let (mut c_vec, mut delete_set) =
             calc_collisions(&positions, &kinematics, &masses, &radii, &entities);
-        create_vec.0 = c_vec;
-        del_set.0 = delete_set;
+
+        delete_set.drain().for_each(|e|{
+            entities.delete(e).expect("error deleting collided entity");
+        });
+
+        c_vec.drain(..).for_each(|body|{
+            entities.build_entity()
+                .with(body.0, &mut positions)
+                .with(body.1, &mut kinematics)
+                .with(body.2, &mut masses)
+                .with(body.3, &mut draws)
+                .with(body.4, &mut radii)
+                .with(body.5, &mut trails)
+                .build();
+        });
+        // create_vec.0 = c_vec;
+        // del_set.0 = delete_set;
     }
 }
 

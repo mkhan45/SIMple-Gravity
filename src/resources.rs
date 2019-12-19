@@ -46,9 +46,3 @@ impl Paused {
         self.0 = !self.0;
     }
 }
-
-#[derive(Clone, Debug, PartialEq, Default)]
-pub struct CreateVec(pub Vec<Body>);
-
-#[derive(Clone, Debug, PartialEq, Default)]
-pub struct DelSet(pub HashSet<Entity>);

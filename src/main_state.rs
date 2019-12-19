@@ -14,7 +14,7 @@ use ggez::{
 };
 
 use crate::resources::{
-    CreateVec, DelSet, MainIterations, MousePos, Paused, PreviewIterations, Resolution, StartPoint,
+    MainIterations, MousePos, Paused, PreviewIterations, Resolution, StartPoint,
     DT,
 };
 #[allow(unused_imports)]
@@ -158,6 +158,12 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             });
         self.imgui_wrapper.sent_signals.clear();
 
+        if let Some(e) = self.selected_entity {
+            if !self.world.is_alive(e) {
+                self.selected_entity = None;
+            }
+        }
+
         let offset = calc_offset(ctx);
         if offset != [0.0, 0.0].into() {
             let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
@@ -173,23 +179,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             dbg!(ggez::timer::fps(ctx));
         }
 
-        {
-            let create_vec = self.world.fetch::<CreateVec>().0.clone();
-
-            create_vec.iter().for_each(|body| {
-                create_body(&mut self.world, body.clone());
-            });
-        }
-        {
-            let del_set = &self.world.fetch::<DelSet>().0.clone();
-
-            del_set.iter().for_each(|e| {
-                self.world
-                    .delete_entity(*e)
-                    .expect("error deleting collided entity");
-            });
-        }
-
         let preview_iterations = self.world.fetch::<PreviewIterations>().0;
         if !self.world.fetch::<Paused>().0 {
             let main_iterations = self.world.fetch::<MainIterations>().0;
@@ -198,6 +187,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             (0..main_iterations).for_each(|_| {
                 self.main_dispatcher.dispatch(&self.world);
             });
+            self.world.maintain();
 
             (main_iterations..preview_iterations).for_each(|_| {
                 self.preview_dispatcher.dispatch(&self.world);
@@ -207,6 +197,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.preview_dispatcher.dispatch(&self.world);
             });
         }
+        
 
         Ok(())
     }
@@ -350,8 +341,19 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let mut graph_builder = graphics::MeshBuilder::new();
         crate::graph_sys::draw_graphs(&mut graph_builder, &self.world);
         let mesh = graph_builder.build(ctx).expect("error building mesh");
-        ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new())
-            .expect("error drawing graph mesh");
+        let coords = ggez::graphics::screen_coordinates(ctx);
+        let resolution = self.world.fetch::<Resolution>().0;
+        ggez::graphics::draw(
+            ctx,
+            &mesh,
+            graphics::DrawParam::new()
+                .dest(Point::new(coords.x, coords.y))
+                .scale(Vector::new(
+                        coords.w / resolution.x,
+                        coords.h / resolution.y,
+                )),
+        )
+        .expect("error drawing graph mesh");
 
         graphics::present(ctx)
     }

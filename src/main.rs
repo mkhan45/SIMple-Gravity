@@ -15,7 +15,7 @@ use components::{
 
 mod resources;
 use resources::{
-    CreateVec, DelSet, MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT,
+    MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
 
 mod main_state;
@@ -123,8 +123,6 @@ fn main() -> GameResult {
     world.insert(DT(1.0));
     world.insert(Paused(false));
     world.insert(StartPoint(None));
-    world.insert(CreateVec(Vec::new()));
-    world.insert(DelSet(HashSet::new()));
 
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
