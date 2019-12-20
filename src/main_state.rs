@@ -219,6 +219,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             });
             self.world.maintain();
         }
+        if let Some(e) = self.selected_entity {
+            if !self.world.is_alive(e) {
+                self.selected_entity = None;
+            }
+        }
 
         (0..preview_iterations).for_each(|_| {
             self.preview_dispatcher.dispatch(&self.world);
