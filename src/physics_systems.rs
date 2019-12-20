@@ -1,7 +1,7 @@
 use specs::prelude::*;
 
-use crate::components::{Kinematics, Mass, Position, Preview, Radius, Draw, Trail};
-use crate::resources::{DT, NewPreview};
+use crate::components::{Draw, Kinematics, Mass, Position, Preview, Radius, Trail};
+use crate::resources::{NewPreview, DT};
 use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
@@ -26,7 +26,7 @@ impl<'a> System<'a> for PhysicsSys {
         (
             mut positions,
             mut kinematics,
-            mut previews,
+            previews,
             mut radii,
             mut masses,
             entities,
@@ -48,12 +48,13 @@ impl<'a> System<'a> for PhysicsSys {
         let (mut c_vec, mut delete_set) =
             calc_collisions(&positions, &kinematics, &masses, &radii, &entities);
 
-        delete_set.drain().for_each(|e|{
+        delete_set.drain().for_each(|e| {
             entities.delete(e).expect("error deleting collided entity");
         });
 
-        c_vec.drain(..).for_each(|body|{
-            entities.build_entity()
+        c_vec.drain(..).for_each(|body| {
+            entities
+                .build_entity()
                 .with(body.0, &mut positions)
                 .with(body.1, &mut kinematics)
                 .with(body.2, &mut masses)
@@ -94,8 +95,8 @@ impl<'a> System<'a> for PreviewPhysicsSys {
             true,
         );
 
-        (&positions, &radii).join().for_each(|(pos1, rad1)|{
-            (&positions, &radii).join().for_each(|(pos2, rad2)|{
+        (&positions, &radii).join().for_each(|(pos1, rad1)| {
+            (&positions, &radii).join().for_each(|(pos2, rad2)| {
                 if pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0 {
                     new_preview.0 = true;
                 }
@@ -164,10 +165,10 @@ fn apply_gravity(
         (positions, kinematics, radii)
             .par_join()
             .for_each(grav_closure);
-        } else {
-            (positions, kinematics, radii, previews)
-                .join()
-                .for_each(|(p, k, r, _)| grav_closure((p, k, r)));
+    } else {
+        (positions, kinematics, radii, previews)
+            .join()
+            .for_each(|(p, k, r, _)| grav_closure((p, k, r)));
     }
 }
 
@@ -209,8 +210,8 @@ fn calc_collisions(
                 .for_each(|(pos2, r2, m2, k2, e2)| {
                     if e1 != e2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                            && !delete_set.contains(&e1)
-                            && !delete_set.contains(&e2)
+                        && !delete_set.contains(&e1)
+                        && !delete_set.contains(&e2)
                     {
                         delete_set.insert(e1);
                         delete_set.insert(e2);

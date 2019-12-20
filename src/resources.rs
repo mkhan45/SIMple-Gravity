@@ -1,8 +1,4 @@
-use crate::{Body, Point, Vector};
-
-use std::collections::HashSet;
-
-use specs::prelude::Entity;
+use crate::{Point, Vector};
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct PreviewIterations(pub usize);

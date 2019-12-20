@@ -15,7 +15,7 @@ use components::{
 
 mod resources;
 use resources::{
-    MainIterations, Paused, PreviewIterations, Resolution, StartPoint, DT, NewPreview
+    MainIterations, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
 
 mod main_state;
@@ -29,8 +29,6 @@ use trail_sys::{PreviewTrailSys, TrailSys};
 
 mod graph_sys;
 use graph_sys::SpeedGraphSys;
-
-use std::collections::HashSet;
 
 mod imgui_wrapper;
 // mod physics;
@@ -51,7 +49,7 @@ pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f
         Mass(mass),
         Draw(ggez::graphics::WHITE),
         Radius(rad),
-        Trail(VecDeque::with_capacity(50)),
+        Trail(VecDeque::with_capacity(36)),
     )
 }
 
@@ -62,7 +60,7 @@ pub fn new_preview(pos: impl Into<Point>, vel: impl Into<Vector>, rad: f32) -> P
         Radius(rad),
         Preview,
         Draw(graphics::Color::new(0.1, 1.0, 0.2, 0.8)),
-        Trail(VecDeque::with_capacity(50)),
+        Trail(VecDeque::with_capacity(500)),
     )
 }
 
