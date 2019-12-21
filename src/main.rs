@@ -87,12 +87,12 @@ fn main() -> GameResult {
         new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
     ];
 
-    // let data = (0..900)
+    // let data = (0..500)
     //     .map(|i| {
     //         new_body(
     //             [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
     //             [0.0, 0.0],
-    //             -0.1,
+    //             0.25,
     //             5.0,
     //         )
     //     })
@@ -125,17 +125,13 @@ fn main() -> GameResult {
 
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
-        .with(TrailSys, "trail_system", &["physics_system"])
+        .with(TrailSys, "trail_system", &[])
         .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
         .build();
 
     let mut preview_dispatcher = DispatcherBuilder::new()
         .with(PreviewPhysicsSys, "preview_physics_system", &[])
-        .with(
-            PreviewTrailSys,
-            "preview_trail_system",
-            &["preview_physics_system"],
-        )
+        .with(PreviewTrailSys, "preview_trail_system", &[])
         .build();
 
     main_dispatcher.setup(&mut world);

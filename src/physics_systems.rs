@@ -95,13 +95,15 @@ impl<'a> System<'a> for PreviewPhysicsSys {
             true,
         );
 
-        (&positions, &radii).join().for_each(|(pos1, rad1)| {
-            (&positions, &radii).join().for_each(|(pos2, rad2)| {
-                if pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0 {
-                    new_preview.0 = true;
-                }
+        (&positions, &radii, &previews)
+            .join()
+            .for_each(|(pos1, rad1, _)| {
+                (&positions, &radii).join().for_each(|(pos2, rad2)| {
+                    if pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0 {
+                        new_preview.0 = true;
+                    }
+                });
             });
-        });
 
         integrate_kinematics(&mut kinematics, &previews, true, dt.0);
     }
