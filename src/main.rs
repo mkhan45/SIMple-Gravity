@@ -27,8 +27,8 @@ use physics_systems::{PhysicsSys, PreviewPhysicsSys};
 mod trail_sys;
 use trail_sys::{PreviewTrailSys, TrailSys};
 
-mod graph_sys;
-use graph_sys::SpeedGraphSys;
+// mod graph_sys;
+// use graph_sys::SpeedGraphSys;
 
 mod imgui_wrapper;
 // mod physics;
@@ -126,7 +126,7 @@ fn main() -> GameResult {
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
         .with(TrailSys, "trail_system", &[])
-        .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
+        // .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
         .build();
 
     let mut preview_dispatcher = DispatcherBuilder::new()

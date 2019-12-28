@@ -18,6 +18,7 @@ use crate::resources::{
 };
 #[allow(unused_imports)]
 use crate::{
+    SCREEN_X, SCREEN_Y,
     imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
     Preview, PreviewBody, Radius, SpeedGraph, Trail, Vector,
 };
@@ -371,22 +372,26 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         self.world.insert(MainIterations(main_iter));
         self.world.insert(PreviewIterations(preview_iter));
 
-        let mut graph_builder = graphics::MeshBuilder::new();
-        crate::graph_sys::draw_graphs(&mut graph_builder, &self.world);
-        let mesh = graph_builder.build(ctx).expect("error building mesh");
-        let coords = ggez::graphics::screen_coordinates(ctx);
-        let resolution = self.world.fetch::<Resolution>().0;
-        ggez::graphics::draw(
-            ctx,
-            &mesh,
-            graphics::DrawParam::new()
-                .dest(Point::new(coords.x, coords.y))
-                .scale(Vector::new(
-                    coords.w / resolution.x,
-                    coords.h / resolution.y,
-                )),
-        )
-        .expect("error drawing graph mesh");
+        // made a new branch for graph stuff
+        // let mut graph_builder = graphics::MeshBuilder::new();
+
+        // crate::graph_sys::draw_graphs(&mut graph_builder, &self.world);
+        // let mesh = graph_builder.build(ctx).expect("error building mesh");
+        // let coords = ggez::graphics::screen_coordinates(ctx);
+        // let resolution = self.world.fetch::<Resolution>().0;
+
+        // let scale = [(coords.w / resolution.x) * 300., coords.h / resolution.y * 300.];
+        // let pos = [resolution.x - 0.25 * resolution.x + coords.x / scale[0], 1.0 + coords.y / scale[1]];
+
+        // ggez::graphics::draw(
+        //     ctx,
+        //     &mesh,
+        //     graphics::DrawParam::new()
+        //         .scale(Vector::new(scale[0], scale[1]))
+        //         // .dest(Point::new(pos[0], pos[1]))
+        //         // .offset(Point::new(-pos[0], -pos[1]))
+        // )
+        // .expect("error drawing graph mesh");
 
         graphics::present(ctx)
     }

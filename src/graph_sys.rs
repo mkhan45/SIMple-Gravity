@@ -4,7 +4,7 @@ use specs::prelude::*;
 
 pub struct SpeedGraphSys;
 
-static GRAPH_RECT: Rect = Rect::new(199.0, 1.0, 100.0, 60.0);
+static GRAPH_RECT: Rect = Rect::new(0.0, 0.0, 1.0, 1.0);
 
 impl<'a> System<'a> for SpeedGraphSys {
     type SystemData = (ReadStorage<'a, Kinematics>, WriteStorage<'a, SpeedGraph>);
