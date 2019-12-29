@@ -312,12 +312,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         let hidpi_factor = self.hidpi_factor;
 
-        let mut dt = if self.world.has_value::<DT>() {
-            self.world.fetch::<DT>().0
-        } else {
-            self.world.insert(DT(1.0));
-            1.0
-        };
+        let mut dt = self.world.fetch::<DT>().0;
 
         let mut main_iter = self.world.fetch::<MainIterations>().0;
         let mut preview_iter = self.world.fetch::<PreviewIterations>().0;
@@ -371,6 +366,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         self.world.insert(MainIterations(main_iter));
         self.world.insert(PreviewIterations(preview_iter));
+        self.world.insert(DT(dt));
 
         // made a new branch for graph stuff
         // let mut graph_builder = graphics::MeshBuilder::new();
