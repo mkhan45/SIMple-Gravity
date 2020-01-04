@@ -38,7 +38,7 @@ pub struct DT(pub f32);
 pub struct Paused(pub bool);
 
 impl Paused {
-    pub fn invert(&mut self) {
+    pub fn toggle(&mut self) {
         self.0 = !self.0;
     }
 }

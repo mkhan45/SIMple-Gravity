@@ -13,44 +13,21 @@ use ggez::{
     Context, GameResult,
 };
 
+#[allow(unused_imports)]
+use crate::components::{Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail};
+use crate::entities::{create_body, create_preview, new_body, new_preview};
+use crate::imgui_wrapper::*;
 use crate::resources::{
     MainIterations, MousePos, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
 #[allow(unused_imports)]
-use crate::{
-    SCREEN_X, SCREEN_Y,
-    imgui_wrapper::*, new_body, new_preview, Body, Draw, Kinematics, Mass, Point, Position,
-    Preview, PreviewBody, Radius, SpeedGraph, Trail, Vector,
-};
+use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
 
 use std::collections::HashSet;
 
 const CAMERA_SPEED: f32 = 1.5;
-
-pub fn create_body(world: &mut World, body: Body) -> Entity {
-    world
-        .create_entity()
-        .with(body.0)
-        .with(body.1)
-        .with(body.2)
-        .with(body.3)
-        .with(body.4)
-        .with(body.5)
-        .build()
-}
-fn create_preview(world: &mut World, body: PreviewBody) -> Entity {
-    world
-        .create_entity()
-        .with(body.0)
-        .with(body.1)
-        .with(body.2)
-        .with(body.3)
-        .with(body.4)
-        .with(body.5)
-        .build()
-}
 
 pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Vector) -> Point {
     let mut np: Point = point.into();
@@ -61,6 +38,7 @@ pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Ve
     np
 }
 
+//TODO: move mass, rad, selected_entity, hidpi_factor, and creating to specs resources
 pub struct MainState<'a, 'b> {
     pub world: World,
     pub main_dispatcher: Dispatcher<'a, 'b>,
@@ -129,6 +107,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         self.world
             .insert(MousePos(input::mouse::position(ctx).into()));
 
+        // process GUI events
         self.imgui_wrapper
             .sent_signals
             .clone()
@@ -158,12 +137,14 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             });
         self.imgui_wrapper.sent_signals.clear();
 
+        // unselect selected entity if it collided
         if let Some(e) = self.selected_entity {
             if !self.world.is_alive(e) {
                 self.selected_entity = None;
             }
         }
 
+        // if preview collided, delete it and make a new one
         if self.world.fetch::<NewPreview>().0 {
             let mut delset: HashSet<Entity> = HashSet::new();
             {
@@ -178,7 +159,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             delset.drain().for_each(|entity| {
                 self.world
                     .delete_entity(entity)
-                    .expect("error deleting collided entity");
+                    .expect("error deleting collided preview");
             });
 
             let coords = ggez::graphics::screen_coordinates(ctx);
@@ -195,6 +176,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world.insert(NewPreview(false));
         }
 
+        // apply camera movement
         let offset = calc_offset(ctx);
         if offset != [0.0, 0.0].into() {
             let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
@@ -210,6 +192,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             dbg!(ggez::timer::fps(ctx));
         }
 
+        // run physics systems
         let preview_iterations = self.world.fetch::<PreviewIterations>().0;
         if !self.world.fetch::<Paused>().0 {
             let main_iterations = self.world.fetch::<MainIterations>().0;
@@ -245,6 +228,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             let previews = self.world.read_storage::<Preview>();
             let trails = self.world.read_storage::<Trail>();
 
+            // draw trails
             (&trails, &radii).join().for_each(|(trail, radius)| {
                 let slices = trail.0.as_slices();
                 if slices.0.len() >= 2 {
@@ -259,6 +243,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 }
             });
 
+            // this is kind of inelegant but previews don't have the Draw component and color is
+            // hardcoded 
+            // TODO?
             (&draws, &positions, &radii)
                 .join()
                 .for_each(|(color, pos, rad)| {
@@ -275,6 +262,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 });
         }
 
+        // draw new body preview and line
         let start_point = self.world.fetch::<StartPoint>().0;
         let resolution = self.world.fetch::<Resolution>().0;
 
@@ -306,10 +294,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         }
 
         let mesh = builder.build(ctx).expect("error building mesh");
-
-        // self.imgui_wrapper.shown_menus.push(UiChoice::DefaultUI);
-
         ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
+
+        // Draw GUI and process sliders
         let hidpi_factor = self.hidpi_factor;
 
         let mut dt = self.world.fetch::<DT>().0;
@@ -368,27 +355,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         self.world.insert(PreviewIterations(preview_iter));
         self.world.insert(DT(dt));
 
-        // made a new branch for graph stuff
-        // let mut graph_builder = graphics::MeshBuilder::new();
-
-        // crate::graph_sys::draw_graphs(&mut graph_builder, &self.world);
-        // let mesh = graph_builder.build(ctx).expect("error building mesh");
-        // let coords = ggez::graphics::screen_coordinates(ctx);
-        // let resolution = self.world.fetch::<Resolution>().0;
-
-        // let scale = [(coords.w / resolution.x) * 300., coords.h / resolution.y * 300.];
-        // let pos = [resolution.x - 0.25 * resolution.x + coords.x / scale[0], 1.0 + coords.y / scale[1]];
-
-        // ggez::graphics::draw(
-        //     ctx,
-        //     &mesh,
-        //     graphics::DrawParam::new()
-        //         .scale(Vector::new(scale[0], scale[1]))
-        //         // .dest(Point::new(pos[0], pos[1]))
-        //         // .offset(Point::new(-pos[0], -pos[1]))
-        // )
-        // .expect("error drawing graph mesh");
-
         graphics::present(ctx)
     }
 
@@ -408,6 +374,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         if !self.items_hovered {
             match button {
                 MouseButton::Right => {
+                    // delete clicked body
                     let resolution = self.world.fetch::<Resolution>().0;
                     self.imgui_wrapper.shown_menus.clear();
                     self.selected_entity = None;
@@ -431,6 +398,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         .push(UiChoice::SideMenu(self.selected_entity));
                 }
                 MouseButton::Left => {
+                    // set up for creating new body
                     if self.creating {
                         let p = Point::new(x, y);
                         let coords = ggez::graphics::screen_coordinates(ctx);
@@ -459,6 +427,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         if let Some(start_point) = start_point {
             match button {
+                // create new body
                 MouseButton::Left => {
                     if self.creating && !self.imgui_wrapper.sent_signals.contains(&UiSignal::Create)
                     {
@@ -477,6 +446,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             }
         }
 
+        // delete preview
         let mut delset: HashSet<Entity> = HashSet::new();
 
         {
@@ -498,6 +468,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
 
+        // delete old preview create a new one
         let mut delset: HashSet<Entity> = HashSet::new();
 
         {
@@ -537,6 +508,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     }
 
     fn mouse_wheel_event(&mut self, ctx: &mut Context, _x: f32, y: f32) {
+        // zoom
         let mouse_pos = input::mouse::position(ctx);
         let mut offset = graphics::screen_coordinates(ctx);
 
@@ -573,9 +545,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         _keymods: KeyMods,
         _repeat: bool,
     ) {
-        #[allow(clippy::single_match)]
         match keycode {
-            KeyCode::Space => self.world.get_mut::<Paused>().unwrap().invert(),
+            KeyCode::Space => self.world.get_mut::<Paused>().unwrap().toggle(),
             KeyCode::Escape => self.imgui_wrapper.shown_menus.clear(),
             _ => {}
         };

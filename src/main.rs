@@ -3,8 +3,6 @@
 extern crate ggez;
 use ggez::*;
 
-use std::collections::VecDeque;
-
 extern crate specs;
 use specs::prelude::*;
 
@@ -12,6 +10,9 @@ mod components;
 use components::{
     Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector,
 };
+
+mod entities;
+use entities::{new_body, new_preview, Body, PreviewBody};
 
 mod resources;
 use resources::{
@@ -27,42 +28,12 @@ use physics_systems::{PhysicsSys, PreviewPhysicsSys};
 mod trail_sys;
 use trail_sys::{PreviewTrailSys, TrailSys};
 
-// mod graph_sys;
-// use graph_sys::SpeedGraphSys;
-
 mod imgui_wrapper;
-// mod physics;
-// mod trails;
 use imgui_wrapper::ImGuiWrapper;
 
 const G: f32 = 1.2;
 const SCREEN_X: f32 = 300.0;
 const SCREEN_Y: f32 = 300.0;
-
-type Body = (Position, Kinematics, Mass, Draw, Radius, Trail);
-type PreviewBody = (Position, Kinematics, Radius, Preview, Draw, Trail);
-
-pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f32) -> Body {
-    (
-        Position(pos.into()),
-        Kinematics::new(vel.into()),
-        Mass(mass),
-        Draw(ggez::graphics::WHITE),
-        Radius(rad),
-        Trail(VecDeque::with_capacity(36)),
-    )
-}
-
-pub fn new_preview(pos: impl Into<Point>, vel: impl Into<Vector>, rad: f32) -> PreviewBody {
-    (
-        Position(pos.into()),
-        Kinematics::new(vel.into()),
-        Radius(rad),
-        Preview,
-        Draw(graphics::Color::new(0.1, 1.0, 0.2, 0.8)),
-        Trail(VecDeque::with_capacity(500)),
-    )
-}
 
 fn main() -> GameResult {
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("N-body gravity sim", "Mikail Khan")
@@ -82,11 +53,14 @@ fn main() -> GameResult {
     world.register::<Trail>();
     world.register::<SpeedGraph>();
 
+    // a simple orbit,
+    // [x_pos, y_pos], [x_vel, y_vel], mass, radius
     let data = vec![
         new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
         new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
     ];
 
+    // Makes a grid, used for benchmarking
     // let data = (0..500)
     //     .map(|i| {
     //         new_body(
@@ -110,11 +84,13 @@ fn main() -> GameResult {
             .build();
     }
 
+    // ggez screen size stuff
     let hidpi_factor = event_loop.get_primary_monitor().get_hidpi_factor() as f32;
     let dimensions = event_loop.get_primary_monitor().get_dimensions();
     let dimensions_vec = Vector::new(dimensions.width as f32, dimensions.height as f32);
     let aspect_ratio = dimensions.height / dimensions.width;
 
+    // initialize all ECS resources and systems
     world.insert(MainIterations(1));
     world.insert(PreviewIterations(25));
     world.insert(Resolution(dimensions_vec));
@@ -126,7 +102,6 @@ fn main() -> GameResult {
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
         .with(TrailSys, "trail_system", &[])
-        // .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
         .build();
 
     let mut preview_dispatcher = DispatcherBuilder::new()
@@ -137,6 +112,7 @@ fn main() -> GameResult {
     main_dispatcher.setup(&mut world);
     preview_dispatcher.setup(&mut world);
 
+    // set initial screen size and run
     graphics::set_mode(
         ctx,
         ggez::conf::WindowMode::default()
