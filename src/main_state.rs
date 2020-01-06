@@ -14,10 +14,10 @@ use ggez::{
 };
 
 #[allow(unused_imports)]
-use crate::components::{Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail};
-use crate::entities::{create_body, create_preview, new_body, new_preview};
+use crate::ecs::components::{Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail};
+use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
 use crate::imgui_wrapper::*;
-use crate::resources::{
+use crate::ecs::resources::{
     MainIterations, MousePos, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
 #[allow(unused_imports)]

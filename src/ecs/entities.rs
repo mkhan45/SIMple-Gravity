@@ -1,4 +1,4 @@
-use crate::components::*;
+use crate::ecs::components::*;
 use crate::{Point, Vector};
 use specs::prelude::*;
 

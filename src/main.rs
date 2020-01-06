@@ -6,27 +6,24 @@ use ggez::*;
 extern crate specs;
 use specs::prelude::*;
 
-mod components;
-use components::{
+mod ecs;
+use ecs::components::{
     Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector,
 };
 
-mod entities;
-use entities::{new_body, new_preview, Body, PreviewBody};
+use ecs::entities::{new_body, new_preview, Body, PreviewBody};
 
-mod resources;
-use resources::{
+use ecs::resources::{
     MainIterations, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
+
+use ecs::systems::physics_systems::{PhysicsSys, PreviewPhysicsSys};
+
+use ecs::systems::trail_sys::{PreviewTrailSys, TrailSys};
 
 mod main_state;
 use main_state::MainState;
 
-mod physics_systems;
-use physics_systems::{PhysicsSys, PreviewPhysicsSys};
-
-mod trail_sys;
-use trail_sys::{PreviewTrailSys, TrailSys};
 
 mod imgui_wrapper;
 use imgui_wrapper::ImGuiWrapper;

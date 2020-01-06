@@ -1,7 +1,7 @@
 use specs::prelude::*;
 
-use crate::components::{Draw, Kinematics, Mass, Position, Preview, Radius, Trail};
-use crate::resources::{NewPreview, DT};
+use crate::ecs::components::{Draw, Kinematics, Mass, Position, Preview, Radius, Trail};
+use crate::ecs::resources::{NewPreview, DT};
 use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
