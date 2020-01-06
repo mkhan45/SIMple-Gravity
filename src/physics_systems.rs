@@ -6,6 +6,12 @@ use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
 
+// PhysicsSys and PreviewPhysicsSys are separate because PreviewPhysicsSys usually needs to be run
+// more times than PhysicsSys.
+// They use the same methods for the most part with only the toggle preview_only changed
+
+// The same closure is used with preview_only on or off, but the specs query is changed
+
 pub struct PhysicsSys;
 
 impl<'a> System<'a> for PhysicsSys {
@@ -63,8 +69,6 @@ impl<'a> System<'a> for PhysicsSys {
                 .with(body.5, &mut trails)
                 .build();
         });
-        // create_vec.0 = c_vec;
-        // del_set.0 = delete_set;
     }
 }
 
@@ -95,20 +99,14 @@ impl<'a> System<'a> for PreviewPhysicsSys {
             true,
         );
 
-        (&positions, &radii, &previews)
-            .join()
-            .for_each(|(pos1, rad1, _)| {
-                (&positions, &radii).join().for_each(|(pos2, rad2)| {
-                    if pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0 {
-                        new_preview.0 = true;
-                    }
-                });
-            });
+        // for some reason this only works sometimes TODO
+        new_preview.0 = calc_preview_collisions(&positions, &radii, &previews);
 
         integrate_kinematics(&mut kinematics, &previews, true, dt.0);
     }
 }
 
+// verlet velocity integration
 fn integrate_positions(
     positions: &mut WriteStorage<'_, Position>,
     kinematics: &WriteStorage<'_, Kinematics>,
@@ -116,8 +114,6 @@ fn integrate_positions(
     preview_only: bool,
     dt: f32,
 ) {
-    // let mut pos_integrate_query = <(Write<Position>, Read<Kinematics>)>::query();
-
     let int_closure = |(pos, kinematics): (&mut Position, &Kinematics)| {
         pos.0 += kinematics.vel * dt + (kinematics.accel / 2.0) * dt.powi(2);
     };
@@ -126,7 +122,7 @@ fn integrate_positions(
         (positions, kinematics).par_join().for_each(int_closure);
     } else {
         (positions, kinematics, previews)
-            .join()
+            .join() // not parallel because there's probably only one preview
             .for_each(|(pos, kine, _)| {
                 int_closure((pos, kine));
             });
@@ -141,8 +137,8 @@ fn apply_gravity(
     previews: &ReadStorage<'_, Preview>,
     preview_only: bool,
 ) {
+    // for each body, sum the accelerations of gravity from every other body and add it
     let grav_closure = |(current_pos, kinematics, _): (&Position, &mut Kinematics, &Radius)| {
-        // kinematics.accel = inner_query.iter_immutable(&world).fold(
         kinematics.accel = (positions, masses).join().fold(
             Vector::new(0.0, 0.0),
             |grav_accel_acc, (other_pos, other_mass)| {
@@ -174,6 +170,8 @@ fn apply_gravity(
     }
 }
 
+// separate from integrate_positions because verlet velocity integration wants acceleration to be
+// calculated between integrating positions and applying kinematics
 fn integrate_kinematics(
     kinematics: &mut WriteStorage<'_, Kinematics>,
     previews: &ReadStorage<'_, Preview>,
@@ -218,6 +216,7 @@ fn calc_collisions(
                         delete_set.insert(e1);
                         delete_set.insert(e2);
 
+                        // completely inelastic collisions
                         let p1 = k1.vel * m1.0;
                         let p2 = k2.vel * m2.0;
                         let ptotal = p1 + p2;
@@ -225,7 +224,11 @@ fn calc_collisions(
                         let mtotal = m1.0 + m2.0;
 
                         let new_vel = ptotal / mtotal;
+                        
+                        // new radius calculated by summing 3D volumes
                         let new_rad = (r1.0.powi(3) + r2.0.powi(3)).powf(1. / 3.);
+
+                        // new positions calculated my weighted average position by mass
                         let new_pos = {
                             let weighted_p1 = pos1.0 * m1.0;
                             let weighted_p2 = pos2.0 * m2.0;
@@ -235,10 +238,25 @@ fn calc_collisions(
                             );
                             sum_weighted / mtotal
                         };
+
                         create_vec.push(new_body(new_pos, new_vel, mtotal, new_rad));
                     }
                 });
         });
 
     (create_vec, delete_set)
+}
+
+
+// previews don't affect anything so the collision method is much simpler and separate
+fn calc_preview_collisions(positions: &WriteStorage<'_, Position>, 
+    radii: &WriteStorage<'_, Radius>, 
+    previews: &ReadStorage<'_, Preview>) -> bool {
+    (positions, radii, previews)
+        .join()
+        .any(|(pos1, rad1, _)| {
+            (positions, radii).join().any(|(pos2, rad2)| {
+                pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0
+            })
+        })
 }

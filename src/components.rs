@@ -9,8 +9,8 @@ use specs::Component;
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
 
-#[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(FlaggedStorage)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Component)]
+#[storage(NullStorage)]
 pub struct Preview;
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]
@@ -66,15 +66,15 @@ impl Kinematics {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(DenseVecStorage)]
+#[storage(VecStorage)]
 pub struct Mass(pub f32);
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(DenseVecStorage)]
+#[storage(VecStorage)]
 pub struct Draw(pub Color);
 
-#[derive(Clone, Copy, Debug, PartialEq, Component)]
-#[storage(HashMapStorage)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Component)]
+#[storage(NullStorage)]
 pub struct Static;
 
 #[derive(Clone, Copy, Debug, PartialEq, Component)]

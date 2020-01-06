@@ -61,12 +61,12 @@ fn main() -> GameResult {
     ];
 
     // Makes a grid, used for benchmarking
-    // let data = (0..500)
+    // let data = (0..900)
     //     .map(|i| {
     //         new_body(
     //             [(i / 10) as f32 * 100.0, (i % 10) as f32 * 100.0],
     //             [0.0, 0.0],
-    //             0.25,
+    //             -0.2,
     //             5.0,
     //         )
     //     })
