@@ -25,7 +25,7 @@ use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
 
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 const CAMERA_SPEED: f32 = 1.5;
 
@@ -128,8 +128,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                             GraphType::Speed => {
                                 let mut speed_graphs = self.world.write_storage::<SpeedGraph>();
                                 speed_graphs
-                                    .insert(e, SpeedGraph(Vec::with_capacity(750)))
+                                    .insert(e, SpeedGraph(Vec::with_capacity(500)))
                                     .expect("error adding graph");
+                                self.imgui_wrapper.shown_menus.push(UiChoice::Graph);
                             }
                         }
                     }
@@ -304,6 +305,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let mut main_iter = self.world.fetch::<MainIterations>().0;
         let mut preview_iter = self.world.fetch::<PreviewIterations>().0;
 
+        let mut graph_data: &[f32] = &[];
+        let speed_graphs = self.world.read_storage::<SpeedGraph>();
+
+        speed_graphs.join().for_each(|data|{
+            graph_data = &data.0[..];
+        });
+
         if let Some(e) = self.selected_entity {
             let (mut mass, mut rad) = {
                 let masses = self.world.read_storage::<Mass>();
@@ -323,6 +331,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     &mut preview_iter,
                     &mut self.items_hovered,
                     true,
+                    graph_data,
                 );
 
                 {
@@ -348,12 +357,31 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 &mut preview_iter,
                 &mut self.items_hovered,
                 false,
+                graph_data,
             );
         }
+
+        std::mem::drop(speed_graphs);
 
         self.world.insert(MainIterations(main_iter));
         self.world.insert(PreviewIterations(preview_iter));
         self.world.insert(DT(dt));
+
+        let coords = ggez::graphics::screen_coordinates(ctx);
+        let resolution = self.world.fetch::<Resolution>().0;
+
+        let scale = [(coords.w / resolution.x) * 300., coords.h / resolution.y * 300.];
+        let pos = [resolution.x - 0.25 * resolution.x + coords.x / scale[0], 1.0 + coords.y / scale[1]];
+
+        ggez::graphics::draw(
+            ctx,
+            &mesh,
+            graphics::DrawParam::new()
+            .scale(Vector::new(scale[0], scale[1]))
+            // .dest(Point::new(pos[0], pos[1]))
+            // .offset(Point::new(-pos[0], -pos[1]))
+        )
+            .expect("error drawing graph mesh");
 
         graphics::present(ctx)
     }
@@ -366,17 +394,27 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
             match button {
                 MouseButton::Right => {
                     // delete clicked body
+                    self.imgui_wrapper.shown_menus = self
+                        .imgui_wrapper
+                        .shown_menus
+                        .iter()
+                        .filter(|menu| match menu {
+                            UiChoice::SideMenu(_) => false,
+                            _ => true,
+                        })
+                    .cloned()
+                        .collect();
+
                     let resolution = self.world.fetch::<Resolution>().0;
-                    self.imgui_wrapper.shown_menus.clear();
                     self.selected_entity = None;
 
                     let positions = self.world.read_storage::<Position>();
@@ -396,7 +434,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .push(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -462,7 +500,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        })
+            })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -484,7 +522,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        });
+            });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -563,7 +601,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

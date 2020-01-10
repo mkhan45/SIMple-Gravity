@@ -21,9 +21,10 @@ use ecs::systems::physics_systems::{PhysicsSys, PreviewPhysicsSys};
 
 use ecs::systems::trail_sys::{PreviewTrailSys, TrailSys};
 
+use ecs::systems::graph_sys::SpeedGraphSys;
+
 mod main_state;
 use main_state::MainState;
-
 
 mod imgui_wrapper;
 use imgui_wrapper::ImGuiWrapper;
@@ -99,6 +100,7 @@ fn main() -> GameResult {
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
         .with(TrailSys, "trail_system", &[])
+        .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
         .build();
 
     let mut preview_dispatcher = DispatcherBuilder::new()
