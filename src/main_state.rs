@@ -127,10 +127,14 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         match graph_type {
                             GraphType::Speed => {
                                 let mut speed_graphs = self.world.write_storage::<SpeedGraph>();
-                                speed_graphs
-                                    .insert(e, SpeedGraph(Vec::with_capacity(500)))
-                                    .expect("error adding graph");
-                                self.imgui_wrapper.shown_menus.push(UiChoice::Graph);
+                                if let None = speed_graphs.get(e) {
+                                    speed_graphs
+                                        .insert(e, SpeedGraph::new())
+                                        .expect("error adding graph");
+                                }
+                                if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
+                                    self.imgui_wrapper.shown_menus.push(UiChoice::Graph);
+                                }
                             }
                         }
                     }
@@ -161,7 +165,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.world
                     .delete_entity(entity)
                     .expect("error deleting collided preview");
-            });
+                });
 
             let coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -305,11 +309,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let mut main_iter = self.world.fetch::<MainIterations>().0;
         let mut preview_iter = self.world.fetch::<PreviewIterations>().0;
 
-        let mut graph_data: &[f32] = &[];
+        let mut graph_data: Vec<&[f32]> = Vec::new();
         let speed_graphs = self.world.read_storage::<SpeedGraph>();
 
         speed_graphs.join().for_each(|data|{
-            graph_data = &data.0[..];
+            graph_data.push(&data.data[..]);
         });
 
         if let Some(e) = self.selected_entity {

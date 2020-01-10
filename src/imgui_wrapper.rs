@@ -228,7 +228,7 @@ impl ImGuiWrapper {
         preview_iterations: &mut usize,
         items_hovered: &mut bool,
         selected_entity: bool,
-        graph_data: &[f32],
+        graph_data: Vec<&[f32]>,
     ) {
         // Update mouse
         self.update_mouse();
@@ -268,13 +268,14 @@ impl ImGuiWrapper {
                     },
                     UiChoice::Graph => {
                         self.graph = true;
-                        make_graph_ui(
-                            &mut ui,
-                            self.resolution,
-                            &mut self.graph,
-                            // &[1.0, 2.0, 1.3, 3.0],
-                            graph_data,
-                        );
+                        for data in graph_data.iter() {
+                            make_graph_ui(
+                                &mut ui,
+                                self.resolution,
+                                &mut self.graph,
+                                data,
+                            );
+                        }
                     },
                     _ => unimplemented!(),
                 }

@@ -87,4 +87,16 @@ pub struct Trail(pub VecDeque<Point>);
 
 #[derive(Clone, Debug, PartialEq, Component)]
 #[storage(HashMapStorage)]
-pub struct SpeedGraph(pub Vec<f32>);
+pub struct SpeedGraph{
+    pub data: Vec<f32>,
+    pub display: bool,
+}
+
+impl SpeedGraph {
+    pub fn new() -> Self {
+        SpeedGraph {
+            data: Vec::with_capacity(500),
+            display: true,
+        }
+    }
+}

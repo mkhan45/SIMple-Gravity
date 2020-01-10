@@ -9,10 +9,10 @@ impl<'a> System<'a> for SpeedGraphSys {
 
     fn run(&mut self, (kinematics, mut graphs): Self::SystemData) {
         (&kinematics, &mut graphs).join().for_each(|(kine, graph)| {
-            graph.0.push(kine.vel.norm());
+            graph.data.push(kine.vel.norm());
 
-            while graph.0.len() >= 500 {
-                graph.0.remove(0);
+            while graph.data.len() >= 500 {
+                graph.data.remove(0);
             }
         });
     }
