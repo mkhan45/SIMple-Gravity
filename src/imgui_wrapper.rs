@@ -7,6 +7,7 @@ extern crate imgui;
 
 use imgui::*;
 use imgui_gfx_renderer::*;
+use imgui::StyleColor;
 
 use crate::Vector;
 
@@ -31,6 +32,7 @@ pub enum GraphType {
 pub enum UiChoice {
     DefaultUI,
     SideMenu(Option<Entity>),
+    Graph,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -49,6 +51,7 @@ pub struct ImGuiWrapper {
     pub sent_signals: Vec<UiSignal>,
     pub resolution: Vector,
     pub sidemenu: bool,
+    pub graph: bool,
 }
 
 pub fn make_sidepanel(
@@ -130,6 +133,20 @@ pub fn make_sidepanel(
     });
 }
 
+pub fn make_graph_ui(ui: &mut imgui::Ui, resolution: Vector, open_bool: &mut bool, data: &[f32]) {
+    // Window
+    imgui::Window::new(im_str!("Graph"))
+        .position([resolution.x * 0.6, 0.0], imgui::Condition::Appearing)
+        .size([resolution.x * 0.4, resolution.y * 0.4], imgui::Condition::Appearing)
+        .opened(open_bool)
+        .build(ui, || {
+            ui.plot_lines(im_str!("Stonks"), data)
+                .graph_size([resolution.x * 0.3, resolution.y * 0.3])
+                .scale_min(1.0)
+                .build();
+        });
+}
+
 pub fn make_default_ui(ui: &mut imgui::Ui) {
     // Window
     imgui::Window::new(im_str!("Hello world"))
@@ -196,6 +213,7 @@ impl ImGuiWrapper {
             sent_signals: Vec::with_capacity(1),
             resolution,
             sidemenu: false,
+            graph: false,
         }
     }
 
@@ -210,6 +228,7 @@ impl ImGuiWrapper {
         preview_iterations: &mut usize,
         items_hovered: &mut bool,
         selected_entity: bool,
+        graph_data: &[f32],
     ) {
         // Update mouse
         self.update_mouse();
@@ -246,7 +265,17 @@ impl ImGuiWrapper {
                             &mut self.sent_signals,
                             selected_entity,
                         );
-                    }
+                    },
+                    UiChoice::Graph => {
+                        self.graph = true;
+                        make_graph_ui(
+                            &mut ui,
+                            self.resolution,
+                            &mut self.graph,
+                            // &[1.0, 2.0, 1.3, 3.0],
+                            graph_data,
+                        );
+                    },
                     _ => unimplemented!(),
                 }
             }
@@ -273,7 +302,18 @@ impl ImGuiWrapper {
                     UiChoice::SideMenu(_) => false,
                     _ => true,
                 })
-                .cloned()
+            .cloned()
+                .collect();
+        }
+        if !self.graph {
+            self.shown_menus = self
+                .shown_menus
+                .iter()
+                .filter(|menu| match menu {
+                    UiChoice::Graph => false,
+                    _ => true,
+                })
+            .cloned()
                 .collect();
         }
     }
