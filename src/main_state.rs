@@ -15,7 +15,7 @@ use ggez::{
 
 #[allow(unused_imports)]
 use crate::ecs::components::{
-    Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph,
+    Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph,
 };
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
 use crate::ecs::resources::{
@@ -125,24 +125,22 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     }
                 }
                 UiSignal::AddGraph(graph_type) => {
+                    macro_rules! add_graph{
+                        ( $component:ty, $ent:expr) => {{
+                            let mut graphs = self.world.write_storage::<$component>();
+                            if graphs.get($ent).is_none(){
+                                graphs
+                                    .insert($ent, <$component>::new())
+                                    .expect("error adding graph");
+                            }
+                        }};
+                    }
+
                     if let Some(e) = self.selected_entity {
                         match graph_type {
-                            GraphType::Speed => {
-                                let mut speed_graphs = self.world.write_storage::<SpeedGraph>();
-                                if let None = speed_graphs.get(e) {
-                                    speed_graphs
-                                        .insert(e, SpeedGraph::new())
-                                        .expect("error adding graph");
-                                }
-                            }
-                            GraphType::XVel => {
-                                let mut xvel_graphs = self.world.write_storage::<XVelGraph>();
-                                if let None = xvel_graphs.get(e) {
-                                    xvel_graphs
-                                        .insert(e, XVelGraph::new())
-                                        .expect("error adding graph");
-                                }
-                            }
+                            GraphType::Speed => add_graph!(SpeedGraph, e),
+                            GraphType::XVel => add_graph!(XVelGraph, e),
+                            GraphType::YVel => add_graph!(YVelGraph, e),
                         }
                         if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
                             self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
@@ -175,7 +173,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.world
                     .delete_entity(entity)
                     .expect("error deleting collided preview");
-            });
+                });
 
             let coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -308,8 +306,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             }
         }
 
-        let mesh = builder.build(ctx).expect("error building mesh");
-        ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
+        if let Ok(mesh) = builder.build(ctx) {
+            ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new())
+                .expect("error drawing mesh");
+        }
 
         // Draw GUI and process sliders
         let hidpi_factor = self.hidpi_factor;
@@ -322,12 +322,16 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let mut graph_data: Vec<(GraphType, &[f32])> = Vec::new();
         let speed_graphs = self.world.read_storage::<SpeedGraph>();
         let xvel_graphs = self.world.read_storage::<XVelGraph>();
+        let yvel_graphs = self.world.read_storage::<YVelGraph>();
 
         speed_graphs.join().for_each(|data| {
             graph_data.push((GraphType::Speed, &data.data[..]));
         });
         xvel_graphs.join().for_each(|data| {
             graph_data.push((GraphType::XVel, &data.data[..]));
+        });
+        yvel_graphs.join().for_each(|data| {
+            graph_data.push((GraphType::YVel, &data.data[..]));
         });
 
         if let Some(e) = self.selected_entity {
@@ -381,26 +385,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         std::mem::drop(speed_graphs);
         std::mem::drop(xvel_graphs);
+        std::mem::drop(yvel_graphs);
 
         self.world.insert(MainIterations(main_iter));
         self.world.insert(PreviewIterations(preview_iter));
         self.world.insert(DT(dt));
-
-        let coords = ggez::graphics::screen_coordinates(ctx);
-        let resolution = self.world.fetch::<Resolution>().0;
-
-        let scale = [
-            (coords.w / resolution.x) * 300.,
-            coords.h / resolution.y * 300.,
-        ];
-
-        ggez::graphics::draw(
-            ctx,
-            &mesh,
-            graphics::DrawParam::new().scale(Vector::new(scale[0], scale[1])), // .dest(Point::new(pos[0], pos[1]))
-                                                                               // .offset(Point::new(-pos[0], -pos[1]))
-        )
-        .expect("error drawing graph mesh");
 
         graphics::present(ctx)
     }
@@ -413,9 +402,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -430,7 +419,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                             UiChoice::SideMenu(_) => false,
                             _ => true,
                         })
-                        .cloned()
+                    .cloned()
                         .collect();
 
                     let resolution = self.world.fetch::<Resolution>().0;
@@ -453,7 +442,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .insert(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -519,7 +508,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        })
+            })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -541,7 +530,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        });
+            });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -620,7 +609,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

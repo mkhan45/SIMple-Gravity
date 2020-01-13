@@ -9,6 +9,7 @@ use specs::prelude::*;
 mod ecs;
 use ecs::components::{
     Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector, XVelGraph,
+    YVelGraph,
 };
 
 #[allow(unused_imports)]
@@ -18,11 +19,9 @@ use ecs::resources::{
     MainIterations, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
 
+use ecs::systems::graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys};
 use ecs::systems::physics_systems::{PhysicsSys, PreviewPhysicsSys};
-
 use ecs::systems::trail_sys::{PreviewTrailSys, TrailSys};
-
-use ecs::systems::graph_sys::{SpeedGraphSys, XVelGraphSys};
 
 mod main_state;
 use main_state::MainState;
@@ -52,6 +51,7 @@ fn main() -> GameResult {
     world.register::<Trail>();
     world.register::<SpeedGraph>();
     world.register::<XVelGraph>();
+    world.register::<YVelGraph>();
 
     // a simple orbit,
     // [x_pos, y_pos], [x_vel, y_vel], mass, radius
@@ -104,6 +104,7 @@ fn main() -> GameResult {
         .with(TrailSys, "trail_system", &[])
         .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
         .with(XVelGraphSys, "xvel_graph_system", &["physics_system"])
+        .with(YVelGraphSys, "yvel_graph_system", &["physics_system"])
         .build();
 
     let mut preview_dispatcher = DispatcherBuilder::new()

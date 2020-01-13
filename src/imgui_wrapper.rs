@@ -29,6 +29,7 @@ pub struct MouseState {
 pub enum GraphType {
     Speed,
     XVel,
+    YVel,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Hash, Eq)]
@@ -112,6 +113,10 @@ pub fn make_sidepanel(
                 signals.push(UiSignal::AddGraph(GraphType::XVel));
             }
 
+            if ui.small_button(im_str!("Graph Y Velocity")) {
+                signals.push(UiSignal::AddGraph(GraphType::YVel));
+            }
+
             if ui.small_button(im_str!("Delete Body")) {
                 signals.push(UiSignal::Delete);
             }
@@ -146,13 +151,14 @@ pub fn make_graph_ui(
     resolution: Vector,
     open_bool: &mut bool,
     data: &[f32],
-    graph_type: &GraphType,
+    graph_type: GraphType,
 ) {
     // Window
 
     let graph_name = match graph_type {
         GraphType::Speed => im_str!("Speed"),
         GraphType::XVel => im_str!("X Velocity"),
+        GraphType::YVel => im_str!("Y Velocity"),
     };
 
     imgui::Window::new(im_str!("Graphs"))
@@ -296,7 +302,7 @@ impl ImGuiWrapper {
                                 self.resolution,
                                 &mut self.graph,
                                 data,
-                                graph_type,
+                                *graph_type,
                             );
                         }
                     }
