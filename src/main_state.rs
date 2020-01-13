@@ -14,7 +14,7 @@ use ggez::{
 };
 
 #[allow(unused_imports)]
-use crate::ecs::components::{Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail};
+use crate::ecs::components::{Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph};
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
 use crate::imgui_wrapper::*;
 use crate::ecs::resources::{
@@ -132,10 +132,18 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                                         .insert(e, SpeedGraph::new())
                                         .expect("error adding graph");
                                 }
-                                if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
-                                    self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
+                            },
+                            GraphType::XVel => {
+                                let mut xvel_graphs = self.world.write_storage::<XVelGraph>();
+                                if let None = xvel_graphs.get(e) {
+                                    xvel_graphs
+                                        .insert(e, XVelGraph::new())
+                                        .expect("error adding graph");
                                 }
-                            }
+                            },
+                        }
+                        if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
+                            self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
                         }
                     }
                 }
@@ -309,11 +317,15 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let mut main_iter = self.world.fetch::<MainIterations>().0;
         let mut preview_iter = self.world.fetch::<PreviewIterations>().0;
 
-        let mut graph_data: Vec<&[f32]> = Vec::new();
+        let mut graph_data: Vec<(GraphType, &[f32])> = Vec::new();
         let speed_graphs = self.world.read_storage::<SpeedGraph>();
+        let xvel_graphs = self.world.read_storage::<XVelGraph>();
 
         speed_graphs.join().for_each(|data|{
-            graph_data.push(&data.data[..]);
+            graph_data.push((GraphType::Speed, &data.data[..]));
+        });
+        xvel_graphs.join().for_each(|data|{
+            graph_data.push((GraphType::XVel, &data.data[..]));
         });
 
         if let Some(e) = self.selected_entity {
@@ -366,6 +378,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         }
 
         std::mem::drop(speed_graphs);
+        std::mem::drop(xvel_graphs);
 
         self.world.insert(MainIterations(main_iter));
         self.world.insert(PreviewIterations(preview_iter));

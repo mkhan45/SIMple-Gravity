@@ -100,3 +100,19 @@ impl SpeedGraph {
         }
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Component)]
+#[storage(HashMapStorage)]
+pub struct XVelGraph{
+    pub data: Vec<f32>,
+    pub display: bool,
+}
+
+impl XVelGraph {
+    pub fn new() -> Self {
+        XVelGraph {
+            data: Vec::with_capacity(500),
+            display: true,
+        }
+    }
+}

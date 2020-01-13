@@ -28,6 +28,7 @@ pub struct MouseState {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum GraphType {
     Speed,
+    XVel
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Hash, Eq)]
@@ -107,6 +108,10 @@ pub fn make_sidepanel(
                 signals.push(UiSignal::AddGraph(GraphType::Speed));
             }
 
+            if ui.small_button(im_str!("Graph X Velocity")) {
+                signals.push(UiSignal::AddGraph(GraphType::XVel));
+            }
+
             if ui.small_button(im_str!("Delete Body")) {
                 signals.push(UiSignal::Delete);
             }
@@ -136,18 +141,23 @@ pub fn make_sidepanel(
     });
 }
 
-pub fn make_graph_ui(ui: &mut imgui::Ui, resolution: Vector, open_bool: &mut bool, data: &[f32]) {
+pub fn make_graph_ui(ui: &mut imgui::Ui, resolution: Vector, open_bool: &mut bool, data: &[f32], graph_type: &GraphType) {
     // Window
-    imgui::Window::new(im_str!("Graph"))
+
+    let graph_name = match graph_type {
+        GraphType::Speed => im_str!("Speed"),
+        GraphType::XVel => im_str!("X Velocity"),
+    };
+    
+    imgui::Window::new(im_str!("Graphs"))
         .position([resolution.x * 0.6, 0.0], imgui::Condition::Appearing)
         .size([resolution.x * 0.4, resolution.y * 0.4], imgui::Condition::Appearing)
         .opened(open_bool)
         .build(ui, || {
-            ui.plot_lines(im_str!("Stonks"), data)
+            ui.plot_lines(graph_name, data)
                 .graph_size([resolution.x * 0.3, resolution.y * 0.3])
-                .scale_min(1.0)
                 .build();
-        });
+            });
 }
 
 pub fn make_default_ui(ui: &mut imgui::Ui) {
@@ -231,7 +241,7 @@ impl ImGuiWrapper {
         preview_iterations: &mut usize,
         items_hovered: &mut bool,
         selected_entity: bool,
-        graph_data: Vec<&[f32]>,
+        graph_data: Vec<(GraphType, &[f32])>,
     ) {
         // Update mouse
         self.update_mouse();
@@ -271,12 +281,13 @@ impl ImGuiWrapper {
                     },
                     UiChoice::Graph => {
                         self.graph = true;
-                        for data in graph_data.iter() {
+                        for (graph_type, data) in graph_data.iter() {
                             make_graph_ui(
                                 &mut ui,
                                 self.resolution,
                                 &mut self.graph,
                                 data,
+                                graph_type,
                             );
                         }
                     },
