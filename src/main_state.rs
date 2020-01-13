@@ -124,11 +124,12 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         self.selected_entity = None;
                     }
                 }
+
                 UiSignal::AddGraph(graph_type) => {
-                    macro_rules! add_graph{
+                    macro_rules! add_graph {
                         ( $component:ty, $ent:expr) => {{
                             let mut graphs = self.world.write_storage::<$component>();
-                            if graphs.get($ent).is_none(){
+                            if graphs.get($ent).is_none() {
                                 graphs
                                     .insert($ent, <$component>::new())
                                     .expect("error adding graph");
@@ -173,7 +174,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.world
                     .delete_entity(entity)
                     .expect("error deleting collided preview");
-                });
+            });
 
             let coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -402,9 +403,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -419,7 +420,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                             UiChoice::SideMenu(_) => false,
                             _ => true,
                         })
-                    .cloned()
+                        .cloned()
                         .collect();
 
                     let resolution = self.world.fetch::<Resolution>().0;
@@ -442,7 +443,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .insert(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -508,7 +509,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            })
+        })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -530,7 +531,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            });
+        });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -609,7 +610,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

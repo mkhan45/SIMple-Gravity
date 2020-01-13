@@ -1,9 +1,7 @@
 use crate::ecs::components::{Kinematics, SpeedGraph, XVelGraph, YVelGraph};
 use specs::prelude::*;
 
-// maybe these should all be in one system
-
-macro_rules! new_graphsys {
+macro_rules! make_graphsys {
     ( $sys:ident, $comp:ty, $access:ident) => {
         pub struct $sys;
         impl<'a> System<'a> for $sys {
@@ -22,14 +20,17 @@ macro_rules! new_graphsys {
     };
 }
 
-#[rustfmt::skip]
-fn norm_access(kine: &Kinematics) -> f32 { kine.vel.norm() }
-new_graphsys!(SpeedGraphSys, SpeedGraph, norm_access);
+fn norm_access(kine: &Kinematics) -> f32 {
+    kine.vel.norm()
+}
+make_graphsys!(SpeedGraphSys, SpeedGraph, norm_access);
 
-#[rustfmt::skip]
-fn x_vel_access(kine: &Kinematics) -> f32 { kine.vel.x }
-new_graphsys!(XVelGraphSys, XVelGraph, x_vel_access);
+fn x_vel_access(kine: &Kinematics) -> f32 {
+    kine.vel.x
+}
+make_graphsys!(XVelGraphSys, XVelGraph, x_vel_access);
 
-#[rustfmt::skip]
-fn y_vel_access(kine: &Kinematics) -> f32 { kine.vel.y }
-new_graphsys!(YVelGraphSys, YVelGraph, y_vel_access);
+fn y_vel_access(kine: &Kinematics) -> f32 {
+    kine.vel.y
+}
+make_graphsys!(YVelGraphSys, YVelGraph, y_vel_access);
