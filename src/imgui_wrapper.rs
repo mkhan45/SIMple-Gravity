@@ -7,13 +7,14 @@ extern crate imgui;
 
 use imgui::*;
 use imgui_gfx_renderer::*;
-use imgui::StyleColor;
 
 use crate::Vector;
 
 use specs::prelude::*;
 
 use std::time;
+
+use std::collections::HashSet;
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
 pub struct MouseState {
@@ -27,7 +28,7 @@ pub enum GraphType {
     Speed,
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Hash, Eq)]
 #[allow(dead_code)]
 pub enum UiChoice {
     DefaultUI,
@@ -47,7 +48,7 @@ pub struct ImGuiWrapper {
     pub renderer: Renderer<gfx_core::format::Rgba8, gfx_device_gl::Resources>,
     pub last_frame: time::Instant,
     pub mouse_state: MouseState,
-    pub shown_menus: Vec<UiChoice>,
+    pub shown_menus: HashSet<UiChoice>,
     pub sent_signals: Vec<UiSignal>,
     pub resolution: Vector,
     pub sidemenu: bool,
@@ -209,7 +210,7 @@ impl ImGuiWrapper {
             renderer,
             last_frame: time::Instant::now(),
             mouse_state: MouseState::default(),
-            shown_menus: Vec::with_capacity(2),
+            shown_menus: HashSet::with_capacity(2),
             sent_signals: Vec::with_capacity(1),
             resolution,
             sidemenu: false,
@@ -307,15 +308,7 @@ impl ImGuiWrapper {
                 .collect();
         }
         if !self.graph {
-            self.shown_menus = self
-                .shown_menus
-                .iter()
-                .filter(|menu| match menu {
-                    UiChoice::Graph => false,
-                    _ => true,
-                })
-            .cloned()
-                .collect();
+            self.shown_menus.remove(&UiChoice::Graph);
         }
     }
 

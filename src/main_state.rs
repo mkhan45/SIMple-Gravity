@@ -133,7 +133,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                                         .expect("error adding graph");
                                 }
                                 if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
-                                    self.imgui_wrapper.shown_menus.push(UiChoice::Graph);
+                                    self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
                                 }
                             }
                         }
@@ -437,7 +437,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
                     self.imgui_wrapper
                         .shown_menus
-                        .push(UiChoice::SideMenu(self.selected_entity));
+                        .insert(UiChoice::SideMenu(self.selected_entity));
                     }
                 MouseButton::Left => {
                     // set up for creating new body
