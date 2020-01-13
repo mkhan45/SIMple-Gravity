@@ -5,10 +5,10 @@ use gfx_device_gl;
 
 extern crate imgui;
 
-use imgui::*;
-use imgui_gfx_renderer::*;
 #[allow(unused_imports)]
 use imgui::StyleColor;
+use imgui::*;
+use imgui_gfx_renderer::*;
 
 use crate::Vector;
 
@@ -28,7 +28,7 @@ pub struct MouseState {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum GraphType {
     Speed,
-    XVel
+    XVel,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Hash, Eq)]
@@ -141,23 +141,32 @@ pub fn make_sidepanel(
     });
 }
 
-pub fn make_graph_ui(ui: &mut imgui::Ui, resolution: Vector, open_bool: &mut bool, data: &[f32], graph_type: &GraphType) {
+pub fn make_graph_ui(
+    ui: &mut imgui::Ui,
+    resolution: Vector,
+    open_bool: &mut bool,
+    data: &[f32],
+    graph_type: &GraphType,
+) {
     // Window
 
     let graph_name = match graph_type {
         GraphType::Speed => im_str!("Speed"),
         GraphType::XVel => im_str!("X Velocity"),
     };
-    
+
     imgui::Window::new(im_str!("Graphs"))
         .position([resolution.x * 0.6, 0.0], imgui::Condition::Appearing)
-        .size([resolution.x * 0.4, resolution.y * 0.4], imgui::Condition::Appearing)
+        .size(
+            [resolution.x * 0.4, resolution.y * 0.4],
+            imgui::Condition::Appearing,
+        )
         .opened(open_bool)
         .build(ui, || {
             ui.plot_lines(graph_name, data)
                 .graph_size([resolution.x * 0.3, resolution.y * 0.3])
                 .build();
-            });
+        });
 }
 
 pub fn make_default_ui(ui: &mut imgui::Ui) {
@@ -278,7 +287,7 @@ impl ImGuiWrapper {
                             &mut self.sent_signals,
                             selected_entity,
                         );
-                    },
+                    }
                     UiChoice::Graph => {
                         self.graph = true;
                         for (graph_type, data) in graph_data.iter() {
@@ -290,7 +299,7 @@ impl ImGuiWrapper {
                                 graph_type,
                             );
                         }
-                    },
+                    }
                     _ => unimplemented!(),
                 }
             }
@@ -317,7 +326,7 @@ impl ImGuiWrapper {
                     UiChoice::SideMenu(_) => false,
                     _ => true,
                 })
-            .cloned()
+                .cloned()
                 .collect();
         }
         if !self.graph {

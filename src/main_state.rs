@@ -14,12 +14,14 @@ use ggez::{
 };
 
 #[allow(unused_imports)]
-use crate::ecs::components::{Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph};
+use crate::ecs::components::{
+    Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph,
+};
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
-use crate::imgui_wrapper::*;
 use crate::ecs::resources::{
     MainIterations, MousePos, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
+use crate::imgui_wrapper::*;
 #[allow(unused_imports)]
 use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
@@ -132,7 +134,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                                         .insert(e, SpeedGraph::new())
                                         .expect("error adding graph");
                                 }
-                            },
+                            }
                             GraphType::XVel => {
                                 let mut xvel_graphs = self.world.write_storage::<XVelGraph>();
                                 if let None = xvel_graphs.get(e) {
@@ -140,7 +142,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                                         .insert(e, XVelGraph::new())
                                         .expect("error adding graph");
                                 }
-                            },
+                            }
                         }
                         if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
                             self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
@@ -173,7 +175,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.world
                     .delete_entity(entity)
                     .expect("error deleting collided preview");
-                });
+            });
 
             let coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -257,7 +259,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             });
 
             // this is kind of inelegant but previews don't have the Draw component and color is
-            // hardcoded 
+            // hardcoded
             // TODO?
             (&draws, &positions, &radii)
                 .join()
@@ -321,10 +323,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let speed_graphs = self.world.read_storage::<SpeedGraph>();
         let xvel_graphs = self.world.read_storage::<XVelGraph>();
 
-        speed_graphs.join().for_each(|data|{
+        speed_graphs.join().for_each(|data| {
             graph_data.push((GraphType::Speed, &data.data[..]));
         });
-        xvel_graphs.join().for_each(|data|{
+        xvel_graphs.join().for_each(|data| {
             graph_data.push((GraphType::XVel, &data.data[..]));
         });
 
@@ -387,17 +389,18 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let coords = ggez::graphics::screen_coordinates(ctx);
         let resolution = self.world.fetch::<Resolution>().0;
 
-        let scale = [(coords.w / resolution.x) * 300., coords.h / resolution.y * 300.];
+        let scale = [
+            (coords.w / resolution.x) * 300.,
+            coords.h / resolution.y * 300.,
+        ];
 
         ggez::graphics::draw(
             ctx,
             &mesh,
-            graphics::DrawParam::new()
-            .scale(Vector::new(scale[0], scale[1]))
-            // .dest(Point::new(pos[0], pos[1]))
-            // .offset(Point::new(-pos[0], -pos[1]))
+            graphics::DrawParam::new().scale(Vector::new(scale[0], scale[1])), // .dest(Point::new(pos[0], pos[1]))
+                                                                               // .offset(Point::new(-pos[0], -pos[1]))
         )
-            .expect("error drawing graph mesh");
+        .expect("error drawing graph mesh");
 
         graphics::present(ctx)
     }
@@ -410,9 +413,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -427,7 +430,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                             UiChoice::SideMenu(_) => false,
                             _ => true,
                         })
-                    .cloned()
+                        .cloned()
                         .collect();
 
                     let resolution = self.world.fetch::<Resolution>().0;
@@ -450,7 +453,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .insert(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -516,7 +519,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            })
+        })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -538,7 +541,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            });
+        });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -617,7 +620,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

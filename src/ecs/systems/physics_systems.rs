@@ -224,7 +224,7 @@ fn calc_collisions(
                         let mtotal = m1.0 + m2.0;
 
                         let new_vel = ptotal / mtotal;
-                        
+
                         // new radius calculated by summing 3D volumes
                         let new_rad = (r1.0.powi(3) + r2.0.powi(3)).powf(1. / 3.);
 
@@ -247,16 +247,15 @@ fn calc_collisions(
     (create_vec, delete_set)
 }
 
-
 // previews don't affect anything so the collision method is much simpler and separate
-fn calc_preview_collisions(positions: &WriteStorage<'_, Position>, 
-    radii: &WriteStorage<'_, Radius>, 
-    previews: &ReadStorage<'_, Preview>) -> bool {
-    (positions, radii, previews)
-        .join()
-        .any(|(pos1, rad1, _)| {
-            (positions, radii).join().any(|(pos2, rad2)| {
-                pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0
-            })
-        })
+fn calc_preview_collisions(
+    positions: &WriteStorage<'_, Position>,
+    radii: &WriteStorage<'_, Radius>,
+    previews: &ReadStorage<'_, Preview>,
+) -> bool {
+    (positions, radii, previews).join().any(|(pos1, rad1, _)| {
+        (positions, radii)
+            .join()
+            .any(|(pos2, rad2)| pos1 != pos2 && pos1.dist(pos2.0) <= rad1.0 + rad2.0)
+    })
 }

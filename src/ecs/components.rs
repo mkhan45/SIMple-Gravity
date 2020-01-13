@@ -87,7 +87,7 @@ pub struct Trail(pub VecDeque<Point>);
 
 #[derive(Clone, Debug, PartialEq, Component)]
 #[storage(HashMapStorage)]
-pub struct SpeedGraph{
+pub struct SpeedGraph {
     pub data: Vec<f32>,
     pub display: bool,
 }
@@ -103,7 +103,7 @@ impl SpeedGraph {
 
 #[derive(Clone, Debug, PartialEq, Component)]
 #[storage(HashMapStorage)]
-pub struct XVelGraph{
+pub struct XVelGraph {
     pub data: Vec<f32>,
     pub display: bool,
 }

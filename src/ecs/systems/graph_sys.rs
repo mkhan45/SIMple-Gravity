@@ -18,17 +18,20 @@ macro_rules! impl_graphsys {
                 });
             }
         }
-    }
+    };
 }
 
 pub struct SpeedGraphSys;
+#[rustfmt::skip]
 fn norm_access(kine: &Kinematics) -> f32 { kine.vel.norm() }
 impl_graphsys!(SpeedGraphSys, SpeedGraph, norm_access);
 
 pub struct XVelGraphSys;
+#[rustfmt::skip]
 fn x_vel_access(kine: &Kinematics) -> f32 { kine.vel.x }
 impl_graphsys!(XVelGraphSys, XVelGraph, x_vel_access);
 
 pub struct YVelGraphSys;
+#[rustfmt::skip]
 fn y_vel_access(kine: &Kinematics) -> f32 { kine.vel.y }
 // impl_graphsys!(YVelGraphSys, YVelGraph, y_vel_access);

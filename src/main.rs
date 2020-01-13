@@ -8,7 +8,7 @@ use specs::prelude::*;
 
 mod ecs;
 use ecs::components::{
-    Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector, XVelGraph
+    Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector, XVelGraph,
 };
 
 #[allow(unused_imports)]
