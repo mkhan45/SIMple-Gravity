@@ -85,34 +85,26 @@ pub struct Radius(pub f32);
 #[storage(VecStorage)]
 pub struct Trail(pub VecDeque<Point>);
 
-#[derive(Clone, Debug, PartialEq, Component)]
-#[storage(HashMapStorage)]
-pub struct SpeedGraph {
-    pub data: Vec<f32>,
-    pub display: bool,
-}
-
-impl SpeedGraph {
-    pub fn new() -> Self {
-        SpeedGraph {
-            data: Vec::with_capacity(500),
-            display: true,
+macro_rules! make_graph_comp {
+    ( $name:ident ) => {
+        #[derive(Clone, Debug, PartialEq, Component)]
+        #[storage(HashMapStorage)]
+        pub struct $name {
+            pub data: Vec<f32>,
+            pub display: bool,
         }
-    }
-}
 
-#[derive(Clone, Debug, PartialEq, Component)]
-#[storage(HashMapStorage)]
-pub struct XVelGraph {
-    pub data: Vec<f32>,
-    pub display: bool,
-}
-
-impl XVelGraph {
-    pub fn new() -> Self {
-        XVelGraph {
-            data: Vec::with_capacity(500),
-            display: true,
+        impl $name {
+            pub fn new() -> Self {
+                $name {
+                    data: Vec::with_capacity(500),
+                    display: true,
+                }
+            }
         }
-    }
+    };
 }
+
+make_graph_comp!(SpeedGraph);
+make_graph_comp!(XVelGraph);
+make_graph_comp!(YVelGraph);

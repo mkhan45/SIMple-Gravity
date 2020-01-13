@@ -1,10 +1,11 @@
-use crate::{Kinematics, SpeedGraph, XVelGraph};
+use crate::ecs::components::{Kinematics, SpeedGraph, XVelGraph, YVelGraph};
 use specs::prelude::*;
 
 // maybe these should all be in one system
 
-macro_rules! impl_graphsys {
-    ( $sys:ty, $comp:ty, $access:ident) => {
+macro_rules! new_graphsys {
+    ( $sys:ident, $comp:ty, $access:ident) => {
+        pub struct $sys;
         impl<'a> System<'a> for $sys {
             type SystemData = (ReadStorage<'a, Kinematics>, WriteStorage<'a, $comp>);
 
@@ -21,17 +22,14 @@ macro_rules! impl_graphsys {
     };
 }
 
-pub struct SpeedGraphSys;
 #[rustfmt::skip]
 fn norm_access(kine: &Kinematics) -> f32 { kine.vel.norm() }
-impl_graphsys!(SpeedGraphSys, SpeedGraph, norm_access);
+new_graphsys!(SpeedGraphSys, SpeedGraph, norm_access);
 
-pub struct XVelGraphSys;
 #[rustfmt::skip]
 fn x_vel_access(kine: &Kinematics) -> f32 { kine.vel.x }
-impl_graphsys!(XVelGraphSys, XVelGraph, x_vel_access);
+new_graphsys!(XVelGraphSys, XVelGraph, x_vel_access);
 
-pub struct YVelGraphSys;
 #[rustfmt::skip]
 fn y_vel_access(kine: &Kinematics) -> f32 { kine.vel.y }
-// impl_graphsys!(YVelGraphSys, YVelGraph, y_vel_access);
+new_graphsys!(YVelGraphSys, YVelGraph, y_vel_access);
