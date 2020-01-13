@@ -11,6 +11,7 @@ use ecs::components::{
     Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector,
 };
 
+#[allow(unused_imports)]
 use ecs::entities::{new_body, new_preview, Body, PreviewBody};
 
 use ecs::resources::{

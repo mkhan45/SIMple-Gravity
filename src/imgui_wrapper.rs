@@ -7,6 +7,7 @@ extern crate imgui;
 
 use imgui::*;
 use imgui_gfx_renderer::*;
+#[allow(unused_imports)]
 use imgui::StyleColor;
 
 use crate::Vector;

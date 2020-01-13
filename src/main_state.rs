@@ -25,7 +25,7 @@ use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 
 const CAMERA_SPEED: f32 = 1.5;
 
@@ -375,7 +375,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let resolution = self.world.fetch::<Resolution>().0;
 
         let scale = [(coords.w / resolution.x) * 300., coords.h / resolution.y * 300.];
-        let pos = [resolution.x - 0.25 * resolution.x + coords.x / scale[0], 1.0 + coords.y / scale[1]];
 
         ggez::graphics::draw(
             ctx,
