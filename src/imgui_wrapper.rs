@@ -45,6 +45,7 @@ pub enum UiSignal {
     Create,
     Delete,
     AddGraph(GraphType),
+    RemoveGraphs,
 }
 
 pub struct ImGuiWrapper {
@@ -102,6 +103,9 @@ pub fn make_sidepanel(
             .build();
         if ui.small_button(im_str!("Toggle Create Body")) {
             signals.push(UiSignal::Create);
+        }
+        if ui.small_button(im_str!("Remove Graphs")) {
+            signals.push(UiSignal::RemoveGraphs);
         }
 
         if selected_entity {
