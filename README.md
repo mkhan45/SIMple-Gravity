@@ -10,6 +10,9 @@ Right click to show the GUI and press escape to hide it. Right clicking on a bod
 The start scenario has a simple orbit
 ![](orbit.gif)
 
+You can graph various properties such as speed (more to come)
+![](graph.gif)
+
 There are previews/predictions when you create a new body
 
 The orbit changes due to integration error, but the timestep is adjustable
