@@ -125,26 +125,31 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     }
                 }
                 UiSignal::AddGraph(graph_type) => {
-                    macro_rules! add_graph {
-                        ( $component:ty, $ent:expr) => {{
-                            let mut graphs = self.world.write_storage::<$component>();
-                            if graphs.get($ent).is_none() {
-                                graphs
-                                    .insert($ent, <$component>::new())
-                                    .expect("error adding graph");
-                            } else {
-                                graphs.get_mut($ent).unwrap().display = true;
-                            }
-                        }};
-                    }
+                    macro_rules! add_graphs {
+                        ( $ent:expr, $gt:expr, $( [$graph_type:pat, $component:ty] ),* ) => {{
+                            match $gt {
+                                $(
+                                    $graph_type => {
+                                        let mut graphs = self.world.write_storage::<$component>();
+                                        if graphs.get($ent).is_none() {
+                                            graphs
+                                                .insert($ent, <$component>::new())
+                                                .expect("error adding graph");
+                                            } else {
+                                                graphs.get_mut($ent).unwrap().display = true;
+                                        }
+                                    },
+                                )*
+                            };
+                        }}}
 
                     if let Some(e) = self.selected_entity {
-                        match graph_type {
-                            GraphType::Speed => add_graph!(SpeedGraph, e),
-                            GraphType::XVel => add_graph!(XVelGraph, e),
-                            GraphType::YVel => add_graph!(YVelGraph, e),
-                            GraphType::Accel => add_graph!(AccelGraph, e),
-                        }
+                        add_graphs!(
+                            e, graph_type,
+                            [GraphType::Speed, SpeedGraph],
+                            [GraphType::XVel, XVelGraph],
+                            [GraphType::YVel, YVelGraph],
+                            [GraphType::Accel, AccelGraph]);
                         if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
                             self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
                         }
