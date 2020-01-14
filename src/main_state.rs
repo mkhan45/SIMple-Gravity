@@ -15,7 +15,7 @@ use ggez::{
 
 #[allow(unused_imports)]
 use crate::ecs::components::{
-    Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph,
+    Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph, AccelGraph
 };
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
 use crate::ecs::resources::{
@@ -143,6 +143,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                             GraphType::Speed => add_graph!(SpeedGraph, e),
                             GraphType::XVel => add_graph!(XVelGraph, e),
                             GraphType::YVel => add_graph!(YVelGraph, e),
+                            GraphType::Accel => add_graph!(AccelGraph, e),
                         }
                         if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
                             self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);

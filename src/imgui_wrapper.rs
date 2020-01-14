@@ -30,6 +30,7 @@ pub enum GraphType {
     Speed,
     XVel,
     YVel,
+    Accel,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Hash, Eq)]
@@ -163,6 +164,7 @@ pub fn make_graph_ui(
         GraphType::Speed => im_str!("Speed"),
         GraphType::XVel => im_str!("X Velocity"),
         GraphType::YVel => im_str!("Y Velocity"),
+        _ => panic!("{:#?} is not an imgui graph", graph_type),
     };
 
     imgui::Window::new(im_str!("Graphs"))

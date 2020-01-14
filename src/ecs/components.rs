@@ -86,13 +86,14 @@ pub struct Radius(pub f32);
 pub struct Trail(pub VecDeque<Point>);
 
 macro_rules! make_graph_components {
-    ( $( $name:ident ),* ) => {
+    ( $( [$name:ident, $dtype:ty] ),* ) => {
         $(
             #[derive(Clone, Debug, PartialEq, Component)]
             #[storage(HashMapStorage)]
             pub struct $name {
-                pub data: Vec<f32>,
+                pub data: Vec<$dtype>,
                 pub display: bool,
+                pub marked_for_undisplay: bool,
             }
 
             impl $name {
@@ -100,6 +101,7 @@ macro_rules! make_graph_components {
                     $name {
                         data: Vec::with_capacity(500),
                         display: true,
+                        marked_for_undisplay: false,
                     }
                 }
             }
@@ -107,4 +109,8 @@ macro_rules! make_graph_components {
     };
 }
 
-make_graph_components!(SpeedGraph, XVelGraph, YVelGraph);
+make_graph_components!(
+    [SpeedGraph, f32], 
+    [XVelGraph, f32], 
+    [YVelGraph, f32],
+    [AccelGraph, Vector]);
