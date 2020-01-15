@@ -1,5 +1,5 @@
-use ggez::{graphics, Context};
 use ggez::event::{KeyCode, KeyMods};
+use ggez::{graphics, Context};
 
 use gfx_core::{handle::RenderTargetView, memory::Typed};
 use gfx_device_gl;
@@ -344,7 +344,7 @@ impl ImGuiWrapper {
                     UiChoice::SideMenu(_) => false,
                     _ => true,
                 })
-            .cloned()
+                .cloned()
                 .collect();
         }
         if !self.graph {

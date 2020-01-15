@@ -6,7 +6,7 @@ use specs::{
 };
 
 use std::fs::File;
-use std::io::{Write, Error};
+use std::io::{Error, Write};
 
 use crate::ecs::components::{Draw, Kinematics, Mass, Position, Radius, SaveMarker};
 
