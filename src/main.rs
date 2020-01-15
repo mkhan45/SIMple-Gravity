@@ -5,7 +5,7 @@ use ggez::*;
 
 extern crate specs;
 use specs::prelude::*;
-use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
+use specs::saveload::{SimpleMarker, SimpleMarkerAllocator, MarkedBuilder};
 
 extern crate serde;
 extern crate ron;
@@ -59,6 +59,7 @@ fn main() -> GameResult {
     world.register::<XVelGraph>();
     world.register::<YVelGraph>();
     world.register::<SimpleMarker<SaveMarker>>();
+    world.insert(SimpleMarkerAllocator::<SaveMarker>::new());
 
     // a simple orbit,
     // [x_pos, y_pos], [x_vel, y_vel], mass, radius
@@ -88,6 +89,7 @@ fn main() -> GameResult {
             .with(draw)
             .with(rad)
             .with(trail)
+            .marked::<SimpleMarker<SaveMarker>>()
             .build();
     }
 
@@ -105,7 +107,6 @@ fn main() -> GameResult {
     world.insert(Paused(false));
     world.insert(StartPoint(None));
     world.insert(NewPreview(false));
-    world.insert(SimpleMarkerAllocator::<SaveMarker>::new());
 
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])

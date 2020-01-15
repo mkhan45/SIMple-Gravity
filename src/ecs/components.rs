@@ -11,8 +11,6 @@ use serde::{Serialize, Deserialize};
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
 
-#[derive(Default, Component)]
-#[storage(NullStorage)]
 pub struct SaveMarker;
 
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Component, Serialize, Deserialize)]
