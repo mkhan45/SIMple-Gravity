@@ -1,8 +1,8 @@
+use crate::ecs::components::SaveMarker;
 use crate::ecs::components::*;
 use crate::{Point, Vector};
-use crate::ecs::components::SaveMarker;
 use specs::prelude::*;
-use specs::saveload::{SimpleMarker, MarkedBuilder};
+use specs::saveload::{MarkedBuilder, SimpleMarker};
 
 use std::collections::VecDeque;
 

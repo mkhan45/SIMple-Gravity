@@ -5,17 +5,17 @@ use ggez::*;
 
 extern crate specs;
 use specs::prelude::*;
-use specs::saveload::{SimpleMarker, SimpleMarkerAllocator, MarkedBuilder};
+use specs::saveload::{MarkedBuilder, SimpleMarker, SimpleMarkerAllocator};
 
-extern crate serde;
 extern crate ron;
+extern crate serde;
 
 mod saveload;
 
 mod ecs;
 use ecs::components::{
-    Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail, Vector, XVelGraph,
-    YVelGraph, SaveMarker
+    Draw, Kinematics, Mass, Point, Position, Preview, Radius, SaveMarker, SpeedGraph, Trail,
+    Vector, XVelGraph, YVelGraph,
 };
 
 #[allow(unused_imports)]

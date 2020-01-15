@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 use specs::prelude::*;
 use specs::Component;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;

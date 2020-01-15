@@ -2,10 +2,10 @@ use ron;
 use specs::{
     error::NoError,
     prelude::*,
-    saveload::{SerializeComponents, SimpleMarker}
+    saveload::{SerializeComponents, SimpleMarker},
 };
 
-use crate::ecs::components::{Position, Kinematics, Mass, Draw, Radius, SaveMarker};
+use crate::ecs::components::{Draw, Kinematics, Mass, Position, Radius, SaveMarker};
 
 pub fn serialize_world(world: &World) -> String {
     let entities = world.entities();
@@ -22,8 +22,9 @@ pub fn serialize_world(world: &World) -> String {
         &(&positions, &kinematics, &masses, &draws, &radii),
         &entities,
         &markers,
-        &mut ser
-        ).expect("error serializing");
+        &mut ser,
+    )
+    .expect("error serializing");
 
     ser.into_output_string()
 }
