@@ -110,7 +110,8 @@ macro_rules! make_graph_components {
 }
 
 make_graph_components!(
-    [SpeedGraph, f32], 
-    [XVelGraph, f32], 
+    [SpeedGraph, f32],
+    [XVelGraph, f32],
     [YVelGraph, f32],
-    [AccelGraph, Vector]);
+    [AccelGraph, Vector]
+);

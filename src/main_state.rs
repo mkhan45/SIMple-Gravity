@@ -15,7 +15,8 @@ use ggez::{
 
 #[allow(unused_imports)]
 use crate::ecs::components::{
-    Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph, AccelGraph
+    AccelGraph, Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph,
+    YVelGraph,
 };
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
 use crate::ecs::resources::{
@@ -145,11 +146,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
                     if let Some(e) = self.selected_entity {
                         add_graphs!(
-                            e, graph_type,
+                            e,
+                            graph_type,
                             [GraphType::Speed, SpeedGraph],
                             [GraphType::XVel, XVelGraph],
                             [GraphType::YVel, YVelGraph],
-                            [GraphType::Accel, AccelGraph]);
+                            [GraphType::Accel, AccelGraph]
+                        );
                         if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
                             self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
                         }
@@ -194,7 +197,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.world
                     .delete_entity(entity)
                     .expect("error deleting collided preview");
-                });
+            });
 
             let coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -349,7 +352,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         macro_rules! add_graph_data {
             ( $query:ident, $component:ty, $graph_type:expr ) => {
-                $query.join().filter(|data| data.display).for_each(|data|{
+                $query.join().filter(|data| data.display).for_each(|data| {
                     graph_data.push(($graph_type, &data.data[..]));
                 });
             };
@@ -408,6 +411,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             );
         }
 
+        // maybe i could use curly braces but w/e
         std::mem::drop(speed_graphs);
         std::mem::drop(xvel_graphs);
         std::mem::drop(yvel_graphs);
@@ -427,9 +431,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -444,7 +448,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                             UiChoice::SideMenu(_) => false,
                             _ => true,
                         })
-                    .cloned()
+                        .cloned()
                         .collect();
 
                     let resolution = self.world.fetch::<Resolution>().0;
@@ -467,7 +471,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .insert(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -506,10 +510,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         let coords = ggez::graphics::screen_coordinates(ctx);
                         p = scale_pos(p, coords, resolution);
 
-                        create_body(
+                        self.selected_entity = Some(create_body(
                             &mut self.world,
                             new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
-                        );
+                        ));
                         self.world.insert(StartPoint(None));
                     }
                 }
@@ -533,7 +537,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            })
+        })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -555,7 +559,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            });
+        });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -634,7 +638,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));
