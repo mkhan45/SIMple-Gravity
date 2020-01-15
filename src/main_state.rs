@@ -350,7 +350,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let xvel_graphs = self.world.read_storage::<XVelGraph>();
         let yvel_graphs = self.world.read_storage::<YVelGraph>();
 
-        macro_rules! add_graph_data {
+        macro_rules! register_graph_data {
             ( $query:ident, $component:ty, $graph_type:expr ) => {
                 $query.join().filter(|data| data.display).for_each(|data| {
                     graph_data.push(($graph_type, &data.data[..]));
@@ -358,9 +358,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             };
         }
 
-        add_graph_data!(speed_graphs, SpeedGraph, GraphType::Speed);
-        add_graph_data!(xvel_graphs, XVelGraph, GraphType::XVel);
-        add_graph_data!(yvel_graphs, YVelGraph, GraphType::YVel);
+        register_graph_data!(speed_graphs, SpeedGraph, GraphType::Speed);
+        register_graph_data!(xvel_graphs, XVelGraph, GraphType::XVel);
+        register_graph_data!(yvel_graphs, YVelGraph, GraphType::YVel);
 
         if let Some(e) = self.selected_entity {
             let (mut mass, mut rad) = {
