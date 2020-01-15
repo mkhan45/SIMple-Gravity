@@ -622,7 +622,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         &mut self,
         _ctx: &mut Context,
         keycode: KeyCode,
-        _keymods: KeyMods,
+        keymods: KeyMods,
         _repeat: bool,
     ) {
         match keycode {
@@ -630,6 +630,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             KeyCode::Escape => self.imgui_wrapper.shown_menus.clear(),
             _ => {}
         };
+        self.imgui_wrapper.update_key_down(keycode, keymods);
     }
 
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
@@ -647,5 +648,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));
+    }
+
+    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, keymods: KeyMods) {
+        self.imgui_wrapper.update_key_up(keycode, keymods);
+    }
+
+    fn text_input_event(&mut self, _ctx: &mut Context, val: char) {
+        self.imgui_wrapper.update_text(val);
     }
 }

@@ -1,4 +1,5 @@
 use ggez::{graphics, Context};
+use ggez::event::{KeyCode, KeyMods};
 
 use gfx_core::{handle::RenderTargetView, memory::Typed};
 use gfx_device_gl;
@@ -338,7 +339,7 @@ impl ImGuiWrapper {
                     UiChoice::SideMenu(_) => false,
                     _ => true,
                 })
-                .cloned()
+            .cloned()
                 .collect();
         }
         if !self.graph {
@@ -368,5 +369,36 @@ impl ImGuiWrapper {
 
     pub fn update_mouse_down(&mut self, pressed: (bool, bool, bool)) {
         self.mouse_state.pressed = pressed;
+    }
+
+    pub fn update_key_up(&mut self, key: KeyCode, mods: KeyMods) {
+        if mods.contains(KeyMods::SHIFT) {
+            self.imgui.io_mut().key_shift = false;
+        }
+        if mods.contains(KeyMods::CTRL) {
+            self.imgui.io_mut().key_ctrl = false;
+        }
+        if mods.contains(KeyMods::ALT) {
+            self.imgui.io_mut().key_alt = false;
+        }
+
+        self.imgui.io_mut().keys_down[key as usize] = false;
+    }
+    pub fn update_key_down(&mut self, key: KeyCode, mods: KeyMods) {
+        if mods.contains(KeyMods::SHIFT) {
+            self.imgui.io_mut().key_shift = true;
+        }
+        if mods.contains(KeyMods::CTRL) {
+            self.imgui.io_mut().key_ctrl = true;
+        }
+        if mods.contains(KeyMods::ALT) {
+            self.imgui.io_mut().key_alt = true;
+        }
+
+        self.imgui.io_mut().keys_down[key as usize] = true;
+    }
+
+    pub fn update_text(&mut self, val: char) {
+        self.imgui.io_mut().add_input_character(val);
     }
 }
