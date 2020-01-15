@@ -90,6 +90,15 @@ pub fn make_sidepanel(
             [resolution.x * 0.6, resolution.y],
         );
     win.build(ui, || {
+        //constructs a small button that sends a UiSignal
+        macro_rules! signal_button {
+            ( $label:expr, $signal:expr ) => {
+                if ui.small_button(im_str!($label)) {
+                    signals.push($signal);
+                }
+            };
+        }
+
         if selected_entity {
             ui.text(im_str!("Edit Object"));
         } else {
@@ -104,26 +113,14 @@ pub fn make_sidepanel(
         ui.drag_float(im_str!("Radius"), rad)
             .speed(rad_speed)
             .build();
-        if ui.small_button(im_str!("Toggle Create Body")) {
-            signals.push(UiSignal::Create);
-        }
+
+        signal_button!("Toggle Create Body", UiSignal::Create);
 
         if selected_entity {
-            if ui.small_button(im_str!("Graph Speed")) {
-                signals.push(UiSignal::AddGraph(GraphType::Speed));
-            }
-
-            if ui.small_button(im_str!("Graph X Velocity")) {
-                signals.push(UiSignal::AddGraph(GraphType::XVel));
-            }
-
-            if ui.small_button(im_str!("Graph Y Velocity")) {
-                signals.push(UiSignal::AddGraph(GraphType::YVel));
-            }
-
-            if ui.small_button(im_str!("Delete Body")) {
-                signals.push(UiSignal::Delete);
-            }
+            signal_button!("Graph Speed", UiSignal::AddGraph(GraphType::Speed));
+            signal_button!("Graph X Velocity", UiSignal::AddGraph(GraphType::XVel));
+            signal_button!("Graph Y Velocity", UiSignal::AddGraph(GraphType::YVel));
+            signal_button!("Delete Body", UiSignal::Delete);
         }
         ui.separator();
         ui.text(im_str!("DT"));
@@ -148,12 +145,8 @@ pub fn make_sidepanel(
         *num_iterations = num_iterations_i32 as usize;
         *preview_iterations = preview_iterations_i32 as usize;
 
-        if ui.small_button(im_str!("Remove Graphs")) {
-            signals.push(UiSignal::RemoveGraphs);
-        }
-        if ui.small_button(im_str!("Save the Universe")) {
-            signals.push(UiSignal::SaveState);
-        }
+        signal_button!("Remove Graphs", UiSignal::RemoveGraphs);
+        signal_button!("Save the Universe", UiSignal::SaveState);
     });
 }
 

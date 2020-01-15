@@ -37,7 +37,7 @@ impl<'a> System<'a> for PreviewTrailSys {
 
     fn run(&mut self, (positions, mut trails, previews): Self::SystemData) {
         (&positions, &mut trails, &previews)
-            .par_join()
+            .join()
             .for_each(|(pos, trail, _)| {
                 trail.0.push_back(pos.0);
             });
