@@ -445,17 +445,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         if !self.items_hovered {
             match button {
                 MouseButton::Right => {
-                    // delete clicked body
-                    self.imgui_wrapper.shown_menus = self
-                        .imgui_wrapper
-                        .shown_menus
-                        .iter()
-                        .filter(|menu| match menu {
-                            UiChoice::SideMenu(_) => false,
-                            _ => true,
-                        })
-                        .cloned()
-                        .collect();
+                    self.imgui_wrapper.remove_sidemenu();
 
                     let resolution = self.world.fetch::<Resolution>().0;
                     self.selected_entity = None;
@@ -628,7 +618,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     ) {
         match keycode {
             KeyCode::Space => self.world.get_mut::<Paused>().unwrap().toggle(),
-            KeyCode::Escape => self.imgui_wrapper.shown_menus.clear(),
+            KeyCode::Escape => self.imgui_wrapper.remove_sidemenu(),
             _ => {}
         };
         self.imgui_wrapper.update_key_down(keycode, keymods);

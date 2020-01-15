@@ -337,19 +337,18 @@ impl ImGuiWrapper {
             .unwrap();
 
         if !self.sidemenu {
-            self.shown_menus = self
-                .shown_menus
-                .iter()
-                .filter(|menu| match menu {
-                    UiChoice::SideMenu(_) => false,
-                    _ => true,
-                })
-                .cloned()
-                .collect();
+            self.remove_sidemenu();
         }
         if !self.graph {
             self.shown_menus.remove(&UiChoice::Graph);
         }
+    }
+
+    pub fn remove_sidemenu(&mut self) {
+        self.shown_menus.retain(|menu| match menu {
+            UiChoice::SideMenu(_) => false,
+            _ => true,
+        });
     }
 
     fn update_mouse(&mut self) {
