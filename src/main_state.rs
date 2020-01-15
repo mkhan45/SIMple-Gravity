@@ -13,6 +13,8 @@ use ggez::{
     Context, GameResult,
 };
 
+use crate::saveload::serialize_world;
+
 #[allow(unused_imports)]
 use crate::ecs::components::{
     AccelGraph, Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph,
@@ -227,6 +229,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
+        }
+        if ggez::timer::ticks(ctx) % 300 == 0 {
+            println!("{}", serialize_world(&self.world));
         }
 
         // run physics systems

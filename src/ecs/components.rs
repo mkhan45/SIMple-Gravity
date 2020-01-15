@@ -6,14 +6,20 @@ use std::collections::VecDeque;
 use specs::prelude::*;
 use specs::Component;
 
+use serde::{Serialize, Deserialize};
+
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
 
-#[derive(Default, Clone, Copy, Debug, PartialEq, Component)]
+#[derive(Default, Component)]
+#[storage(NullStorage)]
+pub struct SaveMarker;
+
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Component, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct Preview;
 
-#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[derive(Clone, Copy, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct Position(pub Point);
 
@@ -47,7 +53,7 @@ impl From<Point> for Position {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[derive(Clone, Copy, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct Kinematics {
     pub vel: Vector,
@@ -65,30 +71,30 @@ impl Kinematics {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[derive(Clone, Copy, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct Mass(pub f32);
 
-#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[derive(Clone, Copy, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct Draw(pub Color);
 
-#[derive(Default, Clone, Copy, Debug, PartialEq, Component)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Component, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct Static;
 
-#[derive(Clone, Copy, Debug, PartialEq, Component)]
+#[derive(Clone, Copy, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct Radius(pub f32);
 
-#[derive(Clone, Debug, PartialEq, Component)]
+#[derive(Clone, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct Trail(pub VecDeque<Point>);
 
 macro_rules! make_graph_components {
     ( $( [$name:ident, $dtype:ty] ),* ) => {
         $(
-            #[derive(Clone, Debug, PartialEq, Component)]
+            #[derive(Clone, Debug, PartialEq, Component, Serialize, Deserialize)]
             #[storage(HashMapStorage)]
             pub struct $name {
                 pub data: Vec<$dtype>,

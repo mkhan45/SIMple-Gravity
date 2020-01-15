@@ -1,6 +1,8 @@
 use crate::ecs::components::*;
 use crate::{Point, Vector};
+use crate::ecs::components::SaveMarker;
 use specs::prelude::*;
+use specs::saveload::{SimpleMarker, MarkedBuilder};
 
 use std::collections::VecDeque;
 
@@ -18,6 +20,7 @@ pub fn create_body(world: &mut World, body: Body) -> Entity {
         .with(body.3)
         .with(body.4)
         .with(body.5)
+        .marked::<SimpleMarker<SaveMarker>>()
         .build()
 }
 
