@@ -48,6 +48,7 @@ pub enum UiSignal {
     Delete,
     AddGraph(GraphType),
     RemoveGraphs,
+    SaveState,
 }
 
 pub struct ImGuiWrapper {
@@ -106,9 +107,6 @@ pub fn make_sidepanel(
         if ui.small_button(im_str!("Toggle Create Body")) {
             signals.push(UiSignal::Create);
         }
-        if ui.small_button(im_str!("Remove Graphs")) {
-            signals.push(UiSignal::RemoveGraphs);
-        }
 
         if selected_entity {
             if ui.small_button(im_str!("Graph Speed")) {
@@ -149,6 +147,13 @@ pub fn make_sidepanel(
 
         *num_iterations = num_iterations_i32 as usize;
         *preview_iterations = preview_iterations_i32 as usize;
+
+        if ui.small_button(im_str!("Remove Graphs")) {
+            signals.push(UiSignal::RemoveGraphs);
+        }
+        if ui.small_button(im_str!("Save the Universe")) {
+            signals.push(UiSignal::SaveState);
+        }
     });
 }
 

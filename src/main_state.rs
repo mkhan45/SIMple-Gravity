@@ -13,7 +13,7 @@ use ggez::{
     Context, GameResult,
 };
 
-use crate::saveload::serialize_world;
+use crate::saveload::save_world;
 
 #[allow(unused_imports)]
 use crate::ecs::components::{
@@ -172,7 +172,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         };
                     }
                     undisplay_graphs!(SpeedGraph, XVelGraph, YVelGraph);
-                }
+                },
+                UiSignal::SaveState => {
+                    match save_world(&self.world, "world.ron".to_string()) {
+                        Ok(()) => println!("Successfully saved the universe"),
+                        Err(e) => println!("Error saving the universe: {}", e),
+                    }
+                },
             });
         self.imgui_wrapper.sent_signals.clear();
 
@@ -199,7 +205,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.world
                     .delete_entity(entity)
                     .expect("error deleting collided preview");
-            });
+                });
 
             let coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -229,9 +235,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         if ggez::timer::ticks(ctx) % 60 == 0 {
             dbg!(ggez::timer::fps(ctx));
-        }
-        if ggez::timer::ticks(ctx) % 300 == 0 {
-            println!("{}", serialize_world(&self.world));
         }
 
         // run physics systems
@@ -436,9 +439,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -453,7 +456,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                             UiChoice::SideMenu(_) => false,
                             _ => true,
                         })
-                        .cloned()
+                    .cloned()
                         .collect();
 
                     let resolution = self.world.fetch::<Resolution>().0;
@@ -476,7 +479,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .insert(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -516,8 +519,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         p = scale_pos(p, coords, resolution);
 
                         self.selected_entity = Some(create_body(
-                            &mut self.world,
-                            new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
+                                &mut self.world,
+                                new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
                         ));
                         self.world.insert(StartPoint(None));
                     }
@@ -542,7 +545,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        })
+            })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -564,7 +567,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        });
+            });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -644,7 +647,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

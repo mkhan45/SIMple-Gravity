@@ -5,6 +5,9 @@ use specs::{
     saveload::{SerializeComponents, SimpleMarker},
 };
 
+use std::fs::File;
+use std::io::{Write, Error};
+
 use crate::ecs::components::{Draw, Kinematics, Mass, Position, Radius, SaveMarker};
 
 pub fn serialize_world(world: &World) -> String {
@@ -27,4 +30,10 @@ pub fn serialize_world(world: &World) -> String {
     .expect("error serializing");
 
     ser.into_output_string()
+}
+
+pub fn save_world(world: &World, filename: String) -> Result<(), Error> {
+    let mut file = File::create(filename)?;
+    file.write_all(serialize_world(world).as_bytes())?;
+    Ok(())
 }
