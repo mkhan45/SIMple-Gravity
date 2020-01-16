@@ -8,6 +8,13 @@ use specs::prelude::*;
 // 4. In main_state.rs register the graph data with register_graph_data!
 // 5. Add the graph to undisplay_graphs! and add_graphs!
 // TODO: Automate the last 2 (3?) steps
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum GraphType {
+    Speed,
+    XVel,
+    YVel,
+    Accel,
+}
 
 macro_rules! make_graphsys {
     ( $sys:ident, $comp:ty, $access:ident) => {

@@ -13,6 +13,7 @@ use ggez::{
     Context, GameResult,
 };
 
+use crate::main_state_utils::*;
 use crate::saveload::save_world;
 
 #[allow(unused_imports)]
@@ -24,6 +25,7 @@ use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
 use crate::ecs::resources::{
     MainIterations, MousePos, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
 };
+use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::*;
 #[allow(unused_imports)]
 use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
@@ -109,76 +111,7 @@ fn calc_offset(ctx: &Context) -> Vector {
 
 impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.world
-            .insert(MousePos(input::mouse::position(ctx).into()));
-
-        // process GUI events
-        self.imgui_wrapper
-            .sent_signals
-            .clone()
-            .drain(..)
-            .for_each(|signal| match signal {
-                UiSignal::Create => self.creating = !self.creating,
-                UiSignal::Delete => {
-                    if let Some(e) = self.selected_entity {
-                        self.world
-                            .delete_entity(e)
-                            .expect("error deleting selected_entity");
-                        self.selected_entity = None;
-                    }
-                }
-                UiSignal::AddGraph(graph_type) => {
-                    macro_rules! add_graphs {
-                        ( $ent:expr, $gt:expr, $( [$graph_type:pat, $component:ty] ),* ) => {{
-                            match $gt {
-                                $(
-                                    $graph_type => {
-                                        let mut graphs = self.world.write_storage::<$component>();
-                                        if graphs.get($ent).is_none() {
-                                            graphs
-                                                .insert($ent, <$component>::new())
-                                                .expect("error adding graph");
-                                            } else {
-                                                graphs.get_mut($ent).unwrap().display = true;
-                                        }
-                                    },
-                                )*
-                            };
-                        }}}
-
-                    if let Some(e) = self.selected_entity {
-                        add_graphs!(
-                            e,
-                            graph_type,
-                            [GraphType::Speed, SpeedGraph],
-                            [GraphType::XVel, XVelGraph],
-                            [GraphType::YVel, YVelGraph],
-                            [GraphType::Accel, AccelGraph]
-                        );
-                        if !self.imgui_wrapper.shown_menus.contains(&UiChoice::Graph) {
-                            self.imgui_wrapper.shown_menus.insert(UiChoice::Graph);
-                        }
-                    }
-                }
-                UiSignal::RemoveGraphs => {
-                    macro_rules! undisplay_graphs {
-                        ( $( $component:ty ),* ) => {
-                            $(
-                                let mut graphs = self.world.write_storage::<$component>();
-                                (&mut graphs).join().for_each(|graph|{
-                                    graph.display = false;
-                                });
-                            )*
-                        };
-                    }
-                    undisplay_graphs!(SpeedGraph, XVelGraph, YVelGraph);
-                }
-                UiSignal::SaveState => match save_world(&self.world, "world.ron".to_string()) {
-                    Ok(()) => println!("Successfully saved the universe"),
-                    Err(e) => println!("Error saving the universe: {}", e),
-                },
-            });
-        self.imgui_wrapper.sent_signals.clear();
+        self.process_gui_signals();
 
         // unselect selected entity if it collided
         if let Some(e) = self.selected_entity {
@@ -189,21 +122,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         // if preview collided, delete it and make a new one
         if self.world.fetch::<NewPreview>().0 {
-            let mut delset: HashSet<Entity> = HashSet::new();
-            {
-                let previews = self.world.read_storage::<Preview>();
-                let entities = self.world.entities();
-
-                (&entities, &previews).join().for_each(|(entity, _)| {
-                    delset.insert(entity);
-                });
-            }
-
-            delset.drain().for_each(|entity| {
-                self.world
-                    .delete_entity(entity)
-                    .expect("error deleting collided preview");
-            });
+            self.delete_preview();
 
             let coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -235,26 +154,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             dbg!(ggez::timer::fps(ctx));
         }
 
-        // run physics systems
-        let preview_iterations = self.world.fetch::<PreviewIterations>().0;
-        if !self.world.fetch::<Paused>().0 {
-            let main_iterations = self.world.fetch::<MainIterations>().0;
-
-            // do_physics(&mut self.world, ctx);
-            (0..main_iterations).for_each(|_| {
-                self.main_dispatcher.dispatch(&self.world);
-            });
-            self.world.maintain();
-        }
-        if let Some(e) = self.selected_entity {
-            if !self.world.is_alive(e) {
-                self.selected_entity = None;
-            }
-        }
-
-        (0..preview_iterations).for_each(|_| {
-            self.preview_dispatcher.dispatch(&self.world);
-        });
+        self.run_physics_systems();
 
         Ok(())
     }
@@ -356,6 +256,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let xvel_graphs = self.world.read_storage::<XVelGraph>();
         let yvel_graphs = self.world.read_storage::<YVelGraph>();
 
+        // adds graph data to gui
         macro_rules! register_graph_data {
             ( $query:ident, $component:ty, $graph_type:expr ) => {
                 $query.join().filter(|data| data.display).for_each(|data| {
@@ -538,6 +439,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
         self.imgui_wrapper.update_mouse_pos(x, y);
+        self.world
+            .insert(MousePos(input::mouse::position(ctx).into()));
 
         // delete old preview create a new one
         let mut delset: HashSet<Entity> = HashSet::new();

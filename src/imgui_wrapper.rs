@@ -11,6 +11,7 @@ use imgui::StyleColor;
 use imgui::*;
 use imgui_gfx_renderer::*;
 
+use crate::ecs::systems::graph_sys::GraphType;
 use crate::Vector;
 
 use specs::prelude::*;
@@ -24,14 +25,6 @@ pub struct MouseState {
     pos: (i32, i32),
     pressed: (bool, bool, bool),
     wheel: f32,
-}
-
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub enum GraphType {
-    Speed,
-    XVel,
-    YVel,
-    Accel,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Hash, Eq)]

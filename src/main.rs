@@ -10,6 +10,7 @@ use specs::saveload::{MarkedBuilder, SimpleMarker, SimpleMarkerAllocator};
 extern crate ron;
 extern crate serde;
 
+mod main_state_utils;
 mod saveload;
 
 mod ecs;
