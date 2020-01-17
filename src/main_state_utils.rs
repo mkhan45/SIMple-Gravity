@@ -3,7 +3,7 @@ use crate::ecs::resources::{MainIterations, Paused, PreviewIterations};
 use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::MainState;
-use crate::saveload::save_world;
+use crate::saveload::{save_world, load_world};
 use specs::prelude::*;
 
 use std::collections::HashSet;
@@ -96,6 +96,10 @@ impl<'a, 'b> MainState<'a, 'b> {
                 UiSignal::SaveState => match save_world(&self.world, "world.ron".to_string()) {
                     Ok(()) => println!("Successfully saved the universe"),
                     Err(e) => println!("Error saving the universe: {}", e),
+                },
+                UiSignal::LoadState => match load_world(&self.world, "world.ron".to_string()){
+                    Ok(()) => println!("Successfully loaded previous save"),
+                    Err(e) => println!("Error loading save: {}", e),
                 },
             });
         self.imgui_wrapper.sent_signals.clear();

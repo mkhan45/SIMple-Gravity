@@ -42,6 +42,7 @@ pub enum UiSignal {
     AddGraph(GraphType),
     RemoveGraphs,
     SaveState,
+    LoadState,
 }
 
 pub struct ImGuiWrapper {
@@ -140,6 +141,7 @@ pub fn make_sidepanel(
 
         signal_button!("Remove Graphs", UiSignal::RemoveGraphs);
         signal_button!("Save the Universe", UiSignal::SaveState);
+        signal_button!("Load Save", UiSignal::LoadState);
     });
 }
 
