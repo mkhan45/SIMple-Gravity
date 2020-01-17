@@ -241,6 +241,26 @@ impl ImGuiWrapper {
         // Renderer
         let renderer = Renderer::init(&mut imgui, &mut *factory, shaders).unwrap();
 
+        {
+            let io = imgui.io_mut();
+            io[Key::Tab] = KeyCode::Tab as _;
+            io[Key::LeftArrow] = KeyCode::Left as _;
+            io[Key::RightArrow] = KeyCode::Right as _;
+            io[Key::UpArrow] = KeyCode::Up as _;
+            io[Key::DownArrow] = KeyCode::Down as _;
+            io[Key::PageUp] = KeyCode::PageUp as _;
+            io[Key::PageDown] = KeyCode::PageDown as _;
+            io[Key::Home] = KeyCode::Home as _;
+            io[Key::End] = KeyCode::End as _;
+            io[Key::Insert] = KeyCode::Insert as _;
+            io[Key::Delete] = KeyCode::Delete as _;
+            io[Key::Backspace] = KeyCode::Back as _;
+            io[Key::Space] = KeyCode::Space as _;
+            io[Key::Enter] = KeyCode::Return as _;
+            io[Key::Escape] = KeyCode::Escape as _;
+            io[Key::KeyPadEnter] = KeyCode::NumpadEnter as _;
+        }
+
         // Create instace
         Self {
             imgui,
