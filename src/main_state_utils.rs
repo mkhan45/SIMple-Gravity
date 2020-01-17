@@ -94,13 +94,25 @@ impl<'a, 'b> MainState<'a, 'b> {
                     undisplay_graphs!(SpeedGraph, XVelGraph, YVelGraph);
                 }
                 UiSignal::SaveState => {
-                    match save_world(&self.world, self.imgui_wrapper.save_filename.to_string()) {
+                    match save_world(
+                        &self.world,
+                        format!(
+                            "saved_systems/{}",
+                            self.imgui_wrapper.save_filename.to_string()
+                        ),
+                    ) {
                         Ok(()) => println!("Successfully saved the universe"),
                         Err(e) => println!("Error saving the universe: {}", e),
                     }
                 }
                 UiSignal::LoadState => {
-                    match load_world(&self.world, self.imgui_wrapper.load_filename.to_string()) {
+                    match load_world(
+                        &self.world,
+                        format!(
+                            "saved_systems/{}",
+                            self.imgui_wrapper.load_filename.to_string()
+                        ),
+                    ) {
                         Ok(()) => println!("Successfully loaded previous save"),
                         Err(e) => println!("Error loading save: {}", e),
                     }
