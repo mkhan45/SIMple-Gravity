@@ -2,9 +2,9 @@ use crate::ecs::components::{AccelGraph, Preview, SpeedGraph, XVelGraph, YVelGra
 use crate::ecs::resources::{MainIterations, Paused, PreviewIterations};
 use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::{UiChoice, UiSignal};
-use crate::main_state::MainState;
 use crate::saveload::{load_world, save_world};
 use specs::prelude::*;
+use crate::main_state::state::MainState;
 
 use std::collections::HashSet;
 

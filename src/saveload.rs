@@ -96,9 +96,9 @@ pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
     }
 
     let positions = world.write_storage::<Position>();
-    (&entities, &positions).join().for_each(|(e, p)| {
+    (&entities, &positions).join().for_each(|(entity, _)| {
         trails
-            .insert(e, Trail(VecDeque::with_capacity(36)))
+            .insert(entity, Trail(VecDeque::with_capacity(36)))
             .expect("Error adding trail to loaded body");
     });
 

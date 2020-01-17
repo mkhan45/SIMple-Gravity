@@ -10,8 +10,9 @@ use specs::saveload::{MarkedBuilder, SimpleMarker, SimpleMarkerAllocator};
 extern crate ron;
 extern crate serde;
 
-mod main_state_utils;
 mod saveload;
+mod main_state;
+use main_state::state::MainState;
 
 mod ecs;
 use ecs::components::{
@@ -29,9 +30,6 @@ use ecs::resources::{
 use ecs::systems::graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys};
 use ecs::systems::physics_systems::{PhysicsSys, PreviewPhysicsSys};
 use ecs::systems::trail_sys::{PreviewTrailSys, TrailSys};
-
-mod main_state;
-use main_state::MainState;
 
 mod imgui_wrapper;
 use imgui_wrapper::ImGuiWrapper;
@@ -65,7 +63,7 @@ fn main() -> GameResult {
     // a simple orbit,
     // [x_pos, y_pos], [x_vel, y_vel], mass, radius
     let data = vec![
-        new_body([215.0, 100.0], [-0.0, -1.1], 0.01, 0.8),
+        new_body([215.0, 100.0], [0.0, -1.1], 0.01, 0.8),
         new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
     ];
 
