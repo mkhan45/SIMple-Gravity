@@ -1,0 +1,77 @@
+[
+    EntityData(
+        marker: SimpleMarker(0),
+        components: (Some(Position([
+            904.7883,
+            89.08337,
+        ])), Some(Kinematics(
+            vel: [
+                -0.8034527,
+                -0.5800503,
+            ],
+            accel: [
+                -0.0050713234,
+                -0.018802486,
+            ],
+            past_accel: [
+                -0.0050713234,
+                -0.018802486,
+            ],
+        )), Some(Mass(0.01)), Some(Draw(Color(
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+        ))), Some(Radius(1))),
+    ),
+    EntityData(
+        marker: SimpleMarker(1),
+        components: (Some(Position([
+            898.876,
+            59.02716,
+        ])), Some(Kinematics(
+            vel: [
+                -0.05563252,
+                -0.9980597,
+            ],
+            accel: [
+                -0.0013822389,
+                0.00008831067,
+            ],
+            past_accel: [
+                -0.0013822389,
+                0.00008831067,
+            ],
+        )), Some(Mass(15)), Some(Draw(Color(
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+        ))), Some(Radius(5))),
+    ),
+    EntityData(
+        marker: SimpleMarker(2),
+        components: (Some(Position([
+            150.02625,
+            99.99951,
+        ])), Some(Kinematics(
+            vel: [
+                0.0012961884,
+                -0.00003585529,
+            ],
+            accel: [
+                0.00003197584,
+                -0.0000017486695,
+            ],
+            past_accel: [
+                0.00003197584,
+                -0.0000017486695,
+            ],
+        )), Some(Mass(650)), Some(Draw(Color(
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+        ))), Some(Radius(20))),
+    ),
+]

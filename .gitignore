@@ -3,4 +3,6 @@
 *imgui.ini
 Cargo.lock
 /saved_systems/*
-!/saved_systems/binary_star.ron
+!/saved_systems/binary.ron
+!/saved_systems/nested.ron
+!/saved_systems/default.ron
