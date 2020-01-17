@@ -55,6 +55,8 @@ pub struct ImGuiWrapper {
     pub resolution: Vector,
     pub sidemenu: bool,
     pub graph: bool,
+    pub save_filename: ImString,
+    pub load_filename: ImString,
 }
 
 pub fn make_sidepanel(
@@ -68,6 +70,8 @@ pub fn make_sidepanel(
     preview_iterations: &mut usize,
     signals: &mut Vec<UiSignal>,
     selected_entity: bool,
+    save_filename: &mut ImString,
+    load_filename: &mut ImString,
 ) {
     // Window
     let win = imgui::Window::new(im_str!("Menu"))
@@ -140,7 +144,13 @@ pub fn make_sidepanel(
         *preview_iterations = preview_iterations_i32 as usize;
 
         signal_button!("Remove Graphs", UiSignal::RemoveGraphs);
+
+        ui.separator();
+
+        ui.input_text(im_str!("Filename:"), save_filename).build();
         signal_button!("Save the Universe", UiSignal::SaveState);
+        ui.separator();
+        ui.input_text(im_str!("Filename: "), load_filename).build();
         signal_button!("Load Save", UiSignal::LoadState);
     });
 }
@@ -242,6 +252,8 @@ impl ImGuiWrapper {
             resolution,
             sidemenu: false,
             graph: false,
+            save_filename: ImString::new("save.ron"),
+            load_filename: ImString::new("load.ron"),
         }
     }
 
@@ -292,6 +304,8 @@ impl ImGuiWrapper {
                             preview_iterations,
                             &mut self.sent_signals,
                             selected_entity,
+                            &mut self.save_filename,
+                            &mut self.load_filename,
                         );
                     }
                     UiChoice::Graph => {

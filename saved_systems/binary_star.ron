@@ -1,0 +1,102 @@
+[
+    EntityData(
+        marker: SimpleMarker(0),
+        components: (Some(Position([
+            164.8014,
+            69.95303,
+        ])), Some(Kinematics(
+            vel: [
+                -0.56054705,
+                -0.6122308,
+            ],
+            accel: [
+                -0.021255031,
+                0.021603609,
+            ],
+            past_accel: [
+                -0.021255031,
+                0.021603609,
+            ],
+        )), Some(Mass(45)), Some(Draw(Color(
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+        ))), Some(Radius(4.5))),
+    ),
+    EntityData(
+        marker: SimpleMarker(1),
+        components: (Some(Position([
+            135.19862,
+            100.04694,
+        ])), Some(Kinematics(
+            vel: [
+                0.56054705,
+                0.6122308,
+            ],
+            accel: [
+                0.021255031,
+                -0.021603609,
+            ],
+            past_accel: [
+                0.021255031,
+                -0.021603609,
+            ],
+        )), Some(Mass(45)), Some(Draw(Color(
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+        ))), Some(Radius(4.5))),
+    ),
+    EntityData(
+        marker: SimpleMarker(2),
+        components: (Some(Position([
+            95.83555,
+            -8.685495,
+        ])), Some(Kinematics(
+            vel: [
+                0.87841654,
+                -0.4813904,
+            ],
+            accel: [
+                0.004630385,
+                0.007510238,
+            ],
+            past_accel: [
+                0.004630385,
+                0.007510238,
+            ],
+        )), Some(Mass(0.1)), Some(Draw(Color(
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+        ))), Some(Radius(1))),
+    ),
+    EntityData(
+        marker: SimpleMarker(3),
+        components: (Some(Position([
+            204.16438,
+            178.68544,
+        ])), Some(Kinematics(
+            vel: [
+                -0.87841713,
+                0.48138982,
+            ],
+            accel: [
+                -0.0046303878,
+                -0.007510251,
+            ],
+            past_accel: [
+                -0.0046303878,
+                -0.007510251,
+            ],
+        )), Some(Mass(0.1)), Some(Draw(Color(
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+        ))), Some(Radius(1))),
+    ),
+]

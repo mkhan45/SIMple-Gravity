@@ -2,20 +2,20 @@
     EntityData(
         marker: SimpleMarker(0),
         components: (Some(Position([
-            152.57616,
-            42.45502,
+            147.99792,
+            155.9679,
         ])), Some(Kinematics(
             vel: [
-                -1.2762532,
-                0.050433487,
+                1.2682045,
+                0.20378251,
             ],
             accel: [
-                -0.0022061465,
-                0.028165255,
+                0.0010259992,
+                -0.028594494,
             ],
             past_accel: [
-                -0.0022061465,
-                0.028165255,
+                0.0010259992,
+                -0.028594494,
             ],
         )), Some(Mass(0.01)), Some(Draw(Color(
             r: 1,
@@ -27,20 +27,20 @@
     EntityData(
         marker: SimpleMarker(1),
         components: (Some(Position([
-            148.22385,
-            98.75024,
+            150.00899,
+            99.919785,
         ])), Some(Kinematics(
             vel: [
-                -0.005687751,
-                -0.00082069717,
+                -0.00016909385,
+                -0.0001738375,
             ],
             accel: [
-                -0.00005594581,
-                0.00000859857,
+                -0.00000013679988,
+                0.000003812599,
             ],
             past_accel: [
-                -0.00005594581,
-                0.00000859857,
+                -0.00000013679988,
+                0.000003812599,
             ],
         )), Some(Mass(75)), Some(Draw(Color(
             r: 1,
@@ -48,230 +48,5 @@
             b: 1,
             a: 1,
         ))), Some(Radius(5))),
-    ),
-    EntityData(
-        marker: SimpleMarker(2),
-        components: (Some(Position([
-            71.5006,
-            134.31877,
-        ])), Some(Kinematics(
-            vel: [
-                -0.53543735,
-                -0.38691723,
-            ],
-            accel: [
-                0.012013939,
-                -0.0043060514,
-            ],
-            past_accel: [
-                0.012013939,
-                -0.0043060514,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(3),
-        components: (Some(Position([
-            299.68866,
-            48.35776,
-        ])), Some(Kinematics(
-            vel: [
-                0.21423073,
-                0.6068259,
-            ],
-            accel: [
-                -0.003363242,
-                0.001117348,
-            ],
-            past_accel: [
-                -0.003363242,
-                0.001117348,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(4),
-        components: (Some(Position([
-            46.102966,
-            89.324745,
-        ])), Some(Kinematics(
-            vel: [
-                0.09859522,
-                -0.59364384,
-            ],
-            accel: [
-                0.008471829,
-                0.0008399294,
-            ],
-            past_accel: [
-                0.008471829,
-                0.0008399294,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(5),
-        components: (Some(Position([
-            76.84928,
-            142.60431,
-        ])), Some(Kinematics(
-            vel: [
-                -0.9021844,
-                -0.3525849,
-            ],
-            accel: [
-                0.010196948,
-                -0.0077904277,
-            ],
-            past_accel: [
-                0.010196948,
-                -0.0077904277,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(6),
-        components: (Some(Position([
-            -83.66856,
-            7.0832796,
-        ])), Some(Kinematics(
-            vel: [
-                -0.10774587,
-                -0.40145114,
-            ],
-            accel: [
-                0.0013924807,
-                0.00055388425,
-            ],
-            past_accel: [
-                0.0013924807,
-                0.00055388425,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(7),
-        components: (Some(Position([
-            -10.343436,
-            10.100483,
-        ])), Some(Kinematics(
-            vel: [
-                0.17194794,
-                -0.51788336,
-            ],
-            accel: [
-                0.0023844356,
-                0.0014002508,
-            ],
-            past_accel: [
-                0.0023844356,
-                0.0014002508,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(8),
-        components: (Some(Position([
-            6.045713,
-            63.70214,
-        ])), Some(Kinematics(
-            vel: [
-                0.17165948,
-                -0.6014801,
-            ],
-            accel: [
-                0.004108409,
-                0.0010531248,
-            ],
-            past_accel: [
-                0.004108409,
-                0.0010531248,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(9),
-        components: (Some(Position([
-            -9.941418,
-            120.81375,
-        ])), Some(Kinematics(
-            vel: [
-                -0.09225157,
-                -0.5025855,
-            ],
-            accel: [
-                0.003579911,
-                -0.0004902609,
-            ],
-            past_accel: [
-                0.003579911,
-                -0.0004902609,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
-    ),
-    EntityData(
-        marker: SimpleMarker(10),
-        components: (Some(Position([
-            6.3799887,
-            163.55826,
-        ])), Some(Kinematics(
-            vel: [
-                -0.20377865,
-                -0.4449536,
-            ],
-            accel: [
-                0.0033952633,
-                -0.0016432509,
-            ],
-            past_accel: [
-                0.0033952633,
-                -0.0016432509,
-            ],
-        )), Some(Mass(0.1)), Some(Draw(Color(
-            r: 1,
-            g: 1,
-            b: 1,
-            a: 1,
-        ))), Some(Radius(1))),
     ),
 ]

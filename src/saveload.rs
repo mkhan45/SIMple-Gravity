@@ -2,12 +2,12 @@ use ron;
 use specs::{
     error::NoError,
     prelude::*,
-    saveload::{SerializeComponents, SimpleMarker, DeserializeComponents, SimpleMarkerAllocator},
+    saveload::{DeserializeComponents, SerializeComponents, SimpleMarker, SimpleMarkerAllocator},
 };
 
-use std::fs::File;
-use std::io::{Error, Write, Read};
 use std::fmt;
+use std::fs::File;
+use std::io::{Error, Read, Write};
 
 use crate::ecs::components::{Draw, Kinematics, Mass, Position, Radius, SaveMarker};
 
@@ -55,7 +55,7 @@ pub fn serialize_world(world: &World) -> String {
         &markers,
         &mut ser,
     )
-        .expect("error serializing");
+    .expect("error serializing");
 
     ser.into_output_string()
 }
@@ -88,8 +88,9 @@ pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
             &entities,
             &mut markers,
             &mut alloc,
-            &mut de
-        ).unwrap_or_else(|e| eprintln!("Error: {}", e));
+            &mut de,
+        )
+        .unwrap_or_else(|e| eprintln!("Error: {}", e));
     }
 
     Ok(())
