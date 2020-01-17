@@ -5,11 +5,12 @@ use specs::{
     saveload::{DeserializeComponents, SerializeComponents, SimpleMarker, SimpleMarkerAllocator},
 };
 
+use std::collections::VecDeque;
 use std::fmt;
 use std::fs::File;
 use std::io::{Error, Read, Write};
 
-use crate::ecs::components::{Draw, Kinematics, Mass, Position, Radius, SaveMarker};
+use crate::ecs::components::{Draw, Kinematics, Mass, Position, Radius, SaveMarker, Trail};
 
 // https://github.com/amethyst/specs/blob/master/examples/saveload.rs
 
@@ -74,6 +75,7 @@ pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
     let draws = world.write_storage::<Draw>();
     let radii = world.write_storage::<Radius>();
     let mut markers = world.write_storage::<SimpleMarker<SaveMarker>>();
+    let mut trails = world.write_storage::<Trail>();
     let mut alloc = world.write_resource::<SimpleMarkerAllocator<SaveMarker>>();
 
     use ron::de::Deserializer;
@@ -92,6 +94,13 @@ pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
         )
         .unwrap_or_else(|e| eprintln!("Error: {}", e));
     }
+
+    let positions = world.write_storage::<Position>();
+    (&entities, &positions).join().for_each(|(e, p)| {
+        trails
+            .insert(e, Trail(VecDeque::with_capacity(36)))
+            .expect("Error adding trail to loaded body");
+    });
 
     Ok(())
 }
