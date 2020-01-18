@@ -87,7 +87,19 @@ pub struct Radius(pub f32);
 
 #[derive(Clone, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
-pub struct Trail(pub VecDeque<Point>);
+pub struct Trail{
+    pub points: VecDeque<Point>,
+    pub max_len: usize,
+}
+
+impl Trail {
+    pub fn new(len: usize) -> Self {
+        Trail {
+            points: VecDeque::with_capacity(len),
+            max_len: len,
+        }
+    }
+}
 
 macro_rules! make_graph_components {
     ( $( [$name:ident, $dtype:ty] ),* ) => {

@@ -170,7 +170,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
             // draw trails
             (&trails, &radii).join().for_each(|(trail, radius)| {
-                let slices = trail.0.as_slices();
+                let slices = trail.points.as_slices();
                 if slices.0.len() >= 2 {
                     if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
                         dbg!(e);

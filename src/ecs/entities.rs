@@ -43,7 +43,7 @@ pub fn new_body(pos: impl Into<Point>, vel: impl Into<Vector>, mass: f32, rad: f
         Mass(mass),
         Draw(ggez::graphics::WHITE),
         Radius(rad),
-        Trail(VecDeque::with_capacity(36)),
+        Trail::new(35),
     )
 }
 
@@ -54,6 +54,6 @@ pub fn new_preview(pos: impl Into<Point>, vel: impl Into<Vector>, rad: f32) -> P
         Radius(rad),
         Preview,
         Draw(graphics::Color::new(0.1, 1.0, 0.2, 0.8)),
-        Trail(VecDeque::with_capacity(500)),
+        Trail::new(500),
     )
 }

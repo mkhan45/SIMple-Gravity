@@ -46,12 +46,13 @@ pub fn serialize_world(world: &World) -> String {
     let masses = world.read_storage::<Mass>();
     let draws = world.read_storage::<Draw>();
     let radii = world.read_storage::<Radius>();
+    let trails = world.read_storage::<Trail>();
     let markers = world.read_storage::<SimpleMarker<SaveMarker>>();
 
     let mut ser = ron::ser::Serializer::new(Some(Default::default()), true);
 
     SerializeComponents::<NoError, SimpleMarker<SaveMarker>>::serialize(
-        &(&positions, &kinematics, &masses, &draws, &radii),
+        &(&positions, &kinematics, &masses, &draws, &radii, &trails),
         &entities,
         &markers,
         &mut ser,
@@ -78,6 +79,10 @@ pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
     let mut trails = world.write_storage::<Trail>();
     let mut alloc = world.write_resource::<SimpleMarkerAllocator<SaveMarker>>();
 
+    (&mut trails).join().for_each(|mut trail| {
+        trail.points = VecDeque::with_capacity(0);
+    });
+
     use ron::de::Deserializer;
 
     let mut file = File::open(filename)?;
@@ -86,20 +91,18 @@ pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
 
     if let Ok(mut de) = Deserializer::from_str(&file_contents) {
         DeserializeComponents::<ComboError, _>::deserialize(
-            &mut (positions, kinematics, masses, draws, radii),
+            &mut (positions, kinematics, masses, draws, radii, trails),
             &entities,
             &mut markers,
             &mut alloc,
             &mut de,
         )
-        .unwrap_or_else(|e| eprintln!("Error: {}", e));
+            .unwrap_or_else(|e| eprintln!("Error: {}", e));
     }
 
-    let positions = world.write_storage::<Position>();
-    (&entities, &positions).join().for_each(|(entity, _)| {
-        trails
-            .insert(entity, Trail(VecDeque::with_capacity(36)))
-            .expect("Error adding trail to loaded body");
+    let mut trails = world.write_storage::<Trail>();
+    (&mut trails).join().for_each(|mut trail| {
+        trail.points = VecDeque::with_capacity(trail.max_len);
     });
 
     Ok(())

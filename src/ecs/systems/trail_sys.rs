@@ -16,10 +16,10 @@ impl<'a> System<'a> for TrailSys {
             .par_join()
             .for_each(|(pos, trail, entity)| {
                 if previews.get(entity).is_none() {
-                    trail.0.push_back(pos.0);
+                    trail.points.push_back(pos.0);
 
-                    while trail.0.len() >= 35 {
-                        trail.0.pop_front();
+                    while trail.points.len() >= trail.max_len {
+                        trail.points.pop_front();
                     }
                 }
             });
@@ -39,7 +39,7 @@ impl<'a> System<'a> for PreviewTrailSys {
         (&positions, &mut trails, &previews)
             .join()
             .for_each(|(pos, trail, _)| {
-                trail.0.push_back(pos.0);
+                trail.points.push_back(pos.0);
             });
     }
 }
