@@ -91,7 +91,7 @@ fn main() -> GameResult {
     world.insert(PreviewIterations(25));
     world.insert(Resolution(dimensions_vec));
     world.insert(DT(1.0));
-    world.insert(Paused(true));
+    world.insert(Paused(false));
     world.insert(StartPoint(None));
     world.insert(NewPreview(false));
 

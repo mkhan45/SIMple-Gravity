@@ -17,8 +17,8 @@ impl<'a, 'b> MainState<'a, 'b> {
             // do_physics(&mut self.world, ctx);
             (0..main_iterations).for_each(|_| {
                 self.main_dispatcher.dispatch(&self.world);
+                self.world.maintain();
             });
-            self.world.maintain();
         }
         if let Some(e) = self.selected_entity {
             if !self.world.is_alive(e) {
