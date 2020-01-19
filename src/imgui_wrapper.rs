@@ -55,12 +55,13 @@ pub struct RenderData {
     pub entity_selected: bool,
     pub save_filename: ImString,
     pub load_filename: ImString,
+    pub trail_len: usize,
 }
 
 impl RenderData {
     pub fn new() -> Self {
         RenderData {
-            mass: 1.0,
+            mass: 0.01,
             rad: 1.0,
             dt: 1.0,
             num_iterations: 1,
@@ -68,6 +69,7 @@ impl RenderData {
             entity_selected: false,
             save_filename: ImString::new("save.ron"),
             load_filename: ImString::new("load.ron"),
+            trail_len: 35,
         }
     }
 }
@@ -95,6 +97,7 @@ pub fn make_sidepanel(
     let mass = &mut render_data.mass;
     let rad = &mut render_data.rad;
     let dt = &mut render_data.dt;
+    let trail_len = &mut render_data.trail_len;
     let num_iterations = &mut render_data.num_iterations;
     let preview_iterations = &mut render_data.preview_iterations;
     let selected_entity = render_data.entity_selected;
@@ -124,6 +127,18 @@ pub fn make_sidepanel(
             };
         }
 
+        macro_rules! int_slider {
+            ( $label:expr, $num:expr, $min:expr, $max:expr ) => {
+                let mut num_i32 = *$num as i32;
+                ui.drag_int(im_str!($label), &mut num_i32)
+                    .min($min)
+                    .speed(0.05 * (*$num as f32).powf(1.0/3.0))
+                    .max($max)
+                    .build();
+                *$num = num_i32 as usize;
+            }
+        }
+
         if selected_entity {
             ui.text(im_str!("Edit Object"));
         } else {
@@ -139,6 +154,8 @@ pub fn make_sidepanel(
             .speed(rad_speed)
             .build();
 
+        int_slider!("Trail Length", trail_len, 0, 10_000);
+
         signal_button!("Toggle Create Body", UiSignal::Create);
 
         if selected_entity {
@@ -151,24 +168,8 @@ pub fn make_sidepanel(
         ui.text(im_str!("DT"));
         ui.drag_float(im_str!(""), dt).speed(0.01).build();
 
-        ui.text(im_str!("Iteration Count"));
-        let mut num_iterations_i32: i32 = *num_iterations as i32;
-        ui.drag_int(im_str!(" "), &mut num_iterations_i32)
-            .min(0)
-            .speed(0.05 * (*num_iterations as f32).powf(1.0 / 3.0))
-            .max(1000)
-            .build();
-
-        ui.text(im_str!("Preview Iteration Count"));
-        let mut preview_iterations_i32: i32 = *preview_iterations as i32;
-        ui.drag_int(im_str!("  "), &mut preview_iterations_i32)
-            .min(0)
-            .speed(0.05 * (*preview_iterations as f32).powf(1.0 / 3.0))
-            .max(1000)
-            .build();
-
-        *num_iterations = num_iterations_i32 as usize;
-        *preview_iterations = preview_iterations_i32 as usize;
+        int_slider!("Iterations", num_iterations, 1, 1000);
+        int_slider!("Preview Iterations", preview_iterations, 1, 1000);
 
         signal_button!("Remove Graphs", UiSignal::RemoveGraphs);
 

@@ -162,8 +162,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         if let Some(e) = self.selected_entity {
             let masses = self.world.read_storage::<Mass>();
             let radii = self.world.read_storage::<Radius>();
+            let trails = self.world.read_storage::<Trail>();
             self.imgui_wrapper.render_data.mass = masses.get(e).unwrap().0;
             self.imgui_wrapper.render_data.rad = radii.get(e).unwrap().0;
+            self.imgui_wrapper.render_data.trail_len = trails.get(e).unwrap().max_len;
         }
 
         let mut builder = graphics::MeshBuilder::new();
@@ -280,9 +282,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 {
                     let mut masses_mut = self.world.write_storage::<Mass>();
                     let mut radii_mut = self.world.write_storage::<Radius>();
+                    let mut trails_mut = self.world.write_storage::<Trail>();
 
                     masses_mut.insert(e, Mass(self.imgui_wrapper.render_data.mass)).unwrap_or(None);
                     radii_mut.insert(e, Radius(self.imgui_wrapper.render_data.rad)).unwrap_or(None);
+                    trails_mut.get_mut(e).unwrap().max_len = self.imgui_wrapper.render_data.trail_len;
                 }
 
                 self.world.entities().entity(e.id());
