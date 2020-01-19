@@ -87,7 +87,7 @@ pub struct Radius(pub f32);
 
 #[derive(Clone, Debug, PartialEq, Component, Serialize, Deserialize)]
 #[storage(VecStorage)]
-pub struct Trail{
+pub struct Trail {
     pub points: VecDeque<Point>,
     pub max_len: usize,
 }

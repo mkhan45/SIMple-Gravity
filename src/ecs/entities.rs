@@ -4,8 +4,6 @@ use crate::{Point, Vector};
 use specs::prelude::*;
 use specs::saveload::{MarkedBuilder, SimpleMarker};
 
-use std::collections::VecDeque;
-
 use ggez::graphics;
 
 pub type Body = (Position, Kinematics, Mass, Draw, Radius, Trail);

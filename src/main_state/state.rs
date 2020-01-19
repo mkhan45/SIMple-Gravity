@@ -4,7 +4,7 @@ use ggez::{
     event,
     event::EventHandler,
     graphics,
-    graphics::{Color, DrawMode},
+    graphics::Color,
     input,
     input::{
         keyboard::{KeyCode, KeyMods},
@@ -26,8 +26,6 @@ use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::*;
 #[allow(unused_imports)]
 use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
-
-static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.2, 0.35, 1.0, 1.0);
 
 use std::collections::HashSet;
 
@@ -159,88 +157,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
 
-        if let Some(e) = self.selected_entity {
-            let masses = self.world.read_storage::<Mass>();
-            let radii = self.world.read_storage::<Radius>();
-            let trails = self.world.read_storage::<Trail>();
-            self.imgui_wrapper.render_data.mass = masses.get(e).unwrap().0;
-            self.imgui_wrapper.render_data.rad = radii.get(e).unwrap().0;
-            self.imgui_wrapper.render_data.trail_len = trails.get(e).unwrap().max_len;
-        }
+        self.update_gui_data();
 
         let mut builder = graphics::MeshBuilder::new();
 
-        {
-            let draws = self.world.read_storage::<Draw>();
-            let positions = self.world.read_storage::<Position>();
-            let radii = self.world.read_storage::<Radius>();
-            let previews = self.world.read_storage::<Preview>();
-            let trails = self.world.read_storage::<Trail>();
-
-            // draw trails
-            (&trails, &radii).join().for_each(|(trail, radius)| {
-                let slices = trail.points.as_slices();
-                if slices.0.len() >= 2 {
-                    if let Err(e) = builder.line(slices.0, 0.25 * radius.0, TRAIL_COLOR) {
-                        dbg!(e);
-                    };
-                }
-                if slices.1.len() >= 2 {
-                    if let Err(e) = builder.line(slices.1, 0.25 * radius.0, TRAIL_COLOR) {
-                        dbg!(e);
-                    };
-                }
-            });
-
-            // this is kind of inelegant but previews don't have the Draw component and color is
-            // hardcoded
-            // TODO?
-            (&draws, &positions, &radii)
-                .join()
-                .for_each(|(color, pos, rad)| {
-                    let point: ggez::mint::Point2<f32> = (*pos).into();
-                    builder.circle(DrawMode::fill(), point, rad.0, 0.01, color.0);
-                });
-
-            (&previews, &positions, &radii)
-                .join()
-                .for_each(|(_, pos, rad)| {
-                    let point: ggez::mint::Point2<f32> = (*pos).into();
-                    let color = Color::new(0.1, 1.0, 0.2, 1.0);
-                    builder.circle(DrawMode::fill(), point, rad.0, 0.05, color);
-                });
-        }
-
-        // draw new body preview and line
-        let start_point = self.world.fetch::<StartPoint>().0;
-        let resolution = self.world.fetch::<Resolution>().0;
-
-        let p = if let Some(start_pos) = start_point {
-            start_pos
-        } else {
-            let mouse_pos = ggez::input::mouse::position(ctx);
-            let coords = ggez::graphics::screen_coordinates(ctx);
-            scale_pos(mouse_pos, coords, resolution)
-        };
-
-        if self.creating {
-            builder.circle(
-                DrawMode::fill(),
-                p,
-                self.rad,
-                0.05,
-                Color::new(1.0, 1.0, 1.0, 0.5),
-            );
-
-            if let Some(p) = start_point {
-                let mouse_pos = ggez::input::mouse::position(ctx);
-                let coords = ggez::graphics::screen_coordinates(ctx);
-                let scaled_pos = scale_pos(mouse_pos, coords, resolution);
-                builder
-                    .line(&[p, scaled_pos], 0.5, graphics::WHITE)
-                    .expect("not enough points in line");
-            }
-        }
+        self.draw_trails(&mut builder);
+        self.draw_bodies(&mut builder);
+        self.draw_preview(&mut builder, ctx);
 
         if let Ok(mesh) = builder.build(ctx) {
             ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new())
@@ -272,21 +195,22 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         if let Some(e) = self.selected_entity {
             if self.world.is_alive(e) {
-                self.imgui_wrapper.render(
-                    ctx,
-                    hidpi_factor,
-                    &mut self.items_hovered,
-                    graph_data,
-                );
+                self.imgui_wrapper
+                    .render(ctx, hidpi_factor, &mut self.items_hovered, graph_data);
 
                 {
                     let mut masses_mut = self.world.write_storage::<Mass>();
                     let mut radii_mut = self.world.write_storage::<Radius>();
                     let mut trails_mut = self.world.write_storage::<Trail>();
 
-                    masses_mut.insert(e, Mass(self.imgui_wrapper.render_data.mass)).unwrap_or(None);
-                    radii_mut.insert(e, Radius(self.imgui_wrapper.render_data.rad)).unwrap_or(None);
-                    trails_mut.get_mut(e).unwrap().max_len = self.imgui_wrapper.render_data.trail_len;
+                    masses_mut
+                        .insert(e, Mass(self.imgui_wrapper.render_data.mass))
+                        .unwrap_or(None);
+                    radii_mut
+                        .insert(e, Radius(self.imgui_wrapper.render_data.rad))
+                        .unwrap_or(None);
+                    trails_mut.get_mut(e).unwrap().max_len =
+                        self.imgui_wrapper.render_data.trail_len;
                 }
 
                 self.world.entities().entity(e.id());
@@ -294,14 +218,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 self.selected_entity = None;
             }
         } else {
-            self.imgui_wrapper.render(
-                ctx,
-                hidpi_factor,
-                &mut self.items_hovered,
-                graph_data,
-            );
+            self.imgui_wrapper
+                .render(ctx, hidpi_factor, &mut self.items_hovered, graph_data);
         }
-
 
         // maybe i could use curly braces but w/e
         std::mem::drop(speed_graphs);
@@ -311,9 +230,14 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         {
             self.mass = self.imgui_wrapper.render_data.mass;
             self.rad = self.imgui_wrapper.render_data.rad;
-            self.world.insert::<DT>(DT(self.imgui_wrapper.render_data.dt));
-            self.world.insert::<MainIterations>(MainIterations(self.imgui_wrapper.render_data.num_iterations));
-            self.world.insert::<PreviewIterations>(PreviewIterations(self.imgui_wrapper.render_data.preview_iterations));
+            self.world
+                .insert::<DT>(DT(self.imgui_wrapper.render_data.dt));
+            self.world.insert::<MainIterations>(MainIterations(
+                self.imgui_wrapper.render_data.num_iterations,
+            ));
+            self.world.insert::<PreviewIterations>(PreviewIterations(
+                self.imgui_wrapper.render_data.preview_iterations,
+            ));
         }
 
         graphics::present(ctx)
@@ -327,9 +251,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-                button == MouseButton::Left,
-                button == MouseButton::Right,
-                button == MouseButton::Middle,
+            button == MouseButton::Left,
+            button == MouseButton::Right,
+            button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -359,7 +283,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .insert(UiChoice::SideMenu(self.selected_entity));
-                    }
+                }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -399,8 +323,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         p = scale_pos(p, coords, resolution);
 
                         self.selected_entity = Some(create_body(
-                                &mut self.world,
-                                new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
+                            &mut self.world,
+                            new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
                         ));
                         self.world.insert(StartPoint(None));
                     }
@@ -425,7 +349,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            })
+        })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -449,7 +373,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-            });
+        });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -529,7 +453,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-            .expect("error resizing");
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

@@ -132,11 +132,11 @@ pub fn make_sidepanel(
                 let mut num_i32 = *$num as i32;
                 ui.drag_int(im_str!($label), &mut num_i32)
                     .min($min)
-                    .speed(0.05 * (*$num as f32).powf(1.0/3.0))
+                    .speed(0.05 * (*$num as f32).powf(1.0 / 3.0))
                     .max($max)
                     .build();
                 *$num = num_i32 as usize;
-            }
+            };
         }
 
         if selected_entity {

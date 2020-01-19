@@ -97,7 +97,7 @@ pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
             &mut alloc,
             &mut de,
         )
-            .unwrap_or_else(|e| eprintln!("Error: {}", e));
+        .unwrap_or_else(|e| eprintln!("Error: {}", e));
     }
 
     let mut trails = world.write_storage::<Trail>();
