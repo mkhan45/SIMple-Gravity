@@ -45,6 +45,33 @@ pub enum UiSignal {
     LoadState,
 }
 
+#[derive(Debug, Clone)]
+pub struct RenderData {
+    pub mass: f32,
+    pub rad: f32,
+    pub dt: f32,
+    pub num_iterations: usize,
+    pub preview_iterations: usize,
+    pub entity_selected: bool,
+    pub save_filename: ImString,
+    pub load_filename: ImString,
+}
+
+impl RenderData {
+    pub fn new() -> Self {
+        RenderData {
+            mass: 1.0,
+            rad: 1.0,
+            dt: 1.0,
+            num_iterations: 1,
+            preview_iterations: 25,
+            entity_selected: false,
+            save_filename: ImString::new("save.ron"),
+            load_filename: ImString::new("load.ron"),
+        }
+    }
+}
+
 pub struct ImGuiWrapper {
     pub imgui: imgui::Context,
     pub renderer: Renderer<gfx_core::format::Rgba8, gfx_device_gl::Resources>,
@@ -55,24 +82,24 @@ pub struct ImGuiWrapper {
     pub resolution: Vector,
     pub sidemenu: bool,
     pub graph: bool,
-    pub save_filename: ImString,
-    pub load_filename: ImString,
+    pub render_data: RenderData,
 }
 
 pub fn make_sidepanel(
     ui: &mut imgui::Ui,
     resolution: Vector,
     open_bool: &mut bool,
-    mass: &mut f32,
-    rad: &mut f32,
-    dt: &mut f32,
-    num_iterations: &mut usize,
-    preview_iterations: &mut usize,
     signals: &mut Vec<UiSignal>,
-    selected_entity: bool,
-    save_filename: &mut ImString,
-    load_filename: &mut ImString,
+    render_data: &mut RenderData,
 ) {
+    let mass = &mut render_data.mass;
+    let rad = &mut render_data.rad;
+    let dt = &mut render_data.dt;
+    let num_iterations = &mut render_data.num_iterations;
+    let preview_iterations = &mut render_data.preview_iterations;
+    let selected_entity = render_data.entity_selected;
+    let save_filename = &mut render_data.save_filename;
+    let load_filename = &mut render_data.load_filename;
     // Window
     let win = imgui::Window::new(im_str!("Menu"))
         .position([0.0, 0.0], imgui::Condition::Always)
@@ -272,8 +299,7 @@ impl ImGuiWrapper {
             resolution,
             sidemenu: false,
             graph: false,
-            save_filename: ImString::new("save.ron"),
-            load_filename: ImString::new("load.ron"),
+            render_data: RenderData::new(),
         }
     }
 
@@ -281,13 +307,7 @@ impl ImGuiWrapper {
         &mut self,
         ctx: &mut Context,
         hidpi_factor: f32,
-        dt: &mut f32,
-        mass: &mut f32,
-        rad: &mut f32,
-        num_iterations: &mut usize,
-        preview_iterations: &mut usize,
         items_hovered: &mut bool,
-        selected_entity: bool,
         graph_data: Vec<(GraphType, &[f32])>,
     ) {
         // Update mouse
@@ -317,15 +337,8 @@ impl ImGuiWrapper {
                             &mut ui,
                             self.resolution,
                             &mut self.sidemenu,
-                            mass,
-                            rad,
-                            dt,
-                            num_iterations,
-                            preview_iterations,
                             &mut self.sent_signals,
-                            selected_entity,
-                            &mut self.save_filename,
-                            &mut self.load_filename,
+                            &mut self.render_data,
                         );
                     }
                     UiChoice::Graph => {

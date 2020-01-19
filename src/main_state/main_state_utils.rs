@@ -98,7 +98,7 @@ impl<'a, 'b> MainState<'a, 'b> {
                         &self.world,
                         format!(
                             "saved_systems/{}",
-                            self.imgui_wrapper.save_filename.to_string()
+                            self.imgui_wrapper.render_data.save_filename.to_string()
                         ),
                     ) {
                         Ok(()) => println!("Successfully saved the universe"),
@@ -110,7 +110,7 @@ impl<'a, 'b> MainState<'a, 'b> {
                         &self.world,
                         format!(
                             "saved_systems/{}",
-                            self.imgui_wrapper.load_filename.to_string()
+                            self.imgui_wrapper.render_data.load_filename.to_string()
                         ),
                     ) {
                         Ok(()) => println!("Successfully loaded previous save"),

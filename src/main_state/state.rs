@@ -159,6 +159,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
 
+        if let Some(e) = self.selected_entity {
+            let masses = self.world.read_storage::<Mass>();
+            let radii = self.world.read_storage::<Radius>();
+            self.imgui_wrapper.render_data.mass = masses.get(e).unwrap().0;
+            self.imgui_wrapper.render_data.rad = radii.get(e).unwrap().0;
+        }
+
         let mut builder = graphics::MeshBuilder::new();
 
         {
@@ -241,11 +248,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         // Draw GUI and process sliders
         let hidpi_factor = self.hidpi_factor;
 
-        let mut dt = self.world.fetch::<DT>().0;
-
-        let mut main_iter = self.world.fetch::<MainIterations>().0;
-        let mut preview_iter = self.world.fetch::<PreviewIterations>().0;
-
         let mut graph_data: Vec<(GraphType, &[f32])> = Vec::new();
 
         // this can probably be done better
@@ -267,24 +269,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         register_graph_data!(yvel_graphs, YVelGraph, GraphType::YVel);
 
         if let Some(e) = self.selected_entity {
-            let (mut mass, mut rad) = {
-                let masses = self.world.read_storage::<Mass>();
-                let radii = self.world.read_storage::<Radius>();
-
-                (masses.get(e).unwrap().0, radii.get(e).unwrap().0)
-            };
-
             if self.world.is_alive(e) {
                 self.imgui_wrapper.render(
                     ctx,
                     hidpi_factor,
-                    &mut dt,
-                    &mut mass,
-                    &mut rad,
-                    &mut main_iter,
-                    &mut preview_iter,
                     &mut self.items_hovered,
-                    true,
                     graph_data,
                 );
 
@@ -292,8 +281,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     let mut masses_mut = self.world.write_storage::<Mass>();
                     let mut radii_mut = self.world.write_storage::<Radius>();
 
-                    masses_mut.insert(e, Mass(mass)).unwrap_or(None);
-                    radii_mut.insert(e, Radius(rad)).unwrap_or(None);
+                    masses_mut.insert(e, Mass(self.imgui_wrapper.render_data.mass)).unwrap_or(None);
+                    radii_mut.insert(e, Radius(self.imgui_wrapper.render_data.rad)).unwrap_or(None);
                 }
 
                 self.world.entities().entity(e.id());
@@ -304,25 +293,24 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.imgui_wrapper.render(
                 ctx,
                 hidpi_factor,
-                &mut dt,
-                &mut self.mass,
-                &mut self.rad,
-                &mut main_iter,
-                &mut preview_iter,
                 &mut self.items_hovered,
-                false,
                 graph_data,
             );
         }
+
 
         // maybe i could use curly braces but w/e
         std::mem::drop(speed_graphs);
         std::mem::drop(xvel_graphs);
         std::mem::drop(yvel_graphs);
 
-        self.world.insert(MainIterations(main_iter));
-        self.world.insert(PreviewIterations(preview_iter));
-        self.world.insert(DT(dt));
+        {
+            self.mass = self.imgui_wrapper.render_data.mass;
+            self.rad = self.imgui_wrapper.render_data.rad;
+            self.world.insert::<DT>(DT(self.imgui_wrapper.render_data.dt));
+            self.world.insert::<MainIterations>(MainIterations(self.imgui_wrapper.render_data.num_iterations));
+            self.world.insert::<PreviewIterations>(PreviewIterations(self.imgui_wrapper.render_data.preview_iterations));
+        }
 
         graphics::present(ctx)
     }
@@ -335,9 +323,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         y: f32,
     ) {
         self.imgui_wrapper.update_mouse_down((
-            button == MouseButton::Left,
-            button == MouseButton::Right,
-            button == MouseButton::Middle,
+                button == MouseButton::Left,
+                button == MouseButton::Right,
+                button == MouseButton::Middle,
         ));
 
         if !self.items_hovered {
@@ -347,6 +335,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
                     let resolution = self.world.fetch::<Resolution>().0;
                     self.selected_entity = None;
+                    self.imgui_wrapper.render_data.entity_selected = false;
 
                     let positions = self.world.read_storage::<Position>();
                     let radii = self.world.read_storage::<Radius>();
@@ -358,6 +347,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     for (e, pos, rad) in (&entities, &positions, &radii).join() {
                         if pos.dist(mouse_pos) <= rad.0 {
                             self.selected_entity = Some(e);
+                            self.imgui_wrapper.render_data.entity_selected = true;
                             break;
                         }
                     }
@@ -365,7 +355,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     self.imgui_wrapper
                         .shown_menus
                         .insert(UiChoice::SideMenu(self.selected_entity));
-                }
+                    }
                 MouseButton::Left => {
                     // set up for creating new body
                     if self.creating {
@@ -405,8 +395,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         p = scale_pos(p, coords, resolution);
 
                         self.selected_entity = Some(create_body(
-                            &mut self.world,
-                            new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
+                                &mut self.world,
+                                new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
                         ));
                         self.world.insert(StartPoint(None));
                     }
@@ -431,7 +421,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        })
+            })
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -455,7 +445,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided entity");
-        });
+            });
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
@@ -535,7 +525,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 crate::SCREEN_Y * aspect_ratio as f32,
             ),
         )
-        .expect("error resizing");
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));
