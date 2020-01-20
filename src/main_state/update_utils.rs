@@ -121,7 +121,10 @@ impl<'a, 'b> MainState<'a, 'b> {
                         Ok(()) => println!("Successfully loaded previous save"),
                         Err(e) => println!("Error loading save: {}", e),
                     }
-                }
+                },
+                UiSignal::DeleteAll => {
+                    self.world.delete_all();
+                },
             });
         self.imgui_wrapper.sent_signals.clear();
     }

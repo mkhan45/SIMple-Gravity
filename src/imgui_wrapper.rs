@@ -43,6 +43,7 @@ pub enum UiSignal {
     RemoveGraphs,
     SaveState,
     LoadState,
+    DeleteAll,
 }
 
 #[derive(Debug, Clone)]
@@ -170,7 +171,10 @@ pub fn make_sidepanel(
         int_slider!("Iterations", num_iterations, 1, 1000);
         int_slider!("Preview Iterations", preview_iterations, 1, 1000);
 
+        ui.separator();
+
         signal_button!("Remove Graphs", UiSignal::RemoveGraphs);
+        signal_button!("Delete All Bodies", UiSignal::DeleteAll);
 
         ui.separator();
 
