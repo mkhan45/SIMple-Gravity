@@ -6,8 +6,11 @@ use ggez::{
 
 use specs::prelude::*;
 
-use crate::ecs::components::{Draw, Mass, Position, Preview, Radius, Trail};
-use crate::ecs::resources::{Resolution, StartPoint};
+use crate::ecs::components::{
+    Draw, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph,
+};
+use crate::ecs::resources::{MainIterations, PreviewIterations, Resolution, StartPoint, DT};
+use crate::ecs::systems::graph_sys::GraphType;
 use crate::main_state::state::{scale_pos, MainState};
 
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.25, 0.45, 1.0, 1.0);
@@ -97,6 +100,72 @@ impl<'a, 'b> MainState<'a, 'b> {
                     .line(&[p, scaled_pos], 0.5, graphics::WHITE)
                     .expect("not enough points in line");
             }
+        }
+    }
+
+    pub fn update_sim_data(&mut self) {
+        self.mass = self.imgui_wrapper.render_data.mass;
+        self.rad = self.imgui_wrapper.render_data.rad;
+        self.world
+            .insert::<DT>(DT(self.imgui_wrapper.render_data.dt));
+        self.world.insert::<MainIterations>(MainIterations(
+            self.imgui_wrapper.render_data.num_iterations,
+        ));
+        self.world.insert::<PreviewIterations>(PreviewIterations(
+            self.imgui_wrapper.render_data.preview_iterations,
+        ));
+    }
+
+    pub fn draw_gui(&mut self, ctx: &mut Context) {
+        let hidpi_factor = self.hidpi_factor;
+
+        let mut graph_data: Vec<(GraphType, &[f32])> = Vec::new();
+
+        // this can probably be done better
+        let speed_graphs = self.world.read_storage::<SpeedGraph>();
+        let xvel_graphs = self.world.read_storage::<XVelGraph>();
+        let yvel_graphs = self.world.read_storage::<YVelGraph>();
+
+        // adds graph data to gui
+        macro_rules! register_graph_data {
+            ( $query:ident, $component:ty, $graph_type:expr ) => {
+                $query.join().filter(|data| data.display).for_each(|data| {
+                    graph_data.push(($graph_type, &data.data[..]));
+                });
+            };
+        }
+
+        register_graph_data!(speed_graphs, SpeedGraph, GraphType::Speed);
+        register_graph_data!(xvel_graphs, XVelGraph, GraphType::XVel);
+        register_graph_data!(yvel_graphs, YVelGraph, GraphType::YVel);
+
+        if let Some(e) = self.selected_entity {
+            if self.world.is_alive(e) {
+                self.imgui_wrapper
+                    .render(ctx, hidpi_factor, &mut self.items_hovered, graph_data);
+
+                {
+                    let mut masses_mut = self.world.write_storage::<Mass>();
+                    let mut radii_mut = self.world.write_storage::<Radius>();
+                    let mut trails_mut = self.world.write_storage::<Trail>();
+
+                    masses_mut
+                        .insert(e, Mass(self.imgui_wrapper.render_data.mass))
+                        .unwrap_or(None);
+                    radii_mut
+                        .insert(e, Radius(self.imgui_wrapper.render_data.rad))
+                        .unwrap_or(None);
+                    trails_mut.get_mut(e).unwrap().max_len =
+                        self.imgui_wrapper.render_data.trail_len;
+                }
+
+                self.world.entities().entity(e.id());
+            } else {
+                self.selected_entity = None;
+            }
+        } else {
+            self.imgui_wrapper
+                .render(ctx, hidpi_factor, &mut self.items_hovered, graph_data);
         }
     }
 }

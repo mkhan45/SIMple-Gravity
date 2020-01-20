@@ -165,8 +165,7 @@ pub fn make_sidepanel(
             signal_button!("Delete Body", UiSignal::Delete);
         }
         ui.separator();
-        ui.text(im_str!("DT"));
-        ui.drag_float(im_str!(""), dt).speed(0.01).build();
+        ui.drag_float(im_str!("DT"), dt).speed(0.01).build();
 
         int_slider!("Iterations", num_iterations, 1, 1000);
         int_slider!("Preview Iterations", preview_iterations, 1, 1000);

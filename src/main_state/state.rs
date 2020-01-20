@@ -19,10 +19,7 @@ use crate::ecs::components::{
     YVelGraph,
 };
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
-use crate::ecs::resources::{
-    MainIterations, MousePos, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
-};
-use crate::ecs::systems::graph_sys::GraphType;
+use crate::ecs::resources::{MousePos, NewPreview, Paused, Resolution, StartPoint};
 use crate::imgui_wrapper::*;
 #[allow(unused_imports)]
 use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
@@ -166,79 +163,11 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         self.draw_preview(&mut builder, ctx);
 
         if let Ok(mesh) = builder.build(ctx) {
-            ggez::graphics::draw(ctx, &mesh, graphics::DrawParam::new())
-                .expect("error drawing mesh");
+            graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
         }
 
-        // Draw GUI and process sliders
-        let hidpi_factor = self.hidpi_factor;
-
-        let mut graph_data: Vec<(GraphType, &[f32])> = Vec::new();
-
-        // this can probably be done better
-        let speed_graphs = self.world.read_storage::<SpeedGraph>();
-        let xvel_graphs = self.world.read_storage::<XVelGraph>();
-        let yvel_graphs = self.world.read_storage::<YVelGraph>();
-
-        // adds graph data to gui
-        macro_rules! register_graph_data {
-            ( $query:ident, $component:ty, $graph_type:expr ) => {
-                $query.join().filter(|data| data.display).for_each(|data| {
-                    graph_data.push(($graph_type, &data.data[..]));
-                });
-            };
-        }
-
-        register_graph_data!(speed_graphs, SpeedGraph, GraphType::Speed);
-        register_graph_data!(xvel_graphs, XVelGraph, GraphType::XVel);
-        register_graph_data!(yvel_graphs, YVelGraph, GraphType::YVel);
-
-        if let Some(e) = self.selected_entity {
-            if self.world.is_alive(e) {
-                self.imgui_wrapper
-                    .render(ctx, hidpi_factor, &mut self.items_hovered, graph_data);
-
-                {
-                    let mut masses_mut = self.world.write_storage::<Mass>();
-                    let mut radii_mut = self.world.write_storage::<Radius>();
-                    let mut trails_mut = self.world.write_storage::<Trail>();
-
-                    masses_mut
-                        .insert(e, Mass(self.imgui_wrapper.render_data.mass))
-                        .unwrap_or(None);
-                    radii_mut
-                        .insert(e, Radius(self.imgui_wrapper.render_data.rad))
-                        .unwrap_or(None);
-                    trails_mut.get_mut(e).unwrap().max_len =
-                        self.imgui_wrapper.render_data.trail_len;
-                }
-
-                self.world.entities().entity(e.id());
-            } else {
-                self.selected_entity = None;
-            }
-        } else {
-            self.imgui_wrapper
-                .render(ctx, hidpi_factor, &mut self.items_hovered, graph_data);
-        }
-
-        // maybe i could use curly braces but w/e
-        std::mem::drop(speed_graphs);
-        std::mem::drop(xvel_graphs);
-        std::mem::drop(yvel_graphs);
-
-        {
-            self.mass = self.imgui_wrapper.render_data.mass;
-            self.rad = self.imgui_wrapper.render_data.rad;
-            self.world
-                .insert::<DT>(DT(self.imgui_wrapper.render_data.dt));
-            self.world.insert::<MainIterations>(MainIterations(
-                self.imgui_wrapper.render_data.num_iterations,
-            ));
-            self.world.insert::<PreviewIterations>(PreviewIterations(
-                self.imgui_wrapper.render_data.preview_iterations,
-            ));
-        }
+        self.draw_gui(ctx);
+        self.update_sim_data();
 
         graphics::present(ctx)
     }
