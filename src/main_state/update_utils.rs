@@ -85,13 +85,13 @@ impl<'a, 'b> MainState<'a, 'b> {
                         }
                     }
                 }
-                UiSignal::RemoveGraphs => {
+                UiSignal::ToggleGraphs => {
                     macro_rules! undisplay_graphs {
                         ( $( $component:ty ),* ) => {
                             $(
                                 let mut graphs = self.world.write_storage::<$component>();
                                 (&mut graphs).join().for_each(|graph|{
-                                    graph.display = false;
+                                    graph.display = !graph.display;
                                 });
                             )*
                         };
@@ -121,10 +121,10 @@ impl<'a, 'b> MainState<'a, 'b> {
                         Ok(()) => println!("Successfully loaded previous save"),
                         Err(e) => println!("Error loading save: {}", e),
                     }
-                },
+                }
                 UiSignal::DeleteAll => {
                     self.world.delete_all();
-                },
+                }
             });
         self.imgui_wrapper.sent_signals.clear();
     }

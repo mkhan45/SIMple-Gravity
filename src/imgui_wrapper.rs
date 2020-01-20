@@ -40,7 +40,7 @@ pub enum UiSignal {
     Create,
     Delete,
     AddGraph(GraphType),
-    RemoveGraphs,
+    ToggleGraphs,
     SaveState,
     LoadState,
     DeleteAll,
@@ -173,7 +173,7 @@ pub fn make_sidepanel(
 
         ui.separator();
 
-        signal_button!("Remove Graphs", UiSignal::RemoveGraphs);
+        signal_button!("Toggle Graphs", UiSignal::ToggleGraphs);
         signal_button!("Delete All Bodies", UiSignal::DeleteAll);
 
         ui.separator();
@@ -203,7 +203,7 @@ pub fn make_graph_ui(
     };
 
     imgui::Window::new(im_str!("Graphs"))
-        .position([resolution.x * 0.6, 0.0], imgui::Condition::Appearing)
+        .position([resolution.x * 0.6, 0.0], imgui::Condition::Once)
         .size(
             [resolution.x * 0.4, resolution.y * 0.4],
             imgui::Condition::Appearing,
