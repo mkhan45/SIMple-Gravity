@@ -6,7 +6,12 @@ use crate::main_state::state::MainState;
 use crate::saveload::{load_world, save_world};
 use specs::prelude::*;
 
+use crate::Vector;
+use ggez::{input, input::keyboard::KeyCode, Context};
+
 use std::collections::HashSet;
+
+const CAMERA_SPEED: f32 = 1.5;
 
 impl<'a, 'b> MainState<'a, 'b> {
     pub fn run_physics_systems(&mut self) {
@@ -139,4 +144,31 @@ impl<'a, 'b> MainState<'a, 'b> {
                 .expect("error deleting collided preview");
         });
     }
+}
+
+pub fn calc_offset(ctx: &Context) -> Vector {
+    let mut offset: Vector = Vector::new(0.0, 0.0);
+
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Up)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::W)
+    {
+        offset.y -= CAMERA_SPEED;
+    }
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Down)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::S)
+    {
+        offset.y += CAMERA_SPEED;
+    }
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Left)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::A)
+    {
+        offset.x -= CAMERA_SPEED;
+    }
+    if input::keyboard::is_key_pressed(ctx, KeyCode::Right)
+        || input::keyboard::is_key_pressed(ctx, KeyCode::D)
+    {
+        offset.x += CAMERA_SPEED;
+    }
+
+    offset
 }

@@ -24,9 +24,7 @@ use crate::imgui_wrapper::*;
 #[allow(unused_imports)]
 use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
-use std::collections::HashSet;
-
-const CAMERA_SPEED: f32 = 1.5;
+use crate::main_state::update_utils::calc_offset;
 
 pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Vector) -> Point {
     let mut np: Point = point.into();
@@ -72,33 +70,6 @@ impl<'a, 'b> MainState<'a, 'b> {
             items_hovered: false,
         }
     }
-}
-
-fn calc_offset(ctx: &Context) -> Vector {
-    let mut offset: Vector = Vector::new(0.0, 0.0);
-
-    if input::keyboard::is_key_pressed(ctx, KeyCode::Up)
-        || input::keyboard::is_key_pressed(ctx, KeyCode::W)
-    {
-        offset.y -= CAMERA_SPEED;
-    }
-    if input::keyboard::is_key_pressed(ctx, KeyCode::Down)
-        || input::keyboard::is_key_pressed(ctx, KeyCode::S)
-    {
-        offset.y += CAMERA_SPEED;
-    }
-    if input::keyboard::is_key_pressed(ctx, KeyCode::Left)
-        || input::keyboard::is_key_pressed(ctx, KeyCode::A)
-    {
-        offset.x -= CAMERA_SPEED;
-    }
-    if input::keyboard::is_key_pressed(ctx, KeyCode::Right)
-        || input::keyboard::is_key_pressed(ctx, KeyCode::D)
-    {
-        offset.x += CAMERA_SPEED;
-    }
-
-    offset
 }
 
 impl<'a, 'b> EventHandler for MainState<'a, 'b> {
@@ -262,23 +233,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             }
         }
 
-        // delete preview
-        let mut delset: HashSet<Entity> = HashSet::new();
-
-        {
-            let previews = self.world.read_storage::<Preview>();
-            let entities = self.world.entities();
-
-            (&entities, &previews).join().for_each(|(entity, _)| {
-                delset.insert(entity);
-            });
-        }
-
-        delset.drain().for_each(|entity| {
-            self.world
-                .delete_entity(entity)
-                .expect("error deleting collided entity");
-        })
+        self.delete_preview();
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
@@ -286,23 +241,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         self.world
             .insert(MousePos(input::mouse::position(ctx).into()));
 
-        // delete old preview create a new one
-        let mut delset: HashSet<Entity> = HashSet::new();
-
-        {
-            let previews = self.world.read_storage::<Preview>();
-            let entities = self.world.entities();
-
-            (&entities, &previews).join().for_each(|(entity, _)| {
-                delset.insert(entity);
-            });
-        }
-
-        delset.drain().for_each(|entity| {
-            self.world
-                .delete_entity(entity)
-                .expect("error deleting collided entity");
-        });
+        self.delete_preview();
 
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
