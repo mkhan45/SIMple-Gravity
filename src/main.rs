@@ -24,7 +24,8 @@ use ecs::components::{
 use ecs::entities::{new_body, new_preview, Body, PreviewBody};
 
 use ecs::resources::{
-    MainIterations, NewPreview, Paused, PreviewIterations, Resolution, StartPoint, DT,
+    FollowSelectedBody, MainIterations, NewPreview, Paused, PreviewIterations, Resolution,
+    StartPoint, DT,
 };
 
 use ecs::systems::graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys};
@@ -94,6 +95,7 @@ fn main() -> GameResult {
     world.insert(Paused(false));
     world.insert(StartPoint(None));
     world.insert(NewPreview(false));
+    world.insert(FollowSelectedBody(false));
 
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])

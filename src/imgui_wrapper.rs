@@ -44,6 +44,7 @@ pub enum UiSignal {
     SaveState,
     LoadState,
     DeleteAll,
+    ToggleFollowBody,
 }
 
 #[derive(Debug, Clone)]
@@ -163,6 +164,7 @@ pub fn make_sidepanel(
             signal_button!("Graph Speed", UiSignal::AddGraph(GraphType::Speed));
             signal_button!("Graph X Velocity", UiSignal::AddGraph(GraphType::XVel));
             signal_button!("Graph Y Velocity", UiSignal::AddGraph(GraphType::YVel));
+            signal_button!("Follow Body", UiSignal::ToggleFollowBody);
             signal_button!("Delete Body", UiSignal::Delete);
         }
         ui.separator();

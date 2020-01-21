@@ -1,5 +1,5 @@
 use crate::ecs::components::{AccelGraph, Preview, SpeedGraph, XVelGraph, YVelGraph};
-use crate::ecs::resources::{MainIterations, Paused, PreviewIterations};
+use crate::ecs::resources::{FollowSelectedBody, MainIterations, Paused, PreviewIterations};
 use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::state::MainState;
@@ -45,6 +45,7 @@ impl<'a, 'b> MainState<'a, 'b> {
                 UiSignal::Create => self.creating = !self.creating,
                 UiSignal::Delete => {
                     if let Some(e) = self.selected_entity {
+                        self.world.insert(FollowSelectedBody(false));
                         self.world
                             .delete_entity(e)
                             .expect("error deleting selected_entity");
@@ -124,6 +125,9 @@ impl<'a, 'b> MainState<'a, 'b> {
                 }
                 UiSignal::DeleteAll => {
                     self.world.delete_all();
+                }
+                UiSignal::ToggleFollowBody => {
+                    self.world.get_mut::<FollowSelectedBody>().unwrap().toggle();
                 }
             });
         self.imgui_wrapper.sent_signals.clear();

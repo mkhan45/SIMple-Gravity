@@ -19,7 +19,9 @@ use crate::ecs::components::{
     YVelGraph,
 };
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
-use crate::ecs::resources::{MousePos, NewPreview, Paused, Resolution, StartPoint};
+use crate::ecs::resources::{
+    FollowSelectedBody, MousePos, NewPreview, Paused, Resolution, StartPoint,
+};
 use crate::imgui_wrapper::*;
 #[allow(unused_imports)]
 use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
@@ -80,6 +82,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         if let Some(e) = self.selected_entity {
             if !self.world.is_alive(e) {
                 self.selected_entity = None;
+                self.world.insert(FollowSelectedBody(false));
             }
         }
 
@@ -125,6 +128,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
 
+        if self.world.fetch::<FollowSelectedBody>().0 {
+            self.follow_selected_body(ctx)?;
+        }
         self.update_gui_data();
 
         let mut builder = graphics::MeshBuilder::new();
@@ -163,6 +169,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
                     let resolution = self.world.fetch::<Resolution>().0;
                     self.selected_entity = None;
+                    self.world.insert(FollowSelectedBody(false));
                     self.imgui_wrapper.render_data.entity_selected = false;
 
                     let positions = self.world.read_storage::<Position>();

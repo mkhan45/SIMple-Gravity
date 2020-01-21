@@ -45,3 +45,12 @@ impl Paused {
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct NewPreview(pub bool);
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub struct FollowSelectedBody(pub bool);
+
+impl FollowSelectedBody {
+    pub fn toggle(&mut self) {
+        self.0 = !self.0;
+    }
+}

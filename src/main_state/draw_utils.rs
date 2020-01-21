@@ -1,7 +1,7 @@
 use ggez::{
     graphics,
     graphics::{Color, DrawMode, MeshBuilder},
-    Context,
+    Context, GameResult,
 };
 
 use specs::prelude::*;
@@ -16,6 +16,20 @@ use crate::main_state::state::{scale_pos, MainState};
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.25, 0.45, 1.0, 1.0);
 
 impl<'a, 'b> MainState<'a, 'b> {
+    pub fn follow_selected_body(&mut self, ctx: &mut Context) -> GameResult {
+        //maybe should be a system with a Camera resource
+        if let Some(e) = self.selected_entity {
+            let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
+            let positions = self.world.read_storage::<Position>();
+
+            let followed_pos = positions.get(e).unwrap();
+            screen_coordinates.x = followed_pos.0.x - screen_coordinates.w / 2.0;
+            screen_coordinates.y = followed_pos.0.y - screen_coordinates.h / 2.0;
+            ggez::graphics::set_screen_coordinates(ctx, screen_coordinates)?;
+        }
+        Ok(())
+    }
+
     pub fn update_gui_data(&mut self) {
         if let Some(e) = self.selected_entity {
             let masses = self.world.read_storage::<Mass>();
