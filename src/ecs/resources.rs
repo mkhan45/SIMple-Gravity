@@ -54,3 +54,12 @@ impl FollowSelectedBody {
         self.0 = !self.0;
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub struct EnableTrails(pub bool);
+
+impl EnableTrails {
+    pub fn toggle(&mut self) {
+        self.0 = !self.0;
+    }
+}

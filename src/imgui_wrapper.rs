@@ -45,6 +45,7 @@ pub enum UiSignal {
     LoadState,
     DeleteAll,
     ToggleFollowBody,
+    ToggleTrails,
 }
 
 #[derive(Debug, Clone)]
@@ -176,6 +177,7 @@ pub fn make_sidepanel(
         ui.separator();
 
         signal_button!("Toggle Graphs", UiSignal::ToggleGraphs);
+        signal_button!("Toggle Trails", UiSignal::ToggleTrails);
         signal_button!("Delete All Bodies", UiSignal::DeleteAll);
 
         ui.separator();

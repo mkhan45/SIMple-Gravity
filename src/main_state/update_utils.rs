@@ -1,5 +1,5 @@
 use crate::ecs::components::{AccelGraph, Preview, SpeedGraph, XVelGraph, YVelGraph};
-use crate::ecs::resources::{FollowSelectedBody, MainIterations, Paused, PreviewIterations};
+use crate::ecs::resources::{FollowSelectedBody, MainIterations, Paused, PreviewIterations, EnableTrails};
 use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::state::MainState;
@@ -128,6 +128,9 @@ impl<'a, 'b> MainState<'a, 'b> {
                 }
                 UiSignal::ToggleFollowBody => {
                     self.world.get_mut::<FollowSelectedBody>().unwrap().toggle();
+                }
+                UiSignal::ToggleTrails => {
+                    self.world.get_mut::<EnableTrails>().unwrap().toggle();
                 }
             });
         self.imgui_wrapper.sent_signals.clear();
