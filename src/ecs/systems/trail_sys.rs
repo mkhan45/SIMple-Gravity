@@ -10,10 +10,13 @@ impl<'a> System<'a> for TrailSys {
         WriteStorage<'a, Trail>,
         Entities<'a>,
         ReadStorage<'a, Preview>,
-        Read<'a, EnableTrails>
+        Read<'a, EnableTrails>,
     );
 
-    fn run(&mut self, (positions, mut trails, entities, previews, trails_enabled): Self::SystemData) {
+    fn run(
+        &mut self,
+        (positions, mut trails, entities, previews, trails_enabled): Self::SystemData,
+    ) {
         (&positions, &mut trails, &entities)
             .par_join()
             .for_each(|(pos, trail, entity)| {

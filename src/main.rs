@@ -24,8 +24,8 @@ use ecs::components::{
 use ecs::entities::{new_body, new_preview, Body, PreviewBody};
 
 use ecs::resources::{
-    FollowSelectedBody, MainIterations, NewPreview, Paused, PreviewIterations, Resolution,
-    StartPoint, DT, EnableTrails
+    EnableTrails, FollowSelectedBody, MainIterations, NewPreview, Paused, PreviewIterations,
+    Resolution, StartPoint, DT,
 };
 
 use ecs::systems::graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys};

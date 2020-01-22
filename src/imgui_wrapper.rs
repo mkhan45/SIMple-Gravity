@@ -116,8 +116,6 @@ pub fn make_sidepanel(
     let num_iterations = &mut render_data.num_iterations;
     let preview_iterations = &mut render_data.preview_iterations;
     let selected_entity = render_data.entity_selected;
-    let save_filename = &mut render_data.save_filename;
-    let load_filename = &mut render_data.load_filename;
     // Window
     let win = imgui::Window::new(im_str!("Menu"))
         .position([0.0, 30.0], imgui::Condition::Always)
@@ -167,9 +165,24 @@ pub fn make_sidepanel(
         signal_button!("Toggle Create Body", UiSignal::Create, ui, signals);
 
         if selected_entity {
-            signal_button!("Graph Speed", UiSignal::AddGraph(GraphType::Speed), ui, signals);
-            signal_button!("Graph X Velocity", UiSignal::AddGraph(GraphType::XVel), ui, signals);
-            signal_button!("Graph Y Velocity", UiSignal::AddGraph(GraphType::YVel), ui, signals);
+            signal_button!(
+                "Graph Speed",
+                UiSignal::AddGraph(GraphType::Speed),
+                ui,
+                signals
+            );
+            signal_button!(
+                "Graph X Velocity",
+                UiSignal::AddGraph(GraphType::XVel),
+                ui,
+                signals
+            );
+            signal_button!(
+                "Graph Y Velocity",
+                UiSignal::AddGraph(GraphType::YVel),
+                ui,
+                signals
+            );
             signal_button!("Follow Body", UiSignal::ToggleFollowBody, ui, signals);
             signal_button!("Delete Body", UiSignal::Delete, ui, signals);
         }
@@ -184,10 +197,6 @@ pub fn make_sidepanel(
         signal_button!("Toggle Graphs", UiSignal::ToggleGraphs, ui, signals);
         signal_button!("Toggle Trails", UiSignal::ToggleTrails, ui, signals);
         signal_button!("Delete All Bodies", UiSignal::DeleteAll, ui, signals);
-
-        ui.separator();
-        ui.input_text(im_str!("Filename: "), load_filename).build();
-        signal_button!("Load Save", UiSignal::LoadState, ui, signals);
     });
 }
 
@@ -196,20 +205,33 @@ pub fn make_menu_bar(
     signals: &mut Vec<UiSignal>,
     render_data: &mut RenderData,
 ) {
-    ui.main_menu_bar(||{
-        ui.menu(im_str!("Load Universe"), true, ||{
+    ui.main_menu_bar(|| {
+        ui.menu(im_str!("Load Universe"), true, || {
             let dir = Path::new("./saved_systems/");
             match fs::read_dir(dir) {
                 Ok(dir_entries) => {
-                    dir_entries.for_each(|entry|{
-                        println!("entry");
+                    dir_entries.for_each(|entry| {
+                        if let Ok(entry) = entry {
+                            if let Ok(filename) = entry.file_name().into_string() {
+                                if &filename.as_str()[filename.len() - 4..] == ".ron" {
+                                    let label = unsafe {
+                                        ImStr::from_utf8_with_nul_unchecked(filename.as_bytes())
+                                    };
+                                    if ui.small_button(label) {
+                                        render_data.load_filename = ImString::new(filename);
+                                        signals.push(UiSignal::LoadState);
+                                    }
+                                }
+                            }
+                        }
                     });
-                },
+                }
                 Err(e) => println!("Error reading dir: {}", e),
             }
         });
         signal_button!("Save the Universe", UiSignal::SaveState, ui, signals);
-        ui.input_text(im_str!("Filename:"), &mut render_data.save_filename).build();
+        ui.input_text(im_str!("Filename:"), &mut render_data.save_filename)
+            .build();
     });
 }
 
@@ -240,7 +262,7 @@ pub fn make_graph_ui(
             ui.plot_lines(graph_name, data)
                 .graph_size([resolution.x * 0.3, resolution.y * 0.3])
                 .build();
-            });
+        });
 }
 
 pub fn make_default_ui(ui: &mut imgui::Ui) {

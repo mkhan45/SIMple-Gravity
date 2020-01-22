@@ -1,5 +1,7 @@
 use crate::ecs::components::{AccelGraph, Preview, SpeedGraph, XVelGraph, YVelGraph};
-use crate::ecs::resources::{FollowSelectedBody, MainIterations, Paused, PreviewIterations, EnableTrails};
+use crate::ecs::resources::{
+    EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations,
+};
 use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::state::MainState;
