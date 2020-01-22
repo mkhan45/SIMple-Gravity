@@ -19,6 +19,8 @@ use specs::prelude::*;
 use std::time;
 
 use std::collections::HashSet;
+use std::fs;
+use std::path::Path;
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
 pub struct MouseState {
@@ -59,6 +61,7 @@ pub struct RenderData {
     pub save_filename: ImString,
     pub load_filename: ImString,
     pub trail_len: usize,
+    pub filename_menu: bool,
 }
 
 impl RenderData {
@@ -73,8 +76,17 @@ impl RenderData {
             save_filename: ImString::new("save.ron"),
             load_filename: ImString::new("load.ron"),
             trail_len: 35,
+            filename_menu: false,
         }
     }
+}
+
+macro_rules! signal_button {
+    ( $label:expr, $signal:expr, $ui:expr, $signals:expr) => {
+        if $ui.small_button(im_str!($label)) {
+            $signals.push($signal);
+        }
+    };
 }
 
 pub struct ImGuiWrapper {
@@ -108,27 +120,20 @@ pub fn make_sidepanel(
     let load_filename = &mut render_data.load_filename;
     // Window
     let win = imgui::Window::new(im_str!("Menu"))
-        .position([0.0, 0.0], imgui::Condition::Always)
+        .position([0.0, 30.0], imgui::Condition::Always)
         .opened(open_bool)
         .size(
-            [resolution.x * 0.35, resolution.y],
+            [resolution.x * 0.35, resolution.y - 30.0],
             imgui::Condition::Appearing,
         )
         .collapsible(false)
         .movable(false)
         .size_constraints(
-            [resolution.x * 0.1, resolution.y],
-            [resolution.x * 0.6, resolution.y],
+            [resolution.x * 0.1, resolution.y - 30.0],
+            [resolution.x * 0.6, resolution.y - 30.0],
         );
     win.build(ui, || {
         //constructs a small button that sends a UiSignal
-        macro_rules! signal_button {
-            ( $label:expr, $signal:expr ) => {
-                if ui.small_button(im_str!($label)) {
-                    signals.push($signal);
-                }
-            };
-        }
 
         macro_rules! int_slider {
             ( $label:expr, $num:expr, $min:expr, $max:expr ) => {
@@ -159,14 +164,14 @@ pub fn make_sidepanel(
 
         int_slider!("Trail Length", trail_len, 0, 10_000);
 
-        signal_button!("Toggle Create Body", UiSignal::Create);
+        signal_button!("Toggle Create Body", UiSignal::Create, ui, signals);
 
         if selected_entity {
-            signal_button!("Graph Speed", UiSignal::AddGraph(GraphType::Speed));
-            signal_button!("Graph X Velocity", UiSignal::AddGraph(GraphType::XVel));
-            signal_button!("Graph Y Velocity", UiSignal::AddGraph(GraphType::YVel));
-            signal_button!("Follow Body", UiSignal::ToggleFollowBody);
-            signal_button!("Delete Body", UiSignal::Delete);
+            signal_button!("Graph Speed", UiSignal::AddGraph(GraphType::Speed), ui, signals);
+            signal_button!("Graph X Velocity", UiSignal::AddGraph(GraphType::XVel), ui, signals);
+            signal_button!("Graph Y Velocity", UiSignal::AddGraph(GraphType::YVel), ui, signals);
+            signal_button!("Follow Body", UiSignal::ToggleFollowBody, ui, signals);
+            signal_button!("Delete Body", UiSignal::Delete, ui, signals);
         }
         ui.separator();
         ui.drag_float(im_str!("DT"), dt).speed(0.01).build();
@@ -176,17 +181,35 @@ pub fn make_sidepanel(
 
         ui.separator();
 
-        signal_button!("Toggle Graphs", UiSignal::ToggleGraphs);
-        signal_button!("Toggle Trails", UiSignal::ToggleTrails);
-        signal_button!("Delete All Bodies", UiSignal::DeleteAll);
+        signal_button!("Toggle Graphs", UiSignal::ToggleGraphs, ui, signals);
+        signal_button!("Toggle Trails", UiSignal::ToggleTrails, ui, signals);
+        signal_button!("Delete All Bodies", UiSignal::DeleteAll, ui, signals);
 
-        ui.separator();
-
-        ui.input_text(im_str!("Filename:"), save_filename).build();
-        signal_button!("Save the Universe", UiSignal::SaveState);
         ui.separator();
         ui.input_text(im_str!("Filename: "), load_filename).build();
-        signal_button!("Load Save", UiSignal::LoadState);
+        signal_button!("Load Save", UiSignal::LoadState, ui, signals);
+    });
+}
+
+pub fn make_menu_bar(
+    ui: &mut imgui::Ui,
+    signals: &mut Vec<UiSignal>,
+    render_data: &mut RenderData,
+) {
+    ui.main_menu_bar(||{
+        ui.menu(im_str!("Load Universe"), true, ||{
+            let dir = Path::new("./saved_systems/");
+            match fs::read_dir(dir) {
+                Ok(dir_entries) => {
+                    dir_entries.for_each(|entry|{
+                        println!("entry");
+                    });
+                },
+                Err(e) => println!("Error reading dir: {}", e),
+            }
+        });
+        signal_button!("Save the Universe", UiSignal::SaveState, ui, signals);
+        ui.input_text(im_str!("Filename:"), &mut render_data.save_filename).build();
     });
 }
 
@@ -217,7 +240,7 @@ pub fn make_graph_ui(
             ui.plot_lines(graph_name, data)
                 .graph_size([resolution.x * 0.3, resolution.y * 0.3])
                 .build();
-        });
+            });
 }
 
 pub fn make_default_ui(ui: &mut imgui::Ui) {
@@ -364,6 +387,7 @@ impl ImGuiWrapper {
                     _ => unimplemented!(),
                 }
             }
+            make_menu_bar(&mut ui, &mut self.sent_signals, &mut self.render_data);
         }
         *items_hovered = ui.is_any_item_hovered();
 
