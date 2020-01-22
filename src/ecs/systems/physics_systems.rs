@@ -6,6 +6,8 @@ use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
 
+use microprofile::scope;
+
 // PhysicsSys and PreviewPhysicsSys are separate because PreviewPhysicsSys usually needs to be run
 // more times than PhysicsSys.
 // They use the same methods for the most part with only the toggle preview_only changed
@@ -114,6 +116,7 @@ fn integrate_positions(
     preview_only: bool,
     dt: f32,
 ) {
+    microprofile::scope!("Physics-System", "integrate_positions");
     let int_closure = |(pos, kinematics): (&mut Position, &Kinematics)| {
         pos.0 += kinematics.vel * dt + (kinematics.accel / 2.0) * dt.powi(2);
     };
@@ -138,6 +141,7 @@ fn apply_gravity(
     preview_only: bool,
 ) {
     // for each body, sum the accelerations of gravity from every other body and add it
+    microprofile::scope!("Physics-System", "apply_gravity");
     let grav_closure = |(current_pos, kinematics, _): (&Position, &mut Kinematics, &Radius)| {
         kinematics.accel = (positions, masses).join().fold(
             Vector::new(0.0, 0.0),
@@ -178,6 +182,7 @@ fn integrate_kinematics(
     preview_only: bool,
     dt: f32,
 ) {
+    microprofile::scope!("Physics-System", "integrate_kinematics");
     let kine_int_closure = |kinematics: &mut Kinematics| {
         *kinematics.vel = *(kinematics.vel + (kinematics.accel + kinematics.past_accel) / 2.0 * dt);
         kinematics.past_accel = kinematics.accel;
@@ -199,6 +204,7 @@ fn calc_collisions(
     radii: &WriteStorage<'_, Radius>,
     entities: &Entities,
 ) -> (Vec<Body>, HashSet<Entity>) {
+    microprofile::scope!("Physics-System", "calc_collisions");
     let mut create_vec: Vec<Body> = Vec::new();
     let mut delete_set: HashSet<Entity> = HashSet::new();
 

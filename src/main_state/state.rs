@@ -28,6 +28,8 @@ use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
 use crate::main_state::update_utils::calc_offset;
 
+use microprofile::scope;
+
 pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Vector) -> Point {
     let mut np: Point = point.into();
     np.x *= coords.w / resolution.x;
@@ -76,6 +78,8 @@ impl<'a, 'b> MainState<'a, 'b> {
 
 impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        microprofile::flip();
+        microprofile::scope!("Update", "update");
         self.process_gui_signals();
 
         // unselect selected entity if it collided
@@ -126,6 +130,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        microprofile::scope!("Draw", "draw");
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
 
         if self.world.fetch::<FollowSelectedBody>().0 {

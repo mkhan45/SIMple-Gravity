@@ -14,6 +14,8 @@ mod main_state;
 mod saveload;
 use main_state::state::MainState;
 
+extern crate microprofile;
+
 mod ecs;
 use ecs::components::{
     Draw, Kinematics, Mass, Point, Position, Preview, Radius, SaveMarker, SpeedGraph, Trail,
@@ -136,5 +138,8 @@ fn main() -> GameResult {
         ImGuiWrapper::new(ctx, hidpi_factor, dimensions_vec),
         hidpi_factor,
     );
+
+    microprofile::init();
+    microprofile::set_enable_all_groups(true);
     event::run(ctx, event_loop, main_state)
 }

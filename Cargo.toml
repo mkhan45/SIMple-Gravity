@@ -20,6 +20,10 @@ imgui-gfx-renderer = "0.2.0"
 serde = { version = "1.0.104", features = ["derive"] }
 ron = "0.5.1"
 
+[dependencies.microprofile]
+version = "0.2.1"
+features = ["disabled"]
+
 [profile.dev]
 debug=0
 
