@@ -138,7 +138,7 @@ impl<'a, 'b> MainState<'a, 'b> {
                     self.world.get_mut::<RelativeTrails>().unwrap().toggle();
                     (&mut self.world.write_storage::<Trail>())
                         .join()
-                        .for_each(|mut trail| {
+                        .for_each(|trail| {
                             trail.points.clear();
                         });
                 }

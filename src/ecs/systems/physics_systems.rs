@@ -6,6 +6,7 @@ use crate::{new_body, Body, Point, Vector, G};
 
 use std::collections::HashSet;
 
+#[allow(unused_imports)]
 use microprofile::scope;
 
 // PhysicsSys and PreviewPhysicsSys are separate because PreviewPhysicsSys usually needs to be run

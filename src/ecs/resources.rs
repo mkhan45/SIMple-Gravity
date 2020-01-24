@@ -73,7 +73,7 @@ pub struct RelativeTrails {
 impl RelativeTrails {
     pub fn new() -> Self {
         RelativeTrails {
-            enabled: true,
+            enabled: false,
             pos: None,
         }
     }

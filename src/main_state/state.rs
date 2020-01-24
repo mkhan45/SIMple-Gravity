@@ -28,6 +28,7 @@ use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
 use crate::main_state::update_utils::calc_offset;
 
+#[allow(unused_imports)]
 use microprofile::scope;
 
 pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Vector) -> Point {
@@ -187,6 +188,14 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             match button {
                 MouseButton::Right => {
                     self.imgui_wrapper.remove_sidemenu();
+
+                    if self.world.fetch::<RelativeTrails>().enabled {
+                        (&mut self.world.write_storage::<Trail>())
+                            .join()
+                            .for_each(|trail| {
+                                trail.points.clear();
+                            });
+                    }
 
                     let resolution = self.world.fetch::<Resolution>().0;
                     self.selected_entity = None;
