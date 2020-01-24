@@ -1,6 +1,6 @@
-use crate::ecs::components::{AccelGraph, Preview, SpeedGraph, XVelGraph, YVelGraph};
+use crate::ecs::components::{AccelGraph, Preview, SpeedGraph, Trail, XVelGraph, YVelGraph};
 use crate::ecs::resources::{
-    EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations,
+    EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations, RelativeTrails,
 };
 use crate::ecs::systems::graph_sys::GraphType;
 use crate::imgui_wrapper::{UiChoice, UiSignal};
@@ -133,6 +133,14 @@ impl<'a, 'b> MainState<'a, 'b> {
                 }
                 UiSignal::ToggleTrails => {
                     self.world.get_mut::<EnableTrails>().unwrap().toggle();
+                }
+                UiSignal::ToggleRelativeTrails => {
+                    self.world.get_mut::<RelativeTrails>().unwrap().toggle();
+                    (&mut self.world.write_storage::<Trail>())
+                        .join()
+                        .for_each(|mut trail| {
+                            trail.points.clear();
+                        });
                 }
             });
         self.imgui_wrapper.sent_signals.clear();

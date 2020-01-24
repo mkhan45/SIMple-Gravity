@@ -48,6 +48,7 @@ pub enum UiSignal {
     DeleteAll,
     ToggleFollowBody,
     ToggleTrails,
+    ToggleRelativeTrails,
 }
 
 #[derive(Debug, Clone)]
@@ -196,6 +197,12 @@ pub fn make_sidepanel(
 
         signal_button!("Toggle Graphs", UiSignal::ToggleGraphs, ui, signals);
         signal_button!("Toggle Trails", UiSignal::ToggleTrails, ui, signals);
+        signal_button!(
+            "Toggle Relative Trails",
+            UiSignal::ToggleRelativeTrails,
+            ui,
+            signals
+        );
         signal_button!("Delete All Bodies", UiSignal::DeleteAll, ui, signals);
     });
 }

@@ -63,3 +63,22 @@ impl EnableTrails {
         self.0 = !self.0;
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub struct RelativeTrails {
+    pub enabled: bool,
+    pub pos: Option<Point>,
+}
+
+impl RelativeTrails {
+    pub fn new() -> Self {
+        RelativeTrails {
+            enabled: true,
+            pos: None,
+        }
+    }
+
+    pub fn toggle(&mut self) {
+        self.enabled = !self.enabled;
+    }
+}

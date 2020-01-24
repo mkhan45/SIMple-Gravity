@@ -20,7 +20,7 @@ use crate::ecs::components::{
 };
 use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
 use crate::ecs::resources::{
-    FollowSelectedBody, MousePos, NewPreview, Paused, Resolution, StartPoint,
+    FollowSelectedBody, MousePos, NewPreview, Paused, RelativeTrails, Resolution, StartPoint,
 };
 use crate::imgui_wrapper::*;
 #[allow(unused_imports)]
@@ -87,6 +87,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             if !self.world.is_alive(e) {
                 self.selected_entity = None;
                 self.world.insert(FollowSelectedBody(false));
+            } else {
+                let positions = self.world.read_storage::<Position>();
+                let selected_pos = positions.get(e).expect("error getting selected position");
+                self.world.fetch_mut::<RelativeTrails>().pos = Some(selected_pos.0);
             }
         }
 
@@ -140,7 +144,19 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         let mut builder = graphics::MeshBuilder::new();
 
-        self.draw_trails(&mut builder);
+        if self.world.fetch::<RelativeTrails>().enabled {
+            let mut trail_builder = graphics::MeshBuilder::new();
+            if let Some(dest_pos) = self.world.fetch::<RelativeTrails>().pos {
+                self.draw_trails(&mut trail_builder);
+                if let Ok(mesh) = trail_builder.build(ctx) {
+                    graphics::draw(ctx, &mesh, graphics::DrawParam::new().dest(dest_pos))
+                        .expect("error drawing mesh");
+                }
+            }
+        } else {
+            self.draw_trails(&mut builder);
+        }
+
         self.draw_bodies(&mut builder);
         self.draw_preview(&mut builder, ctx);
 

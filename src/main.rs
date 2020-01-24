@@ -27,7 +27,7 @@ use ecs::entities::{new_body, new_preview, Body, PreviewBody};
 
 use ecs::resources::{
     EnableTrails, FollowSelectedBody, MainIterations, NewPreview, Paused, PreviewIterations,
-    Resolution, StartPoint, DT,
+    RelativeTrails, Resolution, StartPoint, DT,
 };
 
 use ecs::systems::graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys};
@@ -99,6 +99,7 @@ fn main() -> GameResult {
     world.insert(NewPreview(false));
     world.insert(FollowSelectedBody(false));
     world.insert(EnableTrails(true));
+    world.insert(RelativeTrails::new());
 
     let mut main_dispatcher = DispatcherBuilder::new()
         .with(PhysicsSys, "physics_system", &[])
