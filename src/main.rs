@@ -17,22 +17,22 @@ use main_state::state::MainState;
 extern crate microprofile;
 
 mod ecs;
-use ecs::components::{
-    Draw, Kinematics, Mass, Point, Position, Preview, Radius, SaveMarker, SpeedGraph, Trail,
-    Vector, XVelGraph, YVelGraph,
+use ecs::{
+    components::{
+        Draw, Kinematics, Mass, Point, Position, Preview, Radius, SaveMarker, SpeedGraph, Trail,
+        Vector, XVelGraph, YVelGraph,
+    },
+    entities::{new_body, Body},
+    resources::{
+        EnableTrails, FollowSelectedBody, MainIterations, NewPreview, Paused, PreviewIterations,
+        RelativeTrails, Resolution, StartPoint, DT,
+    },
+    systems::{
+        graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys},
+        physics_systems::{PhysicsSys, PreviewPhysicsSys},
+        trail_sys::{PreviewTrailSys, TrailSys},
+    },
 };
-
-#[allow(unused_imports)]
-use ecs::entities::{new_body, new_preview, Body, PreviewBody};
-
-use ecs::resources::{
-    EnableTrails, FollowSelectedBody, MainIterations, NewPreview, Paused, PreviewIterations,
-    RelativeTrails, Resolution, StartPoint, DT,
-};
-
-use ecs::systems::graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys};
-use ecs::systems::physics_systems::{PhysicsSys, PreviewPhysicsSys};
-use ecs::systems::trail_sys::{PreviewTrailSys, TrailSys};
 
 mod imgui_wrapper;
 use imgui_wrapper::ImGuiWrapper;

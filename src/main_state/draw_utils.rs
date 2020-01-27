@@ -6,11 +6,12 @@ use ggez::{
 
 use specs::prelude::*;
 
-use crate::ecs::components::{
-    Draw, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph,
+use crate::ecs::{
+    components::{Draw, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph},
+    resources::{MainIterations, PreviewIterations, Resolution, StartPoint, DT},
+    systems::graph_sys::GraphType,
 };
-use crate::ecs::resources::{MainIterations, PreviewIterations, Resolution, StartPoint, DT};
-use crate::ecs::systems::graph_sys::GraphType;
+
 use crate::main_state::state::{scale_pos, MainState};
 
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.25, 0.45, 1.0, 1.0);

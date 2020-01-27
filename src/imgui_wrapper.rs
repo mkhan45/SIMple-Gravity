@@ -16,11 +16,10 @@ use crate::Vector;
 
 use specs::prelude::*;
 
-use std::time;
-
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
+use std::time;
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
 pub struct MouseState {

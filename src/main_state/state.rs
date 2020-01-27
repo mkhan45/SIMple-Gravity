@@ -1,12 +1,10 @@
 use specs::prelude::*;
 
 use ggez::{
-    event,
-    event::EventHandler,
-    graphics,
-    graphics::Color,
-    input,
+    event::{self, EventHandler},
+    graphics::{self, Color},
     input::{
+        self,
         keyboard::{KeyCode, KeyMods},
         mouse::MouseButton,
     },
@@ -14,18 +12,20 @@ use ggez::{
 };
 
 #[allow(unused_imports)]
-use crate::ecs::components::{
-    AccelGraph, Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph,
-    YVelGraph,
+use crate::ecs::{
+    components::{
+        AccelGraph, Draw, Kinematics, Mass, Position, Preview, Radius, SpeedGraph, Trail,
+        XVelGraph, YVelGraph,
+    },
+    entities::{create_body, create_preview, new_body, new_preview},
+    resources::{
+        FollowSelectedBody, MousePos, NewPreview, Paused, RelativeTrails, Resolution, StartPoint,
+    },
 };
-use crate::ecs::entities::{create_body, create_preview, new_body, new_preview};
-use crate::ecs::resources::{
-    FollowSelectedBody, MousePos, NewPreview, Paused, RelativeTrails, Resolution, StartPoint,
-};
-use crate::imgui_wrapper::*;
-#[allow(unused_imports)]
-use crate::{Point, Vector, SCREEN_X, SCREEN_Y};
 
+use crate::{Point, Vector};
+
+use crate::imgui_wrapper::*;
 use crate::main_state::update_utils::calc_offset;
 
 #[allow(unused_imports)]

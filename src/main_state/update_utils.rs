@@ -1,14 +1,18 @@
-use crate::ecs::components::{AccelGraph, Preview, SpeedGraph, Trail, XVelGraph, YVelGraph};
-use crate::ecs::resources::{
-    EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations, RelativeTrails,
+use crate::ecs::{
+    components::{AccelGraph, Preview, SpeedGraph, Trail, XVelGraph, YVelGraph},
+    resources::{
+        EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations, RelativeTrails,
+    },
+    systems::graph_sys::GraphType,
 };
-use crate::ecs::systems::graph_sys::GraphType;
+
 use crate::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::state::MainState;
 use crate::saveload::{load_world, save_world};
+use crate::Vector;
+
 use specs::prelude::*;
 
-use crate::Vector;
 use ggez::{input, input::keyboard::KeyCode, Context};
 
 use std::collections::HashSet;
