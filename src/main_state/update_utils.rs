@@ -1,16 +1,17 @@
 use crate::ecs::{
     components::{AccelGraph, Preview, SpeedGraph, Trail, XVelGraph, YVelGraph},
     resources::{
-        EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations, RelativeTrails, NewPreview, MousePos, Resolution, StartPoint
+        EnableTrails, FollowSelectedBody, MainIterations, MousePos, NewPreview, Paused,
+        PreviewIterations, RelativeTrails, Resolution, StartPoint,
     },
     systems::graph_sys::GraphType,
 };
 
+use crate::ecs::entities::{create_preview, new_preview};
 use crate::imgui_wrapper::{UiChoice, UiSignal};
+use crate::main_state::state::scale_pos;
 use crate::main_state::state::MainState;
 use crate::saveload::{load_world, save_world};
-use crate::ecs::entities::{create_preview, new_preview};
-use crate::main_state::state::scale_pos;
 use crate::Vector;
 
 use specs::prelude::*;
@@ -186,7 +187,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided preview");
-            });
+        });
     }
 }
 

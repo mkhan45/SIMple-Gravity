@@ -15,6 +15,7 @@ use crate::ecs::{
 use crate::main_state::state::{scale_pos, MainState};
 
 static TRAIL_COLOR: graphics::Color = graphics::Color::new(0.25, 0.45, 1.0, 1.0);
+static OUTLINE_COLOR: graphics::Color = graphics::Color::new(1.0, 0.1, 0.05, 1.0);
 
 impl<'a, 'b> MainState<'a, 'b> {
     pub fn follow_selected_body(&mut self, ctx: &mut Context) -> GameResult {
@@ -129,6 +130,22 @@ impl<'a, 'b> MainState<'a, 'b> {
         self.world.insert::<PreviewIterations>(PreviewIterations(
             self.imgui_wrapper.render_data.preview_iterations,
         ));
+    }
+
+    pub fn draw_selected_outline(&self, builder: &mut MeshBuilder, entity: Entity) {
+        let positions = self.world.read_storage::<Position>();
+        let radii = self.world.read_storage::<Radius>();
+
+        if let (Some(pos), Some(rad)) = (positions.get(entity), radii.get(entity)) {
+            let stroke_width = (rad.0 * 0.05).max(0.25);
+            builder.circle(
+                DrawMode::stroke(stroke_width),
+                pos.0,
+                rad.0 + stroke_width / 2.0,
+                0.005,
+                OUTLINE_COLOR,
+            );
+        }
     }
 
     pub fn draw_gui(&mut self, ctx: &mut Context) {

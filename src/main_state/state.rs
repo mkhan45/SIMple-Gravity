@@ -95,7 +95,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             }
         }
 
-
         // apply camera movement
         let offset = calc_offset(ctx);
         if offset != [0.0, 0.0].into() {
@@ -143,6 +142,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
         self.draw_bodies(&mut builder);
         self.draw_preview(&mut builder, ctx);
+
+        if let Some(ent) = self.selected_entity {
+            self.draw_selected_outline(&mut builder, ent);
+        }
 
         if let Ok(mesh) = builder.build(ctx) {
             graphics::draw(ctx, &mesh, graphics::DrawParam::new()).expect("error drawing mesh");
