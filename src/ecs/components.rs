@@ -39,12 +39,6 @@ impl Into<ggez::mint::Point2<f32>> for Position {
     }
 }
 
-impl From<[f32; 2]> for Position {
-    fn from(p: [f32; 2]) -> Self {
-        Position(p.into())
-    }
-}
-
 impl From<Point> for Position {
     fn from(p: Point) -> Self {
         Position(p)

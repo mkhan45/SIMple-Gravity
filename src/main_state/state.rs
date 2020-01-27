@@ -95,23 +95,6 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             }
         }
 
-        // if preview collided, delete it and make a new one
-        if self.world.fetch::<NewPreview>().0 {
-            self.delete_preview();
-
-            let coords = ggez::graphics::screen_coordinates(ctx);
-
-            let start_point = self.world.fetch::<StartPoint>().0;
-            if let Some(sp) = start_point {
-                let resolution = self.world.fetch::<Resolution>().0;
-                let mouse_pos = self.world.fetch::<MousePos>().0;
-                let p = scale_pos([mouse_pos.x, mouse_pos.y], coords, resolution);
-
-                create_preview(&mut self.world, new_preview(sp, (sp - p) * 0.025, self.rad));
-            }
-
-            self.world.insert(NewPreview(false));
-        }
 
         // apply camera movement
         let offset = calc_offset(ctx);
@@ -129,7 +112,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             dbg!(ggez::timer::fps(ctx));
         }
 
-        self.run_physics_systems();
+        self.run_physics_systems(ctx);
 
         Ok(())
     }

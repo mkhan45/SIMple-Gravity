@@ -1,7 +1,7 @@
 use crate::ecs::{
     components::{AccelGraph, Preview, SpeedGraph, Trail, XVelGraph, YVelGraph},
     resources::{
-        EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations, RelativeTrails,
+        EnableTrails, FollowSelectedBody, MainIterations, Paused, PreviewIterations, RelativeTrails, NewPreview, MousePos, Resolution, StartPoint
     },
     systems::graph_sys::GraphType,
 };
@@ -9,6 +9,8 @@ use crate::ecs::{
 use crate::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::state::MainState;
 use crate::saveload::{load_world, save_world};
+use crate::ecs::entities::{create_preview, new_preview};
+use crate::main_state::state::scale_pos;
 use crate::Vector;
 
 use specs::prelude::*;
@@ -20,7 +22,7 @@ use std::collections::HashSet;
 const CAMERA_SPEED: f32 = 1.5;
 
 impl<'a, 'b> MainState<'a, 'b> {
-    pub fn run_physics_systems(&mut self) {
+    pub fn run_physics_systems(&mut self, ctx: &mut ggez::Context) {
         let preview_iterations = self.world.fetch::<PreviewIterations>().0;
         if !self.world.fetch::<Paused>().0 {
             let main_iterations = self.world.fetch::<MainIterations>().0;
@@ -39,6 +41,23 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         (0..preview_iterations).for_each(|_| {
             self.preview_dispatcher.dispatch(&self.world);
+            // if preview collided, delete it and make a new one
+            if self.world.fetch::<NewPreview>().0 {
+                self.delete_preview();
+
+                let coords = ggez::graphics::screen_coordinates(ctx);
+
+                let start_point = self.world.fetch::<StartPoint>().0;
+                if let Some(sp) = start_point {
+                    let resolution = self.world.fetch::<Resolution>().0;
+                    let mouse_pos = self.world.fetch::<MousePos>().0;
+                    let p = scale_pos([mouse_pos.x, mouse_pos.y], coords, resolution);
+
+                    create_preview(&mut self.world, new_preview(sp, (sp - p) * 0.025, self.rad));
+                }
+
+                self.world.insert(NewPreview(false));
+            }
         });
     }
 
@@ -167,7 +186,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             self.world
                 .delete_entity(entity)
                 .expect("error deleting collided preview");
-        });
+            });
     }
 }
 

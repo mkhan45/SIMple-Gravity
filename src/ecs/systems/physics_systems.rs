@@ -102,7 +102,6 @@ impl<'a> System<'a> for PreviewPhysicsSys {
             true,
         );
 
-        // for some reason this only works sometimes TODO
         new_preview.0 = calc_preview_collisions(&positions, &radii, &previews);
 
         integrate_kinematics(&mut kinematics, &previews, true, dt.0);
