@@ -62,7 +62,6 @@ pub struct RenderData {
     pub save_filename: ImString,
     pub load_filename: ImString,
     pub trail_len: usize,
-    pub filename_menu: bool,
 }
 
 impl RenderData {
@@ -77,7 +76,6 @@ impl RenderData {
             save_filename: ImString::new("save.ron"),
             load_filename: ImString::new("load.ron"),
             trail_len: 35,
-            filename_menu: false,
         }
     }
 }

@@ -114,6 +114,7 @@ impl<'a, 'b> MainState<'a, 'b> {
                     }
                 }
                 UiSignal::LoadState => {
+                    self.world.delete_all();
                     match load_world(
                         &self.world,
                         format!(

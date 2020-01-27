@@ -24,8 +24,8 @@ impl<'a> System<'a> for TrailSys {
                 let mut temp_pos = pos.0;
                 if relative_trails.enabled {
                     if let Some(rel_pos) = relative_trails.pos {
-                        temp_pos.x = temp_pos.x - rel_pos.x;
-                        temp_pos.y = temp_pos.y - rel_pos.y;
+                        temp_pos.x -= rel_pos.x;
+                        temp_pos.y -= rel_pos.y;
                     }
                 }
                 if previews.get(entity).is_none() {
