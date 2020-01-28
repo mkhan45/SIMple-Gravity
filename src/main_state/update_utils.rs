@@ -123,7 +123,7 @@ impl<'a, 'b> MainState<'a, 'b> {
                             )*
                         };
                     }
-                    undisplay_graphs!(SpeedGraph, XVelGraph, YVelGraph);
+                    undisplay_graphs!(SpeedGraph, XVelGraph, YVelGraph, AccelGraph);
                 }
                 UiSignal::SaveState => {
                     match save_world(

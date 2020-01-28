@@ -19,8 +19,8 @@ extern crate microprofile;
 mod ecs;
 use ecs::{
     components::{
-        Draw, Kinematics, Mass, Point, Position, Preview, Radius, SaveMarker, SpeedGraph, Trail,
-        Vector, XVelGraph, YVelGraph,
+        AccelGraph, Draw, Kinematics, Mass, Point, Position, Preview, Radius, SaveMarker,
+        SpeedGraph, Trail, Vector, XVelGraph, YVelGraph,
     },
     entities::{new_body, Body},
     resources::{
@@ -28,7 +28,7 @@ use ecs::{
         RelativeTrails, Resolution, StartPoint, DT,
     },
     systems::{
-        graph_sys::{SpeedGraphSys, XVelGraphSys, YVelGraphSys},
+        graph_sys::{AccelGraphSys, SpeedGraphSys, XVelGraphSys, YVelGraphSys},
         physics_systems::{PhysicsSys, PreviewPhysicsSys},
         trail_sys::{PreviewTrailSys, TrailSys},
     },
@@ -60,6 +60,7 @@ fn main() -> GameResult {
     world.register::<SpeedGraph>();
     world.register::<XVelGraph>();
     world.register::<YVelGraph>();
+    world.register::<AccelGraph>();
     world.register::<SimpleMarker<SaveMarker>>();
     world.insert(SimpleMarkerAllocator::<SaveMarker>::new());
 
@@ -107,6 +108,7 @@ fn main() -> GameResult {
         .with(SpeedGraphSys, "speed_graph_system", &["physics_system"])
         .with(XVelGraphSys, "xvel_graph_system", &["physics_system"])
         .with(YVelGraphSys, "yvel_graph_system", &["physics_system"])
+        .with(AccelGraphSys, "accel_graph_system", &["physics_system"])
         .build();
 
     let mut preview_dispatcher = DispatcherBuilder::new()

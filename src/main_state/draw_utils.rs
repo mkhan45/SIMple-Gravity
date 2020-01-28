@@ -7,10 +7,13 @@ use ggez::{
 use specs::prelude::*;
 
 use crate::ecs::{
-    components::{Draw, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph},
+    components::{
+        AccelGraph, Draw, Mass, Position, Preview, Radius, SpeedGraph, Trail, XVelGraph, YVelGraph,
+    },
     resources::{MainIterations, PreviewIterations, Resolution, StartPoint, DT},
     systems::graph_sys::GraphType,
 };
+use crate::Point;
 
 use crate::main_state::state::{scale_pos, MainState};
 
@@ -198,6 +201,56 @@ impl<'a, 'b> MainState<'a, 'b> {
         } else {
             self.imgui_wrapper
                 .render(ctx, hidpi_factor, &mut self.items_hovered, graph_data);
+        }
+    }
+
+    pub fn draw_vector_graphs(&self, builder: &mut MeshBuilder, ctx: &mut Context) {
+        let accel_graphs = self.world.read_storage::<AccelGraph>();
+        if accel_graphs.join().filter(|graph| graph.display).count() > 0 {
+            let resolution = self.world.fetch::<Resolution>().0;
+            let screen_coords = ggez::graphics::screen_coordinates(ctx);
+
+            let (width, height) = (screen_coords.w * 0.3, screen_coords.h * 0.3);
+            let top_offset = 35.0 / resolution.y * screen_coords.h;
+            let outline_rect = graphics::Rect::new(
+                screen_coords.right() - width,
+                screen_coords.top() + top_offset,
+                width,
+                height,
+            );
+            let stroke_width = DrawMode::stroke(screen_coords.w * 0.001);
+            builder.rectangle(stroke_width, outline_rect, graphics::WHITE);
+
+            let color = graphics::WHITE;
+            let midpoint: Point =
+                [outline_rect.x + width / 2.0, outline_rect.y + height / 2.0].into();
+            accel_graphs
+                .join()
+                .filter(|graph| graph.display)
+                .for_each(|graph| {
+                    let data = &graph.data;
+                    for (i, vect) in data.iter().enumerate() {
+                        let color = {
+                            if i == data.len() - 1 {
+                                color
+                            } else {
+                                let (r, g, b) = color.to_rgb();
+                                Color::from_rgba(
+                                    r,
+                                    g,
+                                    b,
+                                    (i as f32 / data.len() as f32 * 50.0) as u8,
+                                )
+                            }
+                        };
+                        // gotta make the multiplier dynamic
+                        let endpoint =
+                            midpoint + (vect * 1500.0 * (screen_coords.w / resolution.x));
+                        builder
+                            .line(&[midpoint, endpoint], 0.05, color)
+                            .expect("error drawing vector");
+                    }
+                });
         }
     }
 }

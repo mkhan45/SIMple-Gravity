@@ -181,6 +181,12 @@ pub fn make_sidepanel(
                 ui,
                 signals
             );
+            signal_button!(
+                "Graph Acceleration",
+                UiSignal::AddGraph(GraphType::Accel),
+                ui,
+                signals
+            );
             signal_button!("Follow Body", UiSignal::ToggleFollowBody, ui, signals);
             signal_button!("Delete Body", UiSignal::Delete, ui, signals);
         }
