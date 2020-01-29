@@ -8,7 +8,7 @@ use crate::ecs::{
 };
 
 use crate::ecs::entities::{create_preview, new_preview};
-use crate::imgui_wrapper::{UiChoice, UiSignal};
+use crate::gui::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::state::scale_pos;
 use crate::main_state::state::MainState;
 use crate::saveload::{load_world, save_world};

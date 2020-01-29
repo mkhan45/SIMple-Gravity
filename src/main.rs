@@ -34,8 +34,8 @@ use ecs::{
     },
 };
 
-mod imgui_wrapper;
-use imgui_wrapper::ImGuiWrapper;
+mod gui;
+use gui::imgui_wrapper::ImGuiWrapper;
 
 const G: f32 = 1.2;
 const SCREEN_X: f32 = 300.0;

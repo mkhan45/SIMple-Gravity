@@ -25,7 +25,7 @@ use crate::ecs::{
 
 use crate::{Point, Vector};
 
-use crate::imgui_wrapper::*;
+use crate::gui::imgui_wrapper::*;
 use crate::main_state::update_utils::calc_offset;
 
 #[allow(unused_imports)]
