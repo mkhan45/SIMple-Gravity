@@ -100,6 +100,18 @@ pub struct ImGuiWrapper {
     pub render_data: RenderData,
 }
 
+macro_rules! int_slider {
+    ( $ui:expr, $label:expr, $num:expr, $min:expr, $max:expr ) => {
+        let mut num_i32 = *$num as i32;
+        $ui.drag_int(im_str!($label), &mut num_i32)
+            .min($min)
+            .speed(0.05 * (*$num as f32).powf(1.0 / 3.0))
+            .max($max)
+            .build();
+        *$num = num_i32 as usize;
+    };
+}
+
 pub fn make_sidepanel(
     ui: &mut imgui::Ui,
     resolution: Vector,
@@ -109,10 +121,7 @@ pub fn make_sidepanel(
 ) {
     let mass = &mut render_data.mass;
     let rad = &mut render_data.rad;
-    let dt = &mut render_data.dt;
     let trail_len = &mut render_data.trail_len;
-    let num_iterations = &mut render_data.num_iterations;
-    let preview_iterations = &mut render_data.preview_iterations;
     let selected_entity = render_data.entity_selected;
     // Window
     let win = imgui::Window::new(im_str!("Menu"))
@@ -131,18 +140,6 @@ pub fn make_sidepanel(
     win.build(ui, || {
         //constructs a small button that sends a UiSignal
 
-        macro_rules! int_slider {
-            ( $label:expr, $num:expr, $min:expr, $max:expr ) => {
-                let mut num_i32 = *$num as i32;
-                ui.drag_int(im_str!($label), &mut num_i32)
-                    .min($min)
-                    .speed(0.05 * (*$num as f32).powf(1.0 / 3.0))
-                    .max($max)
-                    .build();
-                *$num = num_i32 as usize;
-            };
-        }
-
         if selected_entity {
             ui.text(im_str!("Edit Object"));
         } else {
@@ -158,7 +155,7 @@ pub fn make_sidepanel(
             .speed(rad_speed)
             .build();
 
-        int_slider!("Trail Length", trail_len, 0, 10_000);
+        int_slider!(ui, "Trail Length", trail_len, 0, 10_000);
 
         signal_button!("Toggle Create Body", UiSignal::Create, ui, signals);
 
@@ -191,12 +188,6 @@ pub fn make_sidepanel(
             signal_button!("Delete Body", UiSignal::Delete, ui, signals);
         }
         ui.separator();
-        ui.drag_float(im_str!("DT"), dt).speed(0.01).build();
-
-        int_slider!("Iterations", num_iterations, 1, 1000);
-        int_slider!("Preview Iterations", preview_iterations, 1, 1000);
-
-        ui.separator();
 
         signal_button!("Toggle Graphs", UiSignal::ToggleGraphs, ui, signals);
         signal_button!("Toggle Trails", UiSignal::ToggleTrails, ui, signals);
@@ -216,6 +207,21 @@ pub fn make_menu_bar(
     render_data: &mut RenderData,
 ) {
     ui.main_menu_bar(|| {
+        ui.menu(im_str!("Universal Variables"), true, || {
+            let dt = &mut render_data.dt;
+            let num_iterations = &mut render_data.num_iterations;
+            let preview_iterations = &mut render_data.preview_iterations;
+
+            ui.drag_float(im_str!("DT"), dt).speed(0.01).build();
+            int_slider!(ui, "Iterations", num_iterations, 1, 1000);
+            int_slider!(ui, "Preview Iterations", preview_iterations, 1, 1000);
+        });
+
+        ui.spacing();
+        ui.separator();
+        ui.separator();
+        ui.spacing();
+
         ui.menu(im_str!("Load Universe"), true, || {
             let dir = Path::new("./saved_systems/");
             match fs::read_dir(dir) {
@@ -239,9 +245,12 @@ pub fn make_menu_bar(
                 Err(e) => println!("Error reading dir: {}", e),
             }
         });
-        signal_button!("Save the Universe", UiSignal::SaveState, ui, signals);
-        ui.input_text(im_str!("Filename:"), &mut render_data.save_filename)
-            .build();
+
+        ui.menu(im_str!("Save the Universe"), true, || {
+            ui.input_text(im_str!("Filename:"), &mut render_data.save_filename)
+                .build();
+            signal_button!("Save", UiSignal::SaveState, ui, signals);
+        });
     });
 }
 
