@@ -198,8 +198,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     let mouse_pos = scale_pos([x, y], coords, resolution);
 
                     for (e, pos, rad) in (&entities, &positions, &radii).join() {
-                        let mselect_rad = 12.5 * (screen_coordinates.w / resolution.x); 
-                        dbg!(mselect_rad);
+                        let mselect_rad = 12.5 * (screen_coordinates.w / resolution.x);
                         if pos.dist(mouse_pos) <= rad.0 + mselect_rad {
                             self.selected_entity = Some(e);
                             self.imgui_wrapper.render_data.entity_selected = true;
@@ -251,7 +250,12 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
 
                         self.selected_entity = Some(create_body(
                             &mut self.world,
-                            new_body(start_point, (start_point - p) * 0.025, self.mass, self.rad),
+                            new_body(
+                                start_point,
+                                (start_point - p) * 0.025,
+                                self.imgui_wrapper.render_data.create_mass,
+                                self.imgui_wrapper.render_data.create_rad,
+                            ),
                         ));
                         self.world.insert(StartPoint(None));
                     }
@@ -277,7 +281,14 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             let resolution = self.world.fetch::<Resolution>().0;
             let p = scale_pos([x, y], coords, resolution);
 
-            create_preview(&mut self.world, new_preview(sp, (sp - p) * 0.025, self.rad));
+            create_preview(
+                &mut self.world,
+                new_preview(
+                    sp,
+                    (sp - p) * 0.025,
+                    self.imgui_wrapper.render_data.create_rad,
+                ),
+            );
         }
 
         if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle) {

@@ -32,20 +32,36 @@ pub fn make_menu_bar(
     render_data: &mut RenderData,
 ) {
     ui.main_menu_bar(|| {
+        ui.menu(im_str!("Create Body"), true, || {
+            let create_mass = &mut render_data.create_mass;
+            let create_rad = &mut render_data.create_rad;
+
+            let mass_speed = (*create_mass * 0.0015).max(0.01);
+            let rad_speed = (*create_rad * 0.0015).max(0.01);
+
+            ui.drag_float(im_str!("Mass"), create_mass)
+                .speed(mass_speed)
+                .build();
+            ui.drag_float(im_str!("Radius"), create_rad)
+                .speed(rad_speed)
+                .build();
+
+            signal_button!("Toggle Create Body", UiSignal::Create, ui, signals);
+        });
+
+        ui.separator();
+
         ui.menu(im_str!("Universal Variables"), true, || {
             let dt = &mut render_data.dt;
             let num_iterations = &mut render_data.num_iterations;
             let preview_iterations = &mut render_data.preview_iterations;
 
-            ui.drag_float(im_str!("DT"), dt).speed(0.01).build();
+            ui.drag_float(im_str!("Timestep"), dt).speed(0.01).build();
             int_slider!(ui, "Iterations", num_iterations, 1, 1000);
             int_slider!(ui, "Preview Iterations", preview_iterations, 1, 1000);
         });
 
-        ui.spacing();
         ui.separator();
-        ui.separator();
-        ui.spacing();
 
         ui.menu(im_str!("Load Universe"), true, || {
             let dir = Path::new("./saved_systems/");
@@ -71,11 +87,17 @@ pub fn make_menu_bar(
             }
         });
 
+        ui.separator();
+
         ui.menu(im_str!("Save the Universe"), true, || {
-            ui.input_text(im_str!("Filename:"), &mut render_data.save_filename)
+            ui.input_text(im_str!("Filename"), &mut render_data.save_filename)
                 .build();
             signal_button!("Save", UiSignal::SaveState, ui, signals);
         });
+
+        ui.separator();
+
+        signal_button!("Reset Universe", UiSignal::DeleteAll, ui, signals);
     });
 }
 pub fn make_sidepanel(
@@ -108,52 +130,52 @@ pub fn make_sidepanel(
 
         if selected_entity {
             ui.text(im_str!("Edit Object"));
-        } else {
-            ui.text(im_str!("New Object"));
+            let mass_speed = (*mass * 0.0015).max(0.01);
+            let rad_speed = (*rad * 0.0015).max(0.01);
+            ui.drag_float(im_str!("Mass"), mass)
+                .speed(mass_speed)
+                .build();
+            ui.drag_float(im_str!("Radius"), rad)
+                .speed(rad_speed)
+                .build();
+
+            int_slider!(ui, "Trail Length", trail_len, 0, 10_000);
+
+            if selected_entity {
+                ui.collapsing_header(im_str!("test")).build();
+                ui.menu(im_str!("Graphs"), true, || {
+                    signal_button!(
+                        "Graph Speed",
+                        UiSignal::AddGraph(GraphType::Speed),
+                        ui,
+                        signals
+                    );
+                    signal_button!(
+                        "Graph X Velocity",
+                        UiSignal::AddGraph(GraphType::XVel),
+                        ui,
+                        signals
+                    );
+                    signal_button!(
+                        "Graph Y Velocity",
+                        UiSignal::AddGraph(GraphType::YVel),
+                        ui,
+                        signals
+                    );
+                    signal_button!(
+                        "Graph Acceleration",
+                        UiSignal::AddGraph(GraphType::Accel),
+                        ui,
+                        signals
+                    );
+                });
+                signal_button!("Follow Body", UiSignal::ToggleFollowBody, ui, signals);
+                signal_button!("Delete Body", UiSignal::Delete, ui, signals);
+            }
+            ui.spacing();
+            ui.separator();
+            ui.spacing();
         }
-
-        let mass_speed = (*mass * 0.0015).max(0.01);
-        let rad_speed = (*rad * 0.0015).max(0.01);
-        ui.drag_float(im_str!("Mass"), mass)
-            .speed(mass_speed)
-            .build();
-        ui.drag_float(im_str!("Radius"), rad)
-            .speed(rad_speed)
-            .build();
-
-        int_slider!(ui, "Trail Length", trail_len, 0, 10_000);
-
-        signal_button!("Toggle Create Body", UiSignal::Create, ui, signals);
-
-        if selected_entity {
-            signal_button!(
-                "Graph Speed",
-                UiSignal::AddGraph(GraphType::Speed),
-                ui,
-                signals
-            );
-            signal_button!(
-                "Graph X Velocity",
-                UiSignal::AddGraph(GraphType::XVel),
-                ui,
-                signals
-            );
-            signal_button!(
-                "Graph Y Velocity",
-                UiSignal::AddGraph(GraphType::YVel),
-                ui,
-                signals
-            );
-            signal_button!(
-                "Graph Acceleration",
-                UiSignal::AddGraph(GraphType::Accel),
-                ui,
-                signals
-            );
-            signal_button!("Follow Body", UiSignal::ToggleFollowBody, ui, signals);
-            signal_button!("Delete Body", UiSignal::Delete, ui, signals);
-        }
-        ui.separator();
 
         signal_button!("Toggle Graphs", UiSignal::ToggleGraphs, ui, signals);
         signal_button!("Toggle Trails", UiSignal::ToggleTrails, ui, signals);
@@ -163,7 +185,6 @@ pub fn make_sidepanel(
             ui,
             signals
         );
-        signal_button!("Delete All Bodies", UiSignal::DeleteAll, ui, signals);
     });
 }
 

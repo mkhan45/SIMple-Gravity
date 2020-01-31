@@ -106,7 +106,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             builder.circle(
                 DrawMode::fill(),
                 p,
-                self.rad,
+                self.imgui_wrapper.render_data.create_rad,
                 0.05,
                 Color::new(1.0, 1.0, 1.0, 0.5),
             );

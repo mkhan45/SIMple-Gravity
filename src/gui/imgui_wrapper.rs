@@ -51,6 +51,8 @@ pub enum UiSignal {
 
 #[derive(Debug, Clone)]
 pub struct RenderData {
+    pub create_mass: f32,
+    pub create_rad: f32,
     pub mass: f32,
     pub rad: f32,
     pub dt: f32,
@@ -65,6 +67,8 @@ pub struct RenderData {
 impl RenderData {
     pub fn new() -> Self {
         RenderData {
+            create_mass: 0.01,
+            create_rad: 1.0,
             mass: 0.01,
             rad: 1.0,
             dt: 1.0,
