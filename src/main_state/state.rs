@@ -87,6 +87,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         if let Some(e) = self.selected_entity {
             if !self.world.is_alive(e) {
                 self.selected_entity = None;
+                self.imgui_wrapper.sidemenu = false;
                 self.world.insert(FollowSelectedBody(false));
             } else {
                 let positions = self.world.read_storage::<Position>();
@@ -187,6 +188,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     let resolution = self.world.fetch::<Resolution>().0;
                     let screen_coordinates = graphics::screen_coordinates(ctx);
                     self.selected_entity = None;
+                    self.imgui_wrapper.remove_sidemenu();
                     self.world.insert(FollowSelectedBody(false));
                     self.imgui_wrapper.render_data.entity_selected = false;
 
@@ -202,13 +204,12 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         if pos.dist(mouse_pos) <= rad.0 + mselect_rad {
                             self.selected_entity = Some(e);
                             self.imgui_wrapper.render_data.entity_selected = true;
+                            self.imgui_wrapper
+                                .shown_menus
+                                .insert(UiChoice::SideMenu(self.selected_entity));
                             break;
                         }
                     }
-
-                    self.imgui_wrapper
-                        .shown_menus
-                        .insert(UiChoice::SideMenu(self.selected_entity));
                 }
                 MouseButton::Left => {
                     // set up for creating new body
