@@ -185,6 +185,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     }
 
                     let resolution = self.world.fetch::<Resolution>().0;
+                    let screen_coordinates = graphics::screen_coordinates(ctx);
                     self.selected_entity = None;
                     self.world.insert(FollowSelectedBody(false));
                     self.imgui_wrapper.render_data.entity_selected = false;
@@ -197,7 +198,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                     let mouse_pos = scale_pos([x, y], coords, resolution);
 
                     for (e, pos, rad) in (&entities, &positions, &radii).join() {
-                        if pos.dist(mouse_pos) <= rad.0 {
+                        let mselect_rad = 12.5 * (screen_coordinates.w / resolution.x); 
+                        dbg!(mselect_rad);
+                        if pos.dist(mouse_pos) <= rad.0 + mselect_rad {
                             self.selected_entity = Some(e);
                             self.imgui_wrapper.render_data.entity_selected = true;
                             break;
