@@ -15,6 +15,59 @@ use microprofile::scope;
 
 // The same closure is used with preview_only on or off, but the specs query is changed
 
+macro_rules! previewsysdupli {
+    ( $sysname:ident, $previewsysname:ident, ($( $datatype:ty ),*) ) => {
+        pub struct $sysname;
+        fn runfn<'a>(data: ($( $datatype, )* )) {
+        }
+
+        impl<'a> System<'a> for $sysname {
+            type SystemData = ($( $datatype, )*);
+
+            fn run(&mut self, data: Self::SystemData) {
+                ( $( &$datatype ),* ).join().for_each(|data|{
+                });
+                runfn(data);
+            }
+        }
+
+        pub struct $previewsysname;
+
+        impl<'a> System<'a> for $previewsysname {
+            type SystemData = ($( $datatype, )*);
+
+            fn run(&mut self, data: Self::SystemData) {
+                runfn(data);
+            }
+        }
+    };
+}
+
+
+previewsysdupli!(PosIntegrateSys, PreviewPosIntegrateSys, 
+    (WriteStorage<'a, Position>, ReadStorage<'a, Kinematics>)
+);
+
+// pub struct PosIntegrateSys;
+
+// impl<'a> System<'a> for PosIntegrateSys {
+//     type SystemData = (WriteStorage<'a, Position>, ReadStorage<'a, Kinematics>, ReadStorage<'a, Preview>, Read<'a, DT>, 
+//         Write<'a, NewPreview>);
+
+//     fn run(&mut self, (mut positions, kinematics, previews, dt, new_preview): Self::SystemData) {
+//     }
+// }
+
+// pub struct PreviewPosIntegrateSys;
+
+// impl<'a> System<'a> for PreviewPosIntegrateSys {
+//     type SystemData = (WriteStorage<'a, Position>, ReadStorage<'a, Kinematics>, ReadStorage<'a, Preview>, Read<'a, DT>, 
+//         Write<'a, NewPreview>);
+
+//     fn run(&mut self, (mut positions, kinematics, previews, dt, new_preview): Self::SystemData) {
+//     }
+// }
+
 pub struct PhysicsSys;
 
 impl<'a> System<'a> for PhysicsSys {
@@ -71,7 +124,7 @@ impl<'a> System<'a> for PhysicsSys {
                 .with(body.4, &mut radii)
                 .with(body.5, &mut trails)
                 .build();
-        });
+            });
     }
 }
 
@@ -167,10 +220,10 @@ fn apply_gravity(
         (positions, kinematics, radii)
             .par_join()
             .for_each(grav_closure);
-    } else {
-        (positions, kinematics, radii, previews)
-            .join()
-            .for_each(|(p, k, r, _)| grav_closure((p, k, r)));
+        } else {
+            (positions, kinematics, radii, previews)
+                .join()
+                .for_each(|(p, k, r, _)| grav_closure((p, k, r)));
     }
 }
 
@@ -216,8 +269,8 @@ fn calc_collisions(
                 .for_each(|(pos2, r2, m2, k2, e2)| {
                     if e1 != e2
                         && pos1.dist(*pos2) <= r1.0 + r2.0
-                        && !delete_set.contains(&e1)
-                        && !delete_set.contains(&e2)
+                            && !delete_set.contains(&e1)
+                            && !delete_set.contains(&e2)
                     {
                         delete_set.insert(e1);
                         delete_set.insert(e2);
