@@ -22,7 +22,7 @@ macro_rules! int_slider {
             .speed(0.05 * (*$num as f32).powf(1.0 / 3.0))
             .max($max)
             .build();
-        *$num = num_i32 as usize;
+        *$num = (num_i32 as usize).min($max).max($min);
     };
 }
 
