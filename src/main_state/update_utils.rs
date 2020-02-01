@@ -54,7 +54,14 @@ impl<'a, 'b> MainState<'a, 'b> {
                     let mouse_pos = self.world.fetch::<MousePos>().0;
                     let p = scale_pos([mouse_pos.x, mouse_pos.y], coords, resolution);
 
-                    create_preview(&mut self.world, new_preview(sp, (sp - p) * 0.025, self.rad));
+                    create_preview(
+                        &mut self.world,
+                        new_preview(
+                            sp,
+                            (sp - p) * 0.025,
+                            self.imgui_wrapper.render_data.create_rad,
+                        ),
+                    );
                 }
 
                 self.world.insert(NewPreview(false));

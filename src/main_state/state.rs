@@ -48,8 +48,6 @@ pub struct MainState<'a, 'b> {
     pub imgui_wrapper: ImGuiWrapper,
     pub hidpi_factor: f32,
     pub selected_entity: Option<Entity>,
-    pub mass: f32,
-    pub rad: f32,
     pub creating: bool,
     pub items_hovered: bool,
 }
@@ -69,8 +67,6 @@ impl<'a, 'b> MainState<'a, 'b> {
             imgui_wrapper,
             hidpi_factor,
             selected_entity: None,
-            mass: 0.1,
-            rad: 1.0,
             creating: false,
             items_hovered: false,
         }
@@ -220,7 +216,10 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         self.world
                             .insert(StartPoint(Some(scale_pos(p, coords, resolution))));
 
-                        create_preview(&mut self.world, new_preview(p, [0.0, 0.0], self.rad));
+                        create_preview(
+                            &mut self.world,
+                            new_preview(p, [0.0, 0.0], self.imgui_wrapper.render_data.create_rad),
+                        );
                     }
                 }
                 _ => {}

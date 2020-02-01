@@ -123,8 +123,6 @@ impl<'a, 'b> MainState<'a, 'b> {
     }
 
     pub fn update_sim_data(&mut self) {
-        self.mass = self.imgui_wrapper.render_data.mass;
-        self.rad = self.imgui_wrapper.render_data.rad;
         self.world
             .insert::<DT>(DT(self.imgui_wrapper.render_data.dt));
         self.world.insert::<MainIterations>(MainIterations(
