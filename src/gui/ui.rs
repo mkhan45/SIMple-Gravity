@@ -116,12 +116,16 @@ pub fn make_menu_bar(
         if ui.small_button(im_str!("Help")) {
             ui.open_popup(im_str!("Help Menu"));
         }
-        ui.popup_modal(im_str!("Help Menu")).build( ||{
+        ui.popup_modal(im_str!("Help Menu")).build(|| {
             ui.bullet_text(im_str!("WASD and arrows to move the camera"));
             ui.bullet_text(im_str!("Space to pause"));
             ui.bullet_text(im_str!("Right click a body to edit it"));
-            ui.bullet_text(im_str!("Create new bodies and edit universal variables with the top bar"));
-            ui.bullet_text(im_str!("Save and load scenarios from the saved_systems folder"));
+            ui.bullet_text(im_str!(
+                "Create new bodies and edit universal variables with the top bar"
+            ));
+            ui.bullet_text(im_str!(
+                "Save and load scenarios from the saved_systems folder"
+            ));
             if ui.small_button(im_str!("Close Help Menu")) {
                 ui.close_current_popup();
             }
@@ -231,7 +235,7 @@ pub fn make_graph_ui(
             ui.plot_lines(graph_name, data)
                 .graph_size([resolution.x * 0.3, resolution.y * 0.3])
                 .build();
-            });
+        });
 }
 
 pub fn make_default_ui(ui: &mut imgui::Ui) {

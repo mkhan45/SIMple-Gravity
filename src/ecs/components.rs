@@ -25,6 +25,10 @@ impl Position {
     pub fn dist(self, p2: impl Into<Point>) -> f32 {
         (self.0 - p2.into()).norm()
     }
+
+    pub fn dist_squared(self, p2: impl Into<Point>) -> f32 {
+        (self.0 - p2.into()).norm_squared()
+    }
 }
 
 impl Into<Point> for Position {

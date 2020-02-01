@@ -215,7 +215,7 @@ fn calc_collisions(
                 .join()
                 .for_each(|(pos2, r2, m2, k2, e2)| {
                     if e1 != e2
-                        && pos1.dist(*pos2) <= r1.0 + r2.0
+                        && pos1.dist_squared(*pos2) <= (r1.0 + r2.0).powi(2)
                         && !delete_set.contains(&e1)
                         && !delete_set.contains(&e2)
                     {
