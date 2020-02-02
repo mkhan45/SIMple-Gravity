@@ -40,7 +40,6 @@ pub fn scale_pos(point: impl Into<Point>, coords: graphics::Rect, resolution: Ve
     np
 }
 
-//TODO: move mass, rad, selected_entity, hidpi_factor, and creating to specs resources
 pub struct MainState<'a, 'b> {
     pub world: World,
     pub main_dispatcher: Dispatcher<'a, 'b>,

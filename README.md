@@ -3,7 +3,9 @@ Gravity simulator using Newton's Law of Universal Gravitation, made to teach phy
 
 The goal is for this to run on the web and to otherwise be as easily accessible as possible.
 
-Right click to show the GUI and press escape to hide it. Right clicking on a body shows a body-specific GUI.
+Right click a body to edit it and graph its properties. 
+
+The GUI uses `imgui-rs`; using it you can create new bodies, adjust existing bodies, or change variables like the timestep.
 
 # gifs
 
@@ -18,11 +20,14 @@ There are previews/predictions when you create a new body
 The orbit changes due to integration error, but the timestep is adjustable
 ![](flawed_orbit.gif)
 
-The GUI uses `imgui-rs`; using it you can create new bodies, adjust existing bodies, or change variables like the timestep.
+You can make trails relative to the selected object.
+![](relative_trail.gif)
 
 Negative mass and negative timestep are cool
-
 ![](cluster.gif)
+
+You can save and load preset scenarios; binary and nested systems are included.
+![](saveload.gif)
 
 # details
 
