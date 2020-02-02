@@ -47,6 +47,7 @@ pub enum UiSignal {
     ToggleFollowBody,
     ToggleTrails,
     ToggleRelativeTrails,
+    Pause,
 }
 
 #[derive(Debug, Clone)]

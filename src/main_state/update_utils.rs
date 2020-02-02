@@ -174,6 +174,9 @@ impl<'a, 'b> MainState<'a, 'b> {
                             trail.points.clear();
                         });
                 }
+                UiSignal::Pause => {
+                    self.world.get_mut::<Paused>().unwrap().toggle();
+                }
             });
         self.imgui_wrapper.sent_signals.clear();
     }

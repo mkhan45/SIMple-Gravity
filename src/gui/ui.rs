@@ -107,6 +107,8 @@ pub fn make_menu_bar(
         ui.separator();
 
         signal_button!("Reset Universe", UiSignal::DeleteAll, ui, signals);
+        ui.separator();
+        signal_button!("Pause", UiSignal::Pause, ui, signals);
 
         ui.spacing();
         ui.separator();
@@ -119,6 +121,8 @@ pub fn make_menu_bar(
         ui.popup_modal(im_str!("Help Menu")).build(|| {
             ui.bullet_text(im_str!("WASD and arrows to move the camera"));
             ui.bullet_text(im_str!("Space to pause"));
+            ui.bullet_text(im_str!("F to follow selected bopdy, D to delete it"));
+            ui.bullet_text(im_str!("T to toggle trails, G to make them relative"));
             ui.bullet_text(im_str!("Right click a body to edit it"));
             ui.bullet_text(im_str!(
                 "Create new bodies and edit universal variables with the top bar"

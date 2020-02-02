@@ -94,6 +94,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         // apply camera movement
         let offset = calc_offset(ctx);
         if offset != [0.0, 0.0].into() {
+            self.world.insert(FollowSelectedBody(false));
             let mut screen_coordinates = ggez::graphics::screen_coordinates(ctx);
             let zoom = screen_coordinates.w / crate::SCREEN_X;
 
@@ -103,7 +104,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             ggez::graphics::set_screen_coordinates(ctx, screen_coordinates).unwrap_or(());
         }
 
-        if ggez::timer::ticks(ctx) % 60 == 0 {
+        if ggez::timer::ticks(ctx) % 120 == 0 {
             dbg!(ggez::timer::fps(ctx));
         }
 
@@ -291,6 +292,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         }
 
         if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle) {
+            self.world.insert(FollowSelectedBody(false));
             let mut offset = Vector::new(dx, dy);
             let resolution = self.world.fetch::<Resolution>().0;
             offset.x *= coords.w / resolution.x;
@@ -342,6 +344,13 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         match keycode {
             KeyCode::Space => self.world.get_mut::<Paused>().unwrap().toggle(),
             KeyCode::Escape => self.imgui_wrapper.remove_sidemenu(),
+            KeyCode::F => self.world.insert(FollowSelectedBody(true)),
+            KeyCode::R => self.imgui_wrapper.sent_signals.push(UiSignal::Delete),
+            KeyCode::T => self.imgui_wrapper.sent_signals.push(UiSignal::ToggleTrails),
+            KeyCode::G => self
+                .imgui_wrapper
+                .sent_signals
+                .push(UiSignal::ToggleRelativeTrails),
             _ => {}
         };
         self.imgui_wrapper.update_key_down(keycode, keymods);
