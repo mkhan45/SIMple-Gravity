@@ -121,7 +121,7 @@ pub fn make_menu_bar(
         ui.popup_modal(im_str!("Help Menu")).build(|| {
             ui.bullet_text(im_str!("WASD and arrows to move the camera"));
             ui.bullet_text(im_str!("Space to pause"));
-            ui.bullet_text(im_str!("F to follow selected bopdy, D to delete it"));
+            ui.bullet_text(im_str!("F to follow selected body, D to delete it"));
             ui.bullet_text(im_str!("T to toggle trails, G to make them relative"));
             ui.bullet_text(im_str!("Right click a body to edit it"));
             ui.bullet_text(im_str!(

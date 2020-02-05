@@ -271,24 +271,26 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         self.imgui_wrapper.update_mouse_pos(x, y);
         self.world
             .insert(MousePos(input::mouse::position(ctx).into()));
-
-        self.delete_preview();
-
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
-        let start_point = self.world.fetch::<StartPoint>().0;
-        if let Some(sp) = start_point {
-            let resolution = self.world.fetch::<Resolution>().0;
-            let p = scale_pos([x, y], coords, resolution);
+        if (dx * dx + dy * dy) > 0.1 { // this is needed for windows since mouse_motion_event runs every frame
+            self.delete_preview();
 
-            create_preview(
-                &mut self.world,
-                new_preview(
-                    sp,
-                    (sp - p) * 0.025,
-                    self.imgui_wrapper.render_data.create_rad,
-                ),
-            );
+
+            let start_point = self.world.fetch::<StartPoint>().0;
+            if let Some(sp) = start_point {
+                let resolution = self.world.fetch::<Resolution>().0;
+                let p = scale_pos([x, y], coords, resolution);
+
+                create_preview(
+                    &mut self.world,
+                    new_preview(
+                        sp,
+                        (sp - p) * 0.025,
+                        self.imgui_wrapper.render_data.create_rad,
+                        ),
+                        );
+            }
         }
 
         if input::mouse::button_pressed(ctx, input::mouse::MouseButton::Middle) {
@@ -340,7 +342,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         keycode: KeyCode,
         keymods: KeyMods,
         _repeat: bool,
-    ) {
+        ) {
         match keycode {
             KeyCode::Space => self.world.get_mut::<Paused>().unwrap().toggle(),
             KeyCode::Escape => self.imgui_wrapper.remove_sidemenu(),
@@ -365,9 +367,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 0.,
                 crate::SCREEN_X,
                 crate::SCREEN_Y * aspect_ratio as f32,
-            ),
-        )
-        .expect("error resizing");
+                ),
+                )
+            .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));
