@@ -124,7 +124,7 @@ fn main() -> GameResult {
         ctx,
         ggez::conf::WindowMode::default()
             .resizable(true)
-            .fullscreen_type(ggez::conf::FullscreenType::Desktop),
+            .fullscreen_type(ggez::conf::FullscreenType::Windowed),
     )
     .expect("error resizing window");
 

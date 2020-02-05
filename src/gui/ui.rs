@@ -72,7 +72,7 @@ pub fn make_menu_bar(
 
         ui.separator();
 
-        ui.menu(im_str!("Load Universe"), true, || {
+        ui.menu(im_str!("Load"), true, || {
             let dir = Path::new("./saved_systems/");
             match fs::read_dir(dir) {
                 Ok(dir_entries) => {
@@ -98,22 +98,20 @@ pub fn make_menu_bar(
 
         ui.separator();
 
-        ui.menu(im_str!("Save the Universe"), true, || {
+        ui.menu(im_str!("Save"), true, || {
             ui.input_text(im_str!("Filename"), &mut render_data.save_filename)
                 .build();
-            signal_button!("Save", UiSignal::SaveState, ui, signals);
+            signal_button!("Save the Universe", UiSignal::SaveState, ui, signals);
         });
 
         ui.separator();
 
-        signal_button!("Reset Universe", UiSignal::DeleteAll, ui, signals);
+        signal_button!("Reset", UiSignal::DeleteAll, ui, signals);
         ui.separator();
         signal_button!("Pause", UiSignal::Pause, ui, signals);
 
-        ui.spacing();
         ui.separator();
         ui.separator();
-        ui.spacing();
 
         if ui.small_button(im_str!("Help")) {
             ui.open_popup(im_str!("Help Menu"));
@@ -121,7 +119,7 @@ pub fn make_menu_bar(
         ui.popup_modal(im_str!("Help Menu")).build(|| {
             ui.bullet_text(im_str!("WASD and arrows to move the camera"));
             ui.bullet_text(im_str!("Space to pause"));
-            ui.bullet_text(im_str!("F to follow selected bopdy, D to delete it"));
+            ui.bullet_text(im_str!("F to follow selected body, D to delete it"));
             ui.bullet_text(im_str!("T to toggle trails, G to make them relative"));
             ui.bullet_text(im_str!("Right click a body to edit it"));
             ui.bullet_text(im_str!(
