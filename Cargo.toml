@@ -1,6 +1,6 @@
 [package]
 name = "gravity-v2"
-version = "0.9.0"
+version = "1.0.0"
 authors = ["Mikail <mikail.khan45@gmail.com>"]
 edition = "2018"
 
@@ -29,3 +29,6 @@ debug=0
 
 [profile.release]
 debug=0
+lto = true
+codegen-units = 1
+incremental = false

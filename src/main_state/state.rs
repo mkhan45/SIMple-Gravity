@@ -104,9 +104,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             ggez::graphics::set_screen_coordinates(ctx, screen_coordinates).unwrap_or(());
         }
 
-        if ggez::timer::ticks(ctx) % 120 == 0 {
-            dbg!(ggez::timer::fps(ctx));
-        }
+        // if ggez::timer::ticks(ctx) % 120 == 0 {
+        //     dbg!(ggez::timer::fps(ctx));
+        // }
 
         self.run_physics_systems(ctx);
 
@@ -260,7 +260,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         self.world.insert(StartPoint(None));
                     }
                 }
-                _ => dbg!(),
+                // _ => dbg!(),
+                _ => {},
             }
         }
 
