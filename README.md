@@ -7,6 +7,17 @@ Right click a body to edit it and graph its properties.
 
 The GUI uses `imgui-rs`; using it you can create new bodies, adjust existing bodies, or change variables like the timestep.
 
+# compiling/running
+
+### precompiled binaries
+
+There are binaries for Windows and Linux in the releases tab on Github, for MacOS you'd have to compile yourself, but feel free to send me the compiled binary to put on Github.
+
+### compile yourself
+Install the rust compiler toolchain via [rustup](https://rustup.rs/)
+
+cd to the folder of this repo and run `cargo run --release`.
+
 # gifs
 
 The start scenario has a simple orbit
