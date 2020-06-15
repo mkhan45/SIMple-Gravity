@@ -1,7 +1,7 @@
 use crate::ecs::components::{Kinematics, Point, Position, Vector};
 use crate::ecs::entities::create_body;
-use crate::main_state::state::MainState;
 use crate::ecs::resources::LuaRes;
+use crate::main_state::state::MainState;
 
 use rlua;
 
@@ -48,7 +48,7 @@ impl MainState<'_, '_> {
     pub fn process_lua_bodies(&mut self) {
         let lua = self.world.fetch_mut::<LuaRes>().clone();
 
-        lua.lock().unwrap().context(|lua_ctx|{
+        lua.lock().unwrap().context(|lua_ctx| {
             let globals = lua_ctx.globals();
             let bodies: Vec<rlua::Table> = globals.get("BODIES").unwrap();
             bodies.iter().for_each(|body| self.process_lua_body(body));
@@ -58,17 +58,34 @@ impl MainState<'_, '_> {
     pub fn init_lua(&mut self) {
         let lua = self.world.fetch_mut::<LuaRes>().clone();
 
-        lua.lock().unwrap().context(|lua_ctx|{
+        lua.lock().unwrap().context(|lua_ctx| {
             let globals = lua_ctx.globals();
             let bodies: Vec<rlua::Table> = Vec::new();
             globals.set("BODIES", bodies).unwrap();
 
+            lua_ctx
+                .load(
+                    r#"
+                function add_body(body)
+                    BODIES[#BODIES + 1] = body
+                end
+
+                function add_bodies(...)
+                    for _, body in ipairs({...}) do
+                        add_body(body)
+                    end
+                end
+            "#,
+                )
+                .exec()
+                .unwrap();
+
             let lua_init_code = std::fs::read_to_string("init.lua").unwrap();
             if let Err(e) = lua_ctx
                 .load(&lua_init_code)
-                    .set_name("init.lua")
-                    .unwrap()
-                    .exec()
+                .set_name("init.lua")
+                .unwrap()
+                .exec()
             {
                 println!("Lua {}", e.to_string());
             };
