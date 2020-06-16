@@ -3,9 +3,8 @@ use crate::ecs::entities::create_body;
 use crate::ecs::resources::LuaRes;
 use crate::main_state::state::MainState;
 
-use rlua;
-
 impl MainState<'_, '_> {
+    #[allow(clippy::many_single_char_names)]
     pub fn process_lua_body(&mut self, body: &rlua::Table) {
         let mass: f32 = body.get("mass").unwrap();
         let x: f32 = body.get("x").unwrap();
@@ -92,5 +91,16 @@ impl MainState<'_, '_> {
         });
 
         self.process_lua_bodies();
+    }
+
+    pub fn lua_update(&mut self) {
+        self.process_lua_bodies();
+        let lua = self.world.fetch_mut::<LuaRes>().clone();
+
+        lua.lock().unwrap().context(|lua_ctx| {
+            let globals = lua_ctx.globals();
+            let bodies: Vec<rlua::Table> = Vec::new();
+            globals.set("BODIES", bodies).unwrap();
+        });
     }
 }

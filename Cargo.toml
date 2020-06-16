@@ -1,6 +1,6 @@
 [package]
 name = "gravity-v2"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Mikail <mikail.khan45@gmail.com>"]
 edition = "2018"
 
@@ -17,8 +17,6 @@ gfx_device_gl = "0.16"
 imgui = "0.2.0"
 imgui-gfx-renderer = "0.2.0"
 
-serde = { version = "1.0.104", features = ["derive"] }
-ron = "0.5.1"
 rlua = "0.17.0"
 
 [dependencies.microprofile]

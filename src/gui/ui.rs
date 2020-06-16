@@ -79,7 +79,7 @@ pub fn make_menu_bar(
                     dir_entries.for_each(|entry| {
                         if let Ok(entry) = entry {
                             if let Ok(filename) = entry.file_name().into_string() {
-                                if &filename.as_str()[filename.len() - 4..] == ".ron" {
+                                if &filename.as_str()[filename.len() - 4..] == ".lua" {
                                     let label = unsafe {
                                         ImStr::from_utf8_with_nul_unchecked(filename.as_bytes())
                                     };

@@ -7,7 +7,8 @@ Right click a body to edit it and graph its properties.
 
 The GUI uses `imgui-rs`; using it you can create new bodies, adjust existing bodies, or change variables like the timestep.
 
-Lua support is in progress; right now you can add bodies with an init.lua and the goal is to completely replace the .toml serialization with Lua. 
+Serialization to .ron removed in favor of "serializing" to Lua. You can now write a simple Lua script to add bodies 
+and for the basics syntax is practically a markup language.
 
 # compiling/running
 

@@ -77,6 +77,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         microprofile::flip();
         microprofile::scope!("Update", "update");
         self.process_gui_signals();
+        self.lua_update();
 
         // unselect selected entity if it collided
         if let Some(e) = self.selected_entity {
@@ -239,6 +240,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let resolution = self.world.fetch::<Resolution>().0;
 
         if let Some(start_point) = start_point {
+            #[allow(clippy::single_match)] // allowed because right click might do something
             match button {
                 // create new body
                 MouseButton::Left => {

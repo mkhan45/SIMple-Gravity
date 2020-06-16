@@ -7,9 +7,6 @@ extern crate specs;
 use specs::prelude::*;
 use specs::saveload::{MarkedBuilder, SimpleMarker, SimpleMarkerAllocator};
 
-extern crate ron;
-extern crate serde;
-
 mod main_state;
 mod saveload;
 use main_state::state::MainState;
