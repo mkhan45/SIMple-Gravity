@@ -2,9 +2,3 @@
 **/*.rs.bk
 *imgui.ini
 Cargo.lock
-/saved_systems/*
-!/saved_systems/binary.ron
-!/saved_systems/nested.ron
-!/saved_systems/default.ron
-!/saved_systems/grid.ron
-!/saved_systems/bench_grid.ron

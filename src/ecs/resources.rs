@@ -82,3 +82,5 @@ impl RelativeTrails {
         self.enabled = !self.enabled;
     }
 }
+
+pub type LuaRes = std::sync::Arc<std::sync::Mutex<rlua::Lua>>;

@@ -72,21 +72,22 @@ pub fn make_menu_bar(
 
         ui.separator();
 
-        ui.menu(im_str!("Load Universe"), true, || {
+        ui.menu(im_str!("Load"), true, || {
             let dir = Path::new("./saved_systems/");
             match fs::read_dir(dir) {
                 Ok(dir_entries) => {
                     dir_entries.for_each(|entry| {
                         if let Ok(entry) = entry {
-                            if let Ok(filename) = entry.file_name().into_string() {
-                                if &filename.as_str()[filename.len() - 4..] == ".ron" {
-                                    let label = unsafe {
-                                        ImStr::from_utf8_with_nul_unchecked(filename.as_bytes())
-                                    };
-                                    if ui.small_button(label) {
-                                        render_data.load_filename = ImString::new(filename);
-                                        signals.push(UiSignal::LoadState);
-                                    }
+                            let filename = entry.file_name().to_string_lossy().into_owned();
+                            //windows is dumb
+                            let mut utf8_filename = String::new();
+                            filename.chars().for_each(|c| utf8_filename.push(c));
+                            let imstring_filename = ImString::new(utf8_filename);
+                            if &filename.as_str()[filename.len() - 4..] == ".lua" {
+                                let label = imstring_filename.clone();
+                                if ui.small_button(&label) {
+                                    render_data.load_filename = imstring_filename;
+                                    signals.push(UiSignal::LoadState);
                                 }
                             }
                         }
@@ -98,22 +99,20 @@ pub fn make_menu_bar(
 
         ui.separator();
 
-        ui.menu(im_str!("Save the Universe"), true, || {
+        ui.menu(im_str!("Save"), true, || {
             ui.input_text(im_str!("Filename"), &mut render_data.save_filename)
                 .build();
-            signal_button!("Save", UiSignal::SaveState, ui, signals);
+            signal_button!("Save the Universe", UiSignal::SaveState, ui, signals);
         });
 
         ui.separator();
 
-        signal_button!("Reset Universe", UiSignal::DeleteAll, ui, signals);
+        signal_button!("Reset", UiSignal::DeleteAll, ui, signals);
         ui.separator();
         signal_button!("Pause", UiSignal::Pause, ui, signals);
 
-        ui.spacing();
         ui.separator();
         ui.separator();
-        ui.spacing();
 
         if ui.small_button(im_str!("Help")) {
             ui.open_popup(im_str!("Help Menu"));

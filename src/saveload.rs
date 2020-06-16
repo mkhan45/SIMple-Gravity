@@ -1,109 +1,75 @@
-use ron;
-use specs::{
-    error::NoError,
-    prelude::*,
-    saveload::{DeserializeComponents, SerializeComponents, SimpleMarker, SimpleMarkerAllocator},
-};
+use specs::prelude::*;
 
-use std::collections::VecDeque;
-use std::fmt;
-use std::fs::File;
-use std::io::{Error, Read, Write};
+use std::io::Error;
 
-use crate::ecs::components::{Draw, Kinematics, Mass, Position, Radius, SaveMarker, Trail};
+use crate::ecs::components::{Kinematics, Mass, Position, Radius, Trail};
 
-// https://github.com/amethyst/specs/blob/master/examples/saveload.rs
+pub fn save_world_to_lua(world: &World, filename: String) -> Result<(), Error> {
+    let mut body_string = String::with_capacity(48);
 
-#[derive(Debug)]
-enum ComboError {
-    Ron(ron::ser::Error),
-}
-
-impl From<ron::ser::Error> for ComboError {
-    fn from(x: ron::ser::Error) -> Self {
-        ComboError::Ron(x)
-    }
-}
-
-impl From<NoError> for ComboError {
-    fn from(e: NoError) -> Self {
-        match e {}
-    }
-}
-
-impl fmt::Display for ComboError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ComboError::Ron(ref e) => write!(f, "{}", e),
-        }
-    }
-}
-
-pub fn serialize_world(world: &World) -> String {
-    let entities = world.entities();
     let positions = world.read_storage::<Position>();
     let kinematics = world.read_storage::<Kinematics>();
-    let masses = world.read_storage::<Mass>();
-    let draws = world.read_storage::<Draw>();
     let radii = world.read_storage::<Radius>();
-    let trails = world.read_storage::<Trail>();
-    let markers = world.read_storage::<SimpleMarker<SaveMarker>>();
+    let masses = world.read_storage::<Mass>();
 
-    let mut ser = ron::ser::Serializer::new(Some(Default::default()), true);
+    let mut first = true;
 
-    SerializeComponents::<NoError, SimpleMarker<SaveMarker>>::serialize(
-        &(&positions, &kinematics, &masses, &draws, &radii, &trails),
-        &entities,
-        &markers,
-        &mut ser,
-    )
-    .expect("error serializing");
+    (&positions, &kinematics, &radii, &masses).join().for_each(|(pos, kine, rad, mass)|{
+        if !first {
+            body_string.push_str(",\n\t");
+        } else {
+            first = false;
+        }
 
-    ser.into_output_string()
+        body_string.push_str(
+            format!(
+                "{{x = {x:.prec$}, y = {y:.prec$}, x_vel = {x_vel:.prec$}, y_vel = {y_vel:.prec$}, mass = {mass:.prec$}, rad = {rad:.prec$}}}",
+                x = pos.0.x,
+                y = pos.0.y,
+                x_vel = kine.vel.x,
+                y_vel = kine.vel.y,
+                mass = mass.0,
+                rad = rad.0,
+                prec = 3,
+                ).as_str())
+    });
+
+    std::fs::write(filename, format!("add_bodies(\n\t{}\n)", body_string)).unwrap();
+
+    Ok(())
 }
 
-pub fn save_world(world: &World, filename: String) -> Result<(), Error> {
-    let mut file = File::create(filename)?;
-    file.write_all(serialize_world(world).as_bytes())?;
+pub fn load_from_lua(world: &World, filename: String) -> Result<(), Error> {
+    let lua = world.fetch_mut::<crate::ecs::resources::LuaRes>().clone();
+
+    lua.lock().unwrap().context(|lua_ctx| {
+        let lua_code = std::fs::read_to_string(filename.clone()).unwrap();
+        if let Err(e) = lua_ctx
+            .load(&lua_code)
+            .set_name(filename.as_str())
+            .unwrap()
+            .exec()
+        {
+            println!("Lua {}", e.to_string());
+        };
+    });
+
     Ok(())
 }
 
 pub fn load_world(world: &World, filename: String) -> Result<(), Error> {
-    let entities = world.entities();
-    let positions = world.write_storage::<Position>();
-    let kinematics = world.write_storage::<Kinematics>();
-    let masses = world.write_storage::<Mass>();
-    let draws = world.write_storage::<Draw>();
-    let radii = world.write_storage::<Radius>();
-    let mut markers = world.write_storage::<SimpleMarker<SaveMarker>>();
-    let mut trails = world.write_storage::<Trail>();
-    let mut alloc = world.write_resource::<SimpleMarkerAllocator<SaveMarker>>();
+    {
+        let mut trails = world.write_storage::<Trail>();
 
-    (&mut trails).join().for_each(|mut trail| {
-        trail.points = VecDeque::with_capacity(0);
-    });
-
-    use ron::de::Deserializer;
-
-    let mut file = File::open(filename)?;
-    let mut file_contents = String::new();
-    file.read_to_string(&mut file_contents)?;
-
-    if let Ok(mut de) = Deserializer::from_str(&file_contents) {
-        DeserializeComponents::<ComboError, _>::deserialize(
-            &mut (positions, kinematics, masses, draws, radii, trails),
-            &entities,
-            &mut markers,
-            &mut alloc,
-            &mut de,
-        )
-        .unwrap_or_else(|e| eprintln!("Error: {}", e));
+        (&mut trails).join().for_each(|trail| {
+            trail.points.clear();
+        });
     }
 
-    let mut trails = world.write_storage::<Trail>();
-    (&mut trails).join().for_each(|mut trail| {
-        trail.points = VecDeque::with_capacity(trail.max_len);
-    });
+    match &filename.as_str()[filename.len() - 4..] {
+        ".lua" => load_from_lua(world, filename),
+        _ => panic!("invalid file"),
+    }?;
 
     Ok(())
 }

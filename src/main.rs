@@ -7,9 +7,6 @@ extern crate specs;
 use specs::prelude::*;
 use specs::saveload::{MarkedBuilder, SimpleMarker, SimpleMarkerAllocator};
 
-extern crate ron;
-extern crate serde;
-
 mod main_state;
 mod saveload;
 use main_state::state::MainState;
@@ -63,6 +60,7 @@ fn main() -> GameResult {
     world.register::<AccelGraph>();
     world.register::<SimpleMarker<SaveMarker>>();
     world.insert(SimpleMarkerAllocator::<SaveMarker>::new());
+    world.insert(std::sync::Arc::new(std::sync::Mutex::new(rlua::Lua::new())));
 
     // a simple orbit,
     // [x_pos, y_pos], [x_vel, y_vel], mass, radius
@@ -141,6 +139,8 @@ fn main() -> GameResult {
         ImGuiWrapper::new(ctx, hidpi_factor, dimensions_vec),
         hidpi_factor,
     );
+
+    main_state.init_lua();
 
     microprofile::init();
     microprofile::set_enable_all_groups(true);

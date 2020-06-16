@@ -77,6 +77,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         microprofile::flip();
         microprofile::scope!("Update", "update");
         self.process_gui_signals();
+        self.lua_update();
 
         // unselect selected entity if it collided
         if let Some(e) = self.selected_entity {
@@ -104,9 +105,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             ggez::graphics::set_screen_coordinates(ctx, screen_coordinates).unwrap_or(());
         }
 
-        if ggez::timer::ticks(ctx) % 120 == 0 {
-            dbg!(ggez::timer::fps(ctx));
-        }
+        // if ggez::timer::ticks(ctx) % 120 == 0 {
+        //     dbg!(ggez::timer::fps(ctx));
+        // }
 
         self.run_physics_systems(ctx);
 
@@ -239,6 +240,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         let resolution = self.world.fetch::<Resolution>().0;
 
         if let Some(start_point) = start_point {
+            #[allow(clippy::single_match)] // allowed because right click might do something
             match button {
                 // create new body
                 MouseButton::Left => {
@@ -260,7 +262,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         self.world.insert(StartPoint(None));
                     }
                 }
-                _ => dbg!(),
+                // _ => dbg!(),
+                _ => {}
             }
         }
 
@@ -273,9 +276,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
             .insert(MousePos(input::mouse::position(ctx).into()));
         let mut coords = ggez::graphics::screen_coordinates(ctx);
 
-        if (dx * dx + dy * dy) > 0.1 { // this is needed for windows since mouse_motion_event runs every frame
+        if (dx * dx + dy * dy) > 0.1 {
+            // this is needed for windows since mouse_motion_event runs every frame
             self.delete_preview();
-
 
             let start_point = self.world.fetch::<StartPoint>().0;
             if let Some(sp) = start_point {
@@ -288,8 +291,8 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                         sp,
                         (sp - p) * 0.025,
                         self.imgui_wrapper.render_data.create_rad,
-                        ),
-                        );
+                    ),
+                );
             }
         }
 
@@ -342,7 +345,7 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
         keycode: KeyCode,
         keymods: KeyMods,
         _repeat: bool,
-        ) {
+    ) {
         match keycode {
             KeyCode::Space => self.world.get_mut::<Paused>().unwrap().toggle(),
             KeyCode::Escape => self.imgui_wrapper.remove_sidemenu(),
@@ -367,9 +370,9 @@ impl<'a, 'b> EventHandler for MainState<'a, 'b> {
                 0.,
                 crate::SCREEN_X,
                 crate::SCREEN_Y * aspect_ratio as f32,
-                ),
-                )
-            .expect("error resizing");
+            ),
+        )
+        .expect("error resizing");
         let resolution = Vector::new(width, height);
         self.imgui_wrapper.resolution = resolution;
         self.world.insert(Resolution(resolution));

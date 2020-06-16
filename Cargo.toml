@@ -1,13 +1,13 @@
 [package]
 name = "gravity-v2"
-version = "0.9.0"
+version = "1.1.0"
 authors = ["Mikail <mikail.khan45@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ggez = { git = "https://github.com/mkhan45/ggez" }
+ggez = { git = "https://github.com/ggez/ggez" }
 nalgebra = { version = "0.18", features=["serde-serialize"] }
 
 specs = { version = "0.15.1", features = ["specs-derive", "serde"] }
@@ -17,8 +17,7 @@ gfx_device_gl = "0.16"
 imgui = "0.2.0"
 imgui-gfx-renderer = "0.2.0"
 
-serde = { version = "1.0.104", features = ["derive"] }
-ron = "0.5.1"
+rlua = "0.17.0"
 
 [dependencies.microprofile]
 version = "0.2.1"
@@ -29,3 +28,6 @@ debug=0
 
 [profile.release]
 debug=0
+lto = true
+codegen-units = 1
+incremental = false

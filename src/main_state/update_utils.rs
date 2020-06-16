@@ -11,7 +11,7 @@ use crate::ecs::entities::{create_preview, new_preview};
 use crate::gui::imgui_wrapper::{UiChoice, UiSignal};
 use crate::main_state::state::scale_pos;
 use crate::main_state::state::MainState;
-use crate::saveload::{load_world, save_world};
+use crate::saveload::{load_world, save_world_to_lua};
 use crate::Vector;
 
 use specs::prelude::*;
@@ -30,7 +30,7 @@ impl<'a, 'b> MainState<'a, 'b> {
 
             // do_physics(&mut self.world, ctx);
             (0..main_iterations).for_each(|_| {
-                self.main_dispatcher.dispatch(&self.world);
+                self.main_dispatcher.dispatch_par(&self.world);
                 self.world.maintain();
             });
         }
@@ -133,7 +133,7 @@ impl<'a, 'b> MainState<'a, 'b> {
                     undisplay_graphs!(SpeedGraph, XVelGraph, YVelGraph, AccelGraph);
                 }
                 UiSignal::SaveState => {
-                    match save_world(
+                    match save_world_to_lua(
                         &self.world,
                         format!(
                             "saved_systems/{}",

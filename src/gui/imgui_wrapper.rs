@@ -2,7 +2,6 @@ use ggez::event::{KeyCode, KeyMods};
 use ggez::{graphics, Context};
 
 use gfx_core::{handle::RenderTargetView, memory::Typed};
-use gfx_device_gl;
 
 extern crate imgui;
 
