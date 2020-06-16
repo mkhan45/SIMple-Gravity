@@ -75,8 +75,8 @@ impl RenderData {
             num_iterations: 1,
             preview_iterations: 25,
             entity_selected: false,
-            save_filename: ImString::new("save.ron"),
-            load_filename: ImString::new("load.ron"),
+            save_filename: ImString::new("save.lua"),
+            load_filename: ImString::new("load.lua"),
             trail_len: 35,
         }
     }
