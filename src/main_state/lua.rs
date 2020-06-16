@@ -79,15 +79,16 @@ impl MainState<'_, '_> {
                 .exec()
                 .unwrap();
 
-            let lua_init_code = std::fs::read_to_string("init.lua").unwrap();
-            if let Err(e) = lua_ctx
-                .load(&lua_init_code)
-                .set_name("init.lua")
-                .unwrap()
-                .exec()
-            {
-                println!("Lua {}", e.to_string());
-            };
+            if let Ok(lua_init_code) = std::fs::read_to_string("saved_systems/default.lua") {
+                if let Err(e) = lua_ctx
+                    .load(&lua_init_code)
+                        .set_name("init.lua")
+                        .unwrap()
+                        .exec()
+                {
+                    println!("Lua {}", e.to_string());
+                };
+            }
         });
 
         self.process_lua_bodies();

@@ -43,6 +43,35 @@ Negative mass and negative timestep are cool
 You can save and load preset scenarios; binary and nested systems are included.
 ![](saveload.gif)
 
+# Lua documentation
+
+Right now Lua is limited to just creating bodies, I may add more stuff later.
+
+The syntax is fairly self explanatory.
+
+You can control these fields of the body:
+- x position (`x` field)
+- y position (`y` field)
+- x velocity (`x_vel` field)
+- y velocity (`y_vel` field)
+- radius (`rad` field)
+- mass (`mass` field)
+
+To create a single body with x position, y position, x velocity, y velocity, mass, and radius all set to 5:
+```lua
+add_body({x = 5, y = 5, x_vel = 5, y_vel = 5, mass = 5, rad = 5})
+```
+
+Here's the binary star system preset as an example for creating multiple bodies:
+```lua
+add_bodies(
+	{x = 125.000, y = 70.000, x_vel = 0.000, y_vel = 1.000, mass = 80.000, rad = 4.500},
+	{x = 175.000, y = 70.000, x_vel = 0.000, y_vel = -1.000, mass = 80.000, rad = 4.500},
+	{x = -30.000, y = 70.000, x_vel = 0.000, y_vel = -1.000, mass = 0.500, rad = 1.000},
+	{x = 330.000, y = 70.000, x_vel = 0.000, y_vel = 1.000, mass = 0.500, rad = 1.000}
+)
+```
+
 # details
 
 Made with [`ggez`](https://github.com/ggez/ggez) and [`specs`](https://github.com/amethyst/specs)
