@@ -15,8 +15,8 @@ extern crate microprofile;
 mod ecs;
 use ecs::{
     components::{
-        AccelGraph, Draw, Kinematics, Mass, Point, Position, Preview, Radius,
-        SpeedGraph, Trail, Vector, XVelGraph, YVelGraph,
+        AccelGraph, Draw, Kinematics, Mass, Point, Position, Preview, Radius, SpeedGraph, Trail,
+        Vector, XVelGraph, YVelGraph,
     },
     entities::{new_body, Body},
     resources::{
@@ -65,11 +65,13 @@ fn main() -> GameResult {
 
         let lua = rlua::Lua::new_with(lua_stdlib);
         lua.set_memory_limit(Some(262_144));
-        lua.set_hook(rlua::HookTriggers {
-            every_nth_instruction: Some(50_000), .. Default::default()
-        }, |_, _| {
-            panic!("Lua script exceeded instruction limit")
-        });
+        lua.set_hook(
+            rlua::HookTriggers {
+                every_nth_instruction: Some(50_000),
+                ..Default::default()
+            },
+            |_, _| panic!("Lua script exceeded instruction limit"),
+        );
         world.insert(std::sync::Arc::new(std::sync::Mutex::new(lua)))
     }
 

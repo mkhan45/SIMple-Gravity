@@ -1,5 +1,5 @@
 # gravity-sim-v2
-Gravity simulator using Newton's Law of Universal Gravitation, made to teach physics
+Gravity simulator using Newton's Law of Universal Gravitation, made to teach physics as part of my high school senior research project
 
 The goal is for this to run on the web and to otherwise be as easily accessible as possible.
 

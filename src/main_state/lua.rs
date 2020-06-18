@@ -13,7 +13,7 @@ impl MainState<'_, '_> {
             let num_bodies = entities.join().count();
             if num_bodies > 1250 {
                 println!("Can't have more than 1250 bodies");
-                return
+                return;
             }
         }
         let mass: f32 = body.get("mass").unwrap();
@@ -92,9 +92,9 @@ impl MainState<'_, '_> {
             if let Ok(lua_init_code) = std::fs::read_to_string("saved_systems/default.lua") {
                 if let Err(e) = lua_ctx
                     .load(&lua_init_code)
-                        .set_name("default.lua")
-                        .unwrap()
-                        .exec()
+                    .set_name("default.lua")
+                    .unwrap()
+                    .exec()
                 {
                     println!("Lua {}", e.to_string());
                 };
