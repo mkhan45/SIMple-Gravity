@@ -57,7 +57,21 @@ fn main() -> GameResult {
     world.register::<XVelGraph>();
     world.register::<YVelGraph>();
     world.register::<AccelGraph>();
-    world.insert(std::sync::Arc::new(std::sync::Mutex::new(rlua::Lua::new())));
+    {
+        let mut lua_stdlib = rlua::StdLib::empty();
+        lua_stdlib.insert(rlua::StdLib::BASE);
+        lua_stdlib.insert(rlua::StdLib::TABLE);
+        lua_stdlib.insert(rlua::StdLib::MATH);
+
+        let lua = rlua::Lua::new_with(lua_stdlib);
+        lua.set_memory_limit(Some(262_144));
+        lua.set_hook(rlua::HookTriggers {
+            every_nth_instruction: Some(50_000), .. Default::default()
+        }, |_, _| {
+            panic!("Lua script exceeded instruction limit")
+        });
+        world.insert(std::sync::Arc::new(std::sync::Mutex::new(lua)))
+    }
 
     // ggez screen size stuff
     let hidpi_factor = event_loop.get_primary_monitor().get_hidpi_factor() as f32;

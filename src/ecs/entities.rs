@@ -1,8 +1,6 @@
-use crate::ecs::components::SaveMarker;
 use crate::ecs::components::*;
 use crate::{Point, Vector};
 use specs::prelude::*;
-use specs::saveload::{MarkedBuilder, SimpleMarker};
 
 use ggez::graphics;
 
@@ -18,7 +16,6 @@ pub fn create_body(world: &mut World, body: Body) -> Entity {
         .with(body.3)
         .with(body.4)
         .with(body.5)
-        .marked::<SimpleMarker<SaveMarker>>()
         .build()
 }
 

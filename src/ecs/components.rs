@@ -9,8 +9,6 @@ use specs::Component;
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
 
-pub struct SaveMarker;
-
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Component)]
 #[storage(NullStorage)]
 pub struct Preview;
