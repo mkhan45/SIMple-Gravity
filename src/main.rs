@@ -5,7 +5,6 @@ use ggez::*;
 
 extern crate specs;
 use specs::prelude::*;
-use specs::saveload::{MarkedBuilder, SimpleMarker, SimpleMarkerAllocator};
 
 mod main_state;
 mod saveload;
@@ -16,7 +15,7 @@ extern crate microprofile;
 mod ecs;
 use ecs::{
     components::{
-        AccelGraph, Draw, Kinematics, Mass, Point, Position, Preview, Radius, SaveMarker,
+        AccelGraph, Draw, Kinematics, Mass, Point, Position, Preview, Radius,
         SpeedGraph, Trail, Vector, XVelGraph, YVelGraph,
     },
     entities::{new_body, Body},
@@ -58,29 +57,7 @@ fn main() -> GameResult {
     world.register::<XVelGraph>();
     world.register::<YVelGraph>();
     world.register::<AccelGraph>();
-    world.register::<SimpleMarker<SaveMarker>>();
-    world.insert(SimpleMarkerAllocator::<SaveMarker>::new());
     world.insert(std::sync::Arc::new(std::sync::Mutex::new(rlua::Lua::new())));
-
-    // a simple orbit,
-    // [x_pos, y_pos], [x_vel, y_vel], mass, radius
-    let data = vec![
-        new_body([215.0, 100.0], [0.0, -1.1], 0.01, 0.8),
-        new_body([150.0, 100.0], [0.0, 0.0], 75.0, 5.0),
-    ];
-
-    for (pos, kine, mass, draw, rad, trail) in data {
-        world
-            .create_entity()
-            .with(pos)
-            .with(kine)
-            .with(mass)
-            .with(draw)
-            .with(rad)
-            .with(trail)
-            .marked::<SimpleMarker<SaveMarker>>()
-            .build();
-    }
 
     // ggez screen size stuff
     let hidpi_factor = event_loop.get_primary_monitor().get_hidpi_factor() as f32;

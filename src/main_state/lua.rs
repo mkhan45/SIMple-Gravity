@@ -3,9 +3,19 @@ use crate::ecs::entities::create_body;
 use crate::ecs::resources::LuaRes;
 use crate::main_state::state::MainState;
 
+use specs::prelude::*;
+
 impl MainState<'_, '_> {
     #[allow(clippy::many_single_char_names)]
     pub fn process_lua_body(&mut self, body: &rlua::Table) {
+        {
+            let entities = self.world.entities();
+            let num_bodies = entities.join().count();
+            if num_bodies > 1250 {
+                println!("Can't have more than 1250 bodies");
+                return
+            }
+        }
         let mass: f32 = body.get("mass").unwrap();
         let x: f32 = body.get("x").unwrap();
         let y: f32 = body.get("y").unwrap();
@@ -66,9 +76,7 @@ impl MainState<'_, '_> {
                 .load(
                     r#"
                 function add_body(body)
-                    if (#BODIES < 1150) then
-                        BODIES[#BODIES + 1] = body
-                    end
+                    BODIES[#BODIES + 1] = body
                 end
 
                 function add_bodies(...)
@@ -84,7 +92,7 @@ impl MainState<'_, '_> {
             if let Ok(lua_init_code) = std::fs::read_to_string("saved_systems/default.lua") {
                 if let Err(e) = lua_ctx
                     .load(&lua_init_code)
-                        .set_name("init.lua")
+                        .set_name("default.lua")
                         .unwrap()
                         .exec()
                 {
