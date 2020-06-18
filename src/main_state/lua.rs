@@ -88,20 +88,9 @@ impl MainState<'_, '_> {
                 )
                 .exec()
                 .unwrap();
-
-            if let Ok(lua_init_code) = std::fs::read_to_string("saved_systems/default.lua") {
-                if let Err(e) = lua_ctx
-                    .load(&lua_init_code)
-                    .set_name("default.lua")
-                    .unwrap()
-                    .exec()
-                {
-                    println!("Lua {}", e.to_string());
-                };
-            }
         });
 
-        self.process_lua_bodies();
+        let _ = crate::saveload::load_from_lua(&self.world, "saved_systems/default.lua".to_string());
     }
 
     pub fn lua_update(&mut self) {
