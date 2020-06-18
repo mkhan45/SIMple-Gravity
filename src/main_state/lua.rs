@@ -66,7 +66,9 @@ impl MainState<'_, '_> {
                 .load(
                     r#"
                 function add_body(body)
-                    BODIES[#BODIES + 1] = body
+                    if (#BODIES < 1150) then
+                        BODIES[#BODIES + 1] = body
+                    end
                 end
 
                 function add_bodies(...)
