@@ -72,6 +72,15 @@ add_bodies(
 )
 ```
 
+## Lua Limitations
+
+For security, Lua scripts are pretty limited in what they can do in this program. 
+- Scripts only have access to the base, table, and math modules of the standard library
+- There is a memory limit of 256 MB
+- There's an instruction limit of 50,000
+
+If you these limits impact any of your scripts, please open an issue. I'm pretty sure the instruction limit is lower than it should be, but I might also want to add a way to load trusted scripts without limitations.
+
 # details
 
 Made with [`ggez`](https://github.com/ggez/ggez) and [`specs`](https://github.com/amethyst/specs)
