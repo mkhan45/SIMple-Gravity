@@ -1,4 +1,6 @@
 # gravity-sim-v2
+[![](https://gitlab.com/mkhan45/gravity-sim-v2/badges/master/pipeline.svg?key_text=build&style=flat-square)](https://gitlab.com/mkhan45/gravity-sim-v2/-/pipelines)
+
 Gravity simulator using Newton's Law of Universal Gravitation, made to teach physics as part of my high school senior research project
 
 The goal is for this to run on the web and to otherwise be as easily accessible as possible.
