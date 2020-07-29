@@ -90,7 +90,8 @@ impl MainState<'_, '_> {
                 .unwrap();
         });
 
-        let _ = crate::saveload::load_from_lua(&self.world, "saved_systems/default.lua".to_string());
+        let _ =
+            crate::saveload::load_from_lua(&self.world, "saved_systems/default.lua".to_string());
     }
 
     pub fn lua_update(&mut self) {
