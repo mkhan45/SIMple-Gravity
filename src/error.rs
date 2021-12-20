@@ -1,7 +1,7 @@
 use std::error::Error;
 
 #[derive(Debug)]
-pub enum SimError { }
+pub enum SimError {}
 
 impl std::fmt::Display for SimError {
     fn fmt(

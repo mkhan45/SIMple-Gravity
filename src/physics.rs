@@ -14,7 +14,8 @@ pub struct KinematicBody {
     pub vel: Vec2,
     pub accel: Vec2,
     pub force: Vec2,
-    pub mass: Vec2,
+    pub mass: f32,
+    pub radius: f32
 }
 
 #[derive(Copy, Clone)]
@@ -23,42 +24,59 @@ pub struct CumulativeMass {
     pub mass: Vec2,
 }
 
-pub fn integrate_sys(mut query: Query<&mut KinematicBody>, dt: Res<DT>) {
-    let dt = dt.0;
+pub struct Preview;
 
-    for mut body in query.iter_mut() {
-        let accel = body.accel;
-        let vel = body.vel;
-        body.pos += vel * dt + 0.5 * accel * dt * dt;
+macro_rules! generate_integration_systems {
+    ($filter:ident, $name:ident) => {
+        pub fn $name(mut query: Query<&mut KinematicBody, $filter<Preview>>, dt: Res<DT>) {
+            let dt = dt.0;
 
-        let new_accel = body.accel + body.force * dt;
-        body.vel = body.vel + (body.accel + new_accel) / 2.0;
-        body.accel = new_accel;
+            for mut body in query.iter_mut() {
+                let accel = body.accel;
+                let vel = body.vel;
+                body.pos += vel * dt + 0.5 * accel * dt * dt;
 
-        body.force = Vec2::new(0.0, 0.0);
-    }
+                let new_accel = body.accel + body.force / body.mass * dt;
+                body.vel = body.vel + (body.accel + new_accel) / 2.0;
+                body.accel = new_accel;
+
+                body.force = Vec2::new(0.0, 0.0);
+            }
+        }
+    };
 }
+generate_integration_systems!(Without, integration_sys);
+generate_integration_systems!(With, preview_integration_sys);
 
-pub fn gravity_sys(affected_query: Query<&mut KinematicBody>, affecting_query: Query<&KinematicBody>) {
+pub fn gravity_sys(
+    query_set: QuerySet<(
+        Query<(&mut KinematicBody, Entity), Without<Preview>>,
+        Query<(&KinematicBody, Entity), Without<Preview>>,
+    )>,
+) {
+    let affected_query = query_set.q0();
+    let affecting_query = query_set.q1();
+
     unsafe {
-        for mut affected_body in affected_query.iter_unsafe() {
+        for (mut affected_body, e1) in affected_query.iter_unsafe() {
             let mut cumulative_force = Vec2::default();
             let p1 = affected_body.pos;
             let m1 = affected_body.mass;
 
-            for affecting_body in affecting_query.iter() {
+            for (affecting_body, _) in affecting_query.iter().filter(|(_, e2)| e1 != *e2) {
                 let p2 = affecting_body.pos;
                 let m2 = affecting_body.mass;
 
                 let rad = p2 - p1;
                 let rad_sqr_dist = rad.length_squared();
+                let rad_dist = rad_sqr_dist.powf(0.5);
 
                 let current_force = G * m1 * m2 / rad_sqr_dist;
 
-                cumulative_force += current_force;
+                cumulative_force.x += current_force * rad.x / rad_dist;
+                cumulative_force.y += current_force * rad.y / rad_dist;
             }
 
-            // *affected_body.force.lock().unwrap() += cumulative_force;
             affected_body.force += cumulative_force;
         }
     }

@@ -4,14 +4,18 @@ use macroquad::prelude::*;
 pub mod error;
 use error::SimError;
 
+pub mod draw;
+pub mod main_state;
 pub mod physics;
 
 #[macroquad::main("Gravity")]
 async fn main() -> Result<(), SimError> {
     next_frame().await;
 
+    let mut main_state = main_state::MainState::default();
+
     loop {
-        clear_background(BLACK);
+        main_state.update()?;
         next_frame().await
     }
 }
