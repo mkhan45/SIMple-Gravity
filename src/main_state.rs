@@ -17,17 +17,24 @@ impl Default for MainState {
 
             world.insert_resource(crate::physics::DT(1.0));
 
+            let camera = {
+                let view_rect = Rect::new(-500.0, -500.0, 1000.0, 1000.0);
+                Camera2D::from_display_rect(view_rect)
+            };
+            world.insert_resource(camera);
+            set_camera(&camera);
+
             world.spawn().insert(KinematicBody {
-                pos: Vec2::new(500.0, 500.0),
+                pos: Vec2::new(0.0, 0.0),
                 mass: 10.0,
                 radius: 50.0,
                 ..Default::default()
             });
 
             world.spawn().insert(KinematicBody {
-                pos: Vec2::new(15.0, 15.0),
+                pos: Vec2::new(250.0, 0.0),
                 mass: 0.1,
-                radius: 10.0,
+                radius: 1.0,
                 ..Default::default()
             });
 
