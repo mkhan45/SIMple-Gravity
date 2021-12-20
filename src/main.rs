@@ -4,6 +4,7 @@ use macroquad::prelude::*;
 pub mod error;
 use error::SimError;
 
+pub mod camera;
 pub mod draw;
 pub mod main_state;
 pub mod physics;

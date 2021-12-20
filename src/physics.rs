@@ -6,7 +6,7 @@ use egui_macroquad::macroquad::prelude::*;
 pub struct DT(pub f32);
 pub struct Steps(pub usize);
 
-pub const G: f32 = 9.81;
+pub const G: f32 = 100.0;
 
 #[derive(Default, Clone)]
 pub struct KinematicBody {
@@ -15,7 +15,7 @@ pub struct KinematicBody {
     pub accel: Vec2,
     pub force: Vec2,
     pub mass: f32,
-    pub radius: f32
+    pub radius: f32,
 }
 
 #[derive(Copy, Clone)]
@@ -32,12 +32,16 @@ macro_rules! generate_integration_systems {
             let dt = dt.0;
 
             for mut body in query.iter_mut() {
-                let accel = body.accel;
-                let vel = body.vel;
-                body.pos += vel * dt + 0.5 * accel * dt * dt;
+                let old_pos = body.pos;
+                let old_vel = body.vel;
+                let old_accel = body.accel;
+                let new_accel = body.force / body.mass;
 
-                let new_accel = body.accel + body.force / body.mass * dt;
-                body.vel = body.vel + (body.accel + new_accel) / 2.0;
+                let new_vel = old_vel + 0.5 * (new_accel + old_accel) * dt;
+                let new_pos = old_pos + new_vel * dt + 0.5 * new_accel * dt * dt;
+
+                body.vel = new_vel;
+                body.pos = new_pos;
                 body.accel = new_accel;
 
                 body.force = Vec2::new(0.0, 0.0);
@@ -78,6 +82,57 @@ pub fn gravity_sys(
             }
 
             affected_body.force += cumulative_force;
+        }
+    }
+}
+
+pub fn collision_sys(
+    query_set: QuerySet<(
+        Query<(&mut KinematicBody, Entity), Without<Preview>>,
+        Query<(&KinematicBody, Entity), Without<Preview>>,
+    )>,
+    mut commands: Commands,
+) {
+    use std::collections::HashSet;
+
+    let affected_query = query_set.q0();
+    let affecting_query = query_set.q1();
+
+    let mut collided_bodies = HashSet::<Entity>::new();
+
+    unsafe {
+        for (mut b1, e1) in affected_query.iter_unsafe() {
+            let collided = affecting_query
+                .iter()
+                .filter(|(_, e2)| e1 != *e2)
+                .filter(|(_, e2)| !collided_bodies.contains(e2))
+                .filter(|(b2, _)| {
+                    let distance_sqr = (b1.pos - b2.pos).length_squared();
+                    let total_radius_sqr = (b1.radius + b2.radius).powi(2);
+
+                    distance_sqr <= total_radius_sqr
+                });
+
+            let mut e1_has_collided = false;
+
+            let mut total_momentum = b1.mass * b1.vel;
+            let mut total_mass = b1.mass;
+
+            for (b2, e2) in collided {
+                e1_has_collided = true;
+
+                total_momentum += b2.mass * b2.vel;
+                total_mass += b2.mass;
+
+                commands.entity(e2).despawn();
+            }
+
+            if e1_has_collided {
+                collided_bodies.insert(e1);
+
+                b1.mass = total_mass;
+                b1.vel = total_momentum / total_mass;
+            }
         }
     }
 }

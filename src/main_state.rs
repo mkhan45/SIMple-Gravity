@@ -17,24 +17,22 @@ impl Default for MainState {
 
             world.insert_resource(crate::physics::DT(1.0));
 
-            let camera = {
-                let view_rect = Rect::new(-500.0, -500.0, 1000.0, 1000.0);
-                Camera2D::from_display_rect(view_rect)
-            };
-            world.insert_resource(camera);
-            set_camera(&camera);
+            let camera_res = crate::camera::CameraRes::default();
+            set_camera(&camera_res.camera);
+            world.insert_resource(camera_res);
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
-                mass: 10.0,
-                radius: 50.0,
+                mass: 2500.0,
+                radius: 150.0,
                 ..Default::default()
             });
 
             world.spawn().insert(KinematicBody {
-                pos: Vec2::new(250.0, 0.0),
-                mass: 0.1,
-                radius: 1.0,
+                pos: Vec2::new(3500.0, 0.0),
+                mass: 0.01,
+                radius: 25.0,
+                vel: Vec2::new(0.0, -7.5),
                 ..Default::default()
             });
 
@@ -48,7 +46,13 @@ impl Default for MainState {
                 "physics",
                 SystemStage::single_threaded()
                     .with_system(crate::physics::gravity_sys.system().label("gravity"))
-                    .with_system(crate::physics::integration_sys.system().after("gravity")),
+                    .with_system(
+                        crate::physics::collision_sys
+                            .system()
+                            .label("collision")
+                            .after("gravity"),
+                    )
+                    .with_system(crate::physics::integration_sys.system().after("collision")),
             );
 
             main_physics_schedule
@@ -64,7 +68,9 @@ impl Default for MainState {
 
             draw_schedule.add_stage(
                 "draw",
-                SystemStage::single_threaded().with_system(crate::draw::draw_bodies_sys.system()),
+                SystemStage::single_threaded()
+                    .with_system(crate::draw::draw_bodies_sys.system())
+                    .with_system(crate::camera::update_camera_sys.system()),
             );
 
             draw_schedule
@@ -87,6 +93,7 @@ impl MainState {
             self.preview_physics_schedule.run(&mut self.world);
         }
 
+        clear_background(BLACK);
         self.draw_schedule.run(&mut self.world);
 
         Ok(())
