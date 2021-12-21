@@ -52,3 +52,7 @@ pub fn update_camera_sys(mut camera_res: ResMut<CameraRes>) {
 
     set_camera(&camera_res.camera);
 }
+
+pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>) {
+    // TODO
+}

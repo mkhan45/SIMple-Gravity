@@ -1,8 +1,6 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-// use std::sync::{Arc, Mutex};
-
 pub struct DT(pub f32);
 pub struct Steps(pub usize);
 
