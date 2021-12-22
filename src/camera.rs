@@ -56,23 +56,28 @@ pub fn update_camera_sys(mut camera_res: ResMut<CameraRes>) {
 }
 
 pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>, mouse_state: Res<MouseState>) {
-    let current_mouse_pos = camera_res.camera.screen_to_world(mouse_position_local());
+    let mouse_screen_pos: Vec2 = mouse_position().into();
+    let current_mouse_pos = camera_res.camera.screen_to_world(mouse_screen_pos);
 
     // panning via middle mouse
     if is_mouse_button_down(MouseButton::Middle) {
-        let offset = {
-            let mut offset = current_mouse_pos - mouse_state.prev_position;
-            offset.x /= camera_res.camera.zoom.x;
-            offset.y /= camera_res.camera.zoom.y;
-
-            // not sure why 10.0 seems to be the exact ratio
-            // but if there's sliding it's unnoticeable
-            offset / 10.0
-        };
-
+        let offset = current_mouse_pos - mouse_state.prev_position;
         camera_res.camera.target -= offset;
     }
 
     // zooming
-    // TODO
+    let y_scroll = mouse_wheel().1;
+
+    if y_scroll != 0.0 {
+        let scale_fac = 1.0 + y_scroll * 0.1;
+
+        camera_res.screen_size *= scale_fac;
+        camera_res.camera.zoom *= scale_fac;
+
+        let old_world_mouse_pos = current_mouse_pos;
+        let new_world_mouse_pos = camera_res.camera.screen_to_world(mouse_screen_pos);
+        let mouse_delta = old_world_mouse_pos - new_world_mouse_pos;
+
+        camera_res.camera.target += mouse_delta * 2.0;
+    }
 }

@@ -9,5 +9,5 @@ pub struct MouseState {
 }
 
 pub fn update_mouse_input_sys(mut mouse_state: ResMut<MouseState>, camera_res: Res<CameraRes>) {
-    mouse_state.prev_position = camera_res.camera.screen_to_world(mouse_position_local());
+    mouse_state.prev_position = camera_res.camera.screen_to_world(mouse_position().into());
 }
