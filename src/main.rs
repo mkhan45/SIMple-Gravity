@@ -6,6 +6,7 @@ use error::SimError;
 
 pub mod camera;
 pub mod draw;
+pub mod input_state;
 pub mod main_state;
 pub mod physics;
 

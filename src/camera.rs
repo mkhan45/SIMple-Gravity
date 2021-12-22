@@ -1,6 +1,8 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
+use crate::input_state::MouseState;
+
 const SCREEN_WIDTH: f32 = 10_000.0;
 const SCREEN_HEIGHT: f32 = 10_000.0;
 
@@ -53,6 +55,24 @@ pub fn update_camera_sys(mut camera_res: ResMut<CameraRes>) {
     set_camera(&camera_res.camera);
 }
 
-pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>) {
+pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>, mouse_state: Res<MouseState>) {
+    let current_mouse_pos = camera_res.camera.screen_to_world(mouse_position_local());
+
+    // panning via middle mouse
+    if is_mouse_button_down(MouseButton::Middle) {
+        let offset = {
+            let mut offset = current_mouse_pos - mouse_state.prev_position;
+            offset.x /= camera_res.camera.zoom.x;
+            offset.y /= camera_res.camera.zoom.y;
+
+            // not sure why 10.0 seems to be the exact ratio
+            // but if there's sliding it's unnoticeable
+            offset / 10.0
+        };
+
+        camera_res.camera.target -= offset;
+    }
+
+    // zooming
     // TODO
 }

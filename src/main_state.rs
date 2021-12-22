@@ -7,6 +7,7 @@ pub struct MainState {
     pub world: World,
     main_physics_schedule: Schedule,
     preview_physics_schedule: Schedule,
+    input_schedule: Schedule,
     draw_schedule: Schedule,
 }
 
@@ -20,6 +21,9 @@ impl Default for MainState {
             let camera_res = crate::camera::CameraRes::default();
             set_camera(&camera_res.camera);
             world.insert_resource(camera_res);
+
+            let mouse_state_res = crate::input_state::MouseState::default();
+            world.insert_resource(mouse_state_res);
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
@@ -70,16 +74,30 @@ impl Default for MainState {
                 "draw",
                 SystemStage::single_threaded()
                     .with_system(crate::draw::draw_bodies_sys.system())
-                    .with_system(crate::camera::update_camera_sys.system()),
+                    .with_system(crate::camera::update_camera_sys.system())
+                    .with_system(crate::camera::camera_transform_sys.system()),
             );
 
             draw_schedule
+        };
+
+        let input_schedule = {
+            let mut input_schedule = Schedule::default();
+
+            input_schedule.add_stage(
+                "update_mouse_input",
+                SystemStage::single_threaded()
+                    .with_system(crate::input_state::update_mouse_input_sys.system()),
+            );
+
+            input_schedule
         };
 
         Self {
             world,
             main_physics_schedule,
             preview_physics_schedule,
+            input_schedule,
             draw_schedule,
         }
     }
@@ -95,6 +113,7 @@ impl MainState {
 
         clear_background(BLACK);
         self.draw_schedule.run(&mut self.world);
+        self.input_schedule.run(&mut self.world);
 
         Ok(())
     }
