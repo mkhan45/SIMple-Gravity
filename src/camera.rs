@@ -69,7 +69,7 @@ pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>, mouse_state: Res<
     let y_scroll = mouse_wheel().1;
 
     if y_scroll != 0.0 {
-        let scale_fac = 1.0 + y_scroll * 0.1;
+        let scale_fac = 1.0 + y_scroll.signum() * 0.1;
 
         camera_res.screen_size *= scale_fac;
         camera_res.camera.zoom *= scale_fac;
