@@ -25,8 +25,8 @@ impl Default for MainState {
             let mouse_state_res = crate::input_state::MouseState::default();
             world.insert_resource(mouse_state_res);
 
-            world.insert_resource(crate::input_state::CreationData::default());
-            world.insert_resource(crate::input_state::CreationState::Unstarted);
+            world.insert_resource(crate::body_creation::CreationData::default());
+            world.insert_resource(crate::body_creation::CreationState::Unstarted);
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
@@ -92,7 +92,7 @@ impl Default for MainState {
                 "update_mouse_input",
                 SystemStage::single_threaded()
                     .with_system(crate::input_state::update_mouse_input_sys.system())
-                    .with_system(crate::input_state::create_body_sys.system()),
+                    .with_system(crate::body_creation::create_body_sys.system()),
             );
 
             input_schedule

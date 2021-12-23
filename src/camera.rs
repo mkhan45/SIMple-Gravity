@@ -66,7 +66,9 @@ pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>, mouse_state: Res<
     }
 
     // zooming
-    let y_scroll = mouse_wheel().1;
+    let y_scroll = (!is_key_down(KeyCode::LeftShift))
+        .then(|| mouse_wheel().1)
+        .unwrap_or(0.0);
 
     if y_scroll != 0.0 {
         let scale_fac = 1.0 + y_scroll.signum() * 0.1;

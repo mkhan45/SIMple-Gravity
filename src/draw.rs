@@ -2,8 +2,9 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
 use crate::{
+    body_creation::{CreationData, CreationState},
     camera::CameraRes,
-    input_state::{CreationData, CreationState, MouseState},
+    input_state::MouseState,
     physics::KinematicBody,
 };
 
@@ -34,18 +35,34 @@ pub fn draw_create_preview(
     camera_res: Res<CameraRes>,
     mouse_state: Res<MouseState>,
 ) {
+    let draw_body_preview = |point: &Vec2| {
+        let sides = calculate_sides(creation_data.radius, &camera_res);
+        draw_poly(
+            point.x,
+            point.y,
+            sides,
+            creation_data.radius,
+            0.0,
+            PREVIEW_COLOR,
+        );
+    };
+
     match *creation_state {
         CreationState::Initiated => {
-            let sides = calculate_sides(creation_data.radius, &camera_res);
-            draw_poly(
+            draw_body_preview(&mouse_state.prev_position);
+        }
+        CreationState::Clicked { start_point } => {
+            draw_body_preview(&start_point);
+
+            draw_line(
+                start_point.x,
+                start_point.y,
                 mouse_state.prev_position.x,
                 mouse_state.prev_position.y,
-                sides,
-                creation_data.radius,
-                0.0,
-                PREVIEW_COLOR,
+                (creation_data.radius / 2.0).max(10.0),
+                WHITE,
             );
         }
-        _ => { /* TODO */ }
+        _ => {}
     }
 }
