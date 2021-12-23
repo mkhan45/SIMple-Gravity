@@ -1,3 +1,5 @@
+#![feature(option_result_contains)]
+
 use egui_macroquad::macroquad;
 use macroquad::prelude::*;
 

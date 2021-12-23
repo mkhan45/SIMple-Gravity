@@ -1,6 +1,8 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
+use crate::ui::inspect::InspectedEntity;
+
 pub struct DT(pub f32);
 pub struct Steps(pub usize);
 
@@ -104,6 +106,7 @@ pub fn collision_sys(
         Query<(&mut KinematicBody, Entity), Without<Preview>>,
         Query<(&KinematicBody, Entity), Without<Preview>>,
     )>,
+    mut inspected_entity: ResMut<InspectedEntity>,
     mut commands: Commands,
     paused: Res<Paused>,
 ) {
@@ -138,6 +141,8 @@ pub fn collision_sys(
             let mut total_radius = b1.radius;
             let mut total_moment = b1.pos * b1.mass;
 
+            let mut inspected_is_collided = false;
+
             for (b2, e2) in collided {
                 e1_has_collided = true;
 
@@ -147,6 +152,10 @@ pub fn collision_sys(
                 total_moment += b2.pos * b2.mass;
 
                 commands.entity(e2).despawn();
+
+                if inspected_entity.0.contains(&e2) {
+                    inspected_is_collided = true;
+                }
             }
 
             if e1_has_collided {
@@ -162,6 +171,10 @@ pub fn collision_sys(
                 b1.radius = new_radius;
 
                 b1.pos = total_moment / total_mass;
+
+                if inspected_is_collided {
+                    inspected_entity.0 = Some(e1);
+                }
             }
         }
     }

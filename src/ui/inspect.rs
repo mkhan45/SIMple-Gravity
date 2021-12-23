@@ -29,7 +29,10 @@ pub fn inspect_panel_sys(
     mut kinematic_bodies: Query<&mut KinematicBody>,
 ) {
     if let Some(entity) = inspected_entity.0 {
-        let mut kinematic_body = kinematic_bodies.get_mut(entity).unwrap();
+        let mut kinematic_body = match kinematic_bodies.get_mut(entity) {
+            Ok(b) => b,
+            Err(_) => return,
+        };
 
         egui::SidePanel::left("Inspect").show(&egui_ctx, |ui| {
             ui.spacing_mut().slider_width = 200.0;
