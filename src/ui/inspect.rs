@@ -4,6 +4,7 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::physics::KinematicBody;
 
+use super::body_creation::CreationState;
 use super::input_state::MouseState;
 
 pub struct InspectedEntity(pub Option<Entity>);
@@ -11,15 +12,21 @@ pub struct InspectedEntity(pub Option<Entity>);
 pub fn inspect_body_sys(
     mut inspected_entity: ResMut<InspectedEntity>,
     kinematic_bodies: Query<(&KinematicBody, Entity)>,
+    creation_state: Res<CreationState>,
     mouse_state: Res<MouseState>,
 ) {
-    if inspected_entity.0.is_none() && is_mouse_button_pressed(MouseButton::Left) {
+    if inspected_entity.0.is_none()
+        && *creation_state != CreationState::Initiated
+        && is_mouse_button_pressed(MouseButton::Left)
+    {
         inspected_entity.0 = kinematic_bodies
             .iter()
             .find(|(body, _)| {
                 (body.pos - mouse_state.prev_position).length_squared() < body.radius.powi(2)
             })
             .map(|(_, e)| e);
+    } else if *creation_state != CreationState::Initiated && is_key_pressed(KeyCode::Escape) {
+        inspected_entity.0 = None;
     }
 }
 

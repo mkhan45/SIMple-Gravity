@@ -138,7 +138,7 @@ pub fn collision_sys(
 
             let mut total_momentum = b1.mass * b1.vel;
             let mut total_mass = b1.mass;
-            let mut total_radius = b1.radius;
+            let mut total_volume = b1.radius.powi(3);
             let mut total_moment = b1.pos * b1.mass;
 
             let mut inspected_is_collided = false;
@@ -148,7 +148,7 @@ pub fn collision_sys(
 
                 total_momentum += b2.mass * b2.vel;
                 total_mass += b2.mass;
-                total_radius += b2.radius;
+                total_volume += b2.radius.powi(3);
                 total_moment += b2.pos * b2.mass;
 
                 commands.entity(e2).despawn();
@@ -163,12 +163,7 @@ pub fn collision_sys(
 
                 b1.mass = total_mass;
                 b1.vel = total_momentum / total_mass;
-
-                // d ~= m / r^3
-                // r ~= cbrt(m / d)
-                let avg_density = total_mass / total_radius.powi(3);
-                let new_radius = (total_mass / avg_density).powf(1.0 / 3.0);
-                b1.radius = new_radius;
+                b1.radius = total_volume.powf(1.0 / 3.0);
 
                 b1.pos = total_moment / total_mass;
 

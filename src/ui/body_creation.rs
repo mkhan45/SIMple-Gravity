@@ -5,6 +5,7 @@ use macroquad::prelude::*;
 use super::input_state::MouseState;
 use crate::physics::KinematicBody;
 
+#[derive(PartialEq, Debug)]
 pub enum CreationState {
     Unstarted,
     Initiated,
