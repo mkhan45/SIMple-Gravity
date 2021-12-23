@@ -1,10 +1,11 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::physics::KinematicBody;
+use crate::physics::{KinematicBody, Paused};
 
 use crate::ui::body_creation::{CreationData, CreationState};
 use crate::ui::input_state::MouseState;
+use crate::ui::inspect::InspectedEntity;
 
 pub struct MainState {
     pub world: World,
@@ -30,6 +31,10 @@ impl Default for MainState {
 
             world.insert_resource(CreationData::default());
             world.insert_resource(CreationState::Unstarted);
+            world.insert_resource(InspectedEntity(None));
+            world.insert_resource(egui_macroquad::egui::CtxRef::default());
+
+            world.insert_resource(Paused(false));
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
@@ -87,7 +92,19 @@ impl Default for MainState {
 
             draw_schedule.add_stage(
                 "gui",
-                SystemStage::single_threaded().with_system(crate::ui::gui::top_panel_sys.system()),
+                SystemStage::single_threaded()
+                    .with_system(crate::ui::initialize_gui_sys.system().label("initialize"))
+                    .with_system(
+                        crate::ui::top_panel::top_panel_sys
+                            .system()
+                            .label("top_panel")
+                            .after("initialize"),
+                    )
+                    .with_system(
+                        crate::ui::inspect::inspect_panel_sys
+                            .system()
+                            .after("top_panel"),
+                    ),
             );
 
             draw_schedule
@@ -97,10 +114,11 @@ impl Default for MainState {
             let mut input_schedule = Schedule::default();
 
             input_schedule.add_stage(
-                "update_mouse_input",
+                "update_input",
                 SystemStage::single_threaded()
                     .with_system(crate::ui::input_state::update_mouse_input_sys.system())
-                    .with_system(crate::ui::body_creation::create_body_sys.system()),
+                    .with_system(crate::ui::body_creation::create_body_sys.system())
+                    .with_system(crate::ui::inspect::inspect_body_sys.system()),
             );
 
             input_schedule

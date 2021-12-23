@@ -38,7 +38,7 @@ pub fn create_body_sys(
             }
         }
         CreationState::Initiated => {
-            if is_key_pressed(KeyCode::C) {
+            if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::Escape) {
                 *creation_state = CreationState::Unstarted;
             }
 

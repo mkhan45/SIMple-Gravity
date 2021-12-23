@@ -24,9 +24,19 @@ pub struct CumulativeMass {
 
 pub struct Preview;
 
+pub struct Paused(pub bool);
+
 macro_rules! generate_integration_systems {
     ($filter:ident, $name:ident) => {
-        pub fn $name(mut query: Query<&mut KinematicBody, $filter<Preview>>, dt: Res<DT>) {
+        pub fn $name(
+            mut query: Query<&mut KinematicBody, $filter<Preview>>,
+            dt: Res<DT>,
+            paused: Res<Paused>,
+        ) {
+            if paused.0 {
+                return;
+            }
+
             let dt = dt.0;
 
             for mut body in query.iter_mut() {
@@ -55,7 +65,12 @@ pub fn gravity_sys(
         Query<(&mut KinematicBody, Entity), Without<Preview>>,
         Query<(&KinematicBody, Entity), Without<Preview>>,
     )>,
+    paused: Res<Paused>,
 ) {
+    if paused.0 {
+        return;
+    }
+
     let affected_query = query_set.q0();
     let affecting_query = query_set.q1();
 
@@ -90,8 +105,13 @@ pub fn collision_sys(
         Query<(&KinematicBody, Entity), Without<Preview>>,
     )>,
     mut commands: Commands,
+    paused: Res<Paused>,
 ) {
     use std::collections::HashSet;
+
+    if paused.0 {
+        return;
+    }
 
     let affected_query = query_set.q0();
     let affecting_query = query_set.q1();
