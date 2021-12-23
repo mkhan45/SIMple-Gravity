@@ -85,6 +85,11 @@ impl Default for MainState {
                     .with_system(crate::camera::camera_transform_sys.system()),
             );
 
+            draw_schedule.add_stage(
+                "gui",
+                SystemStage::single_threaded().with_system(crate::ui::gui::top_panel_sys.system()),
+            );
+
             draw_schedule
         };
 
@@ -121,6 +126,7 @@ impl MainState {
 
         clear_background(BLACK);
         self.draw_schedule.run(&mut self.world);
+        egui_macroquad::draw();
         self.input_schedule.run(&mut self.world);
 
         Ok(())

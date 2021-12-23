@@ -19,7 +19,7 @@ pub struct CreationData {
 impl Default for CreationData {
     fn default() -> Self {
         Self {
-            radius: 150.0,
+            radius: 75.0,
             mass: 1.0,
         }
     }
@@ -38,6 +38,10 @@ pub fn create_body_sys(
             }
         }
         CreationState::Initiated => {
+            if is_key_pressed(KeyCode::C) {
+                *creation_state = CreationState::Unstarted;
+            }
+
             if is_mouse_button_pressed(MouseButton::Left) {
                 *creation_state = CreationState::Clicked {
                     start_point: mouse_state.prev_position,
