@@ -4,12 +4,11 @@ use macroquad::prelude::*;
 pub mod error;
 use error::SimError;
 
-pub mod body_creation;
 pub mod camera;
 pub mod draw;
-pub mod input_state;
 pub mod main_state;
 pub mod physics;
+pub mod ui;
 
 #[macroquad::main("Gravity")]
 async fn main() -> Result<(), SimError> {

@@ -3,6 +3,9 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::physics::KinematicBody;
 
+use crate::ui::body_creation::{CreationData, CreationState};
+use crate::ui::input_state::MouseState;
+
 pub struct MainState {
     pub world: World,
     main_physics_schedule: Schedule,
@@ -22,11 +25,11 @@ impl Default for MainState {
             set_camera(&camera_res.camera);
             world.insert_resource(camera_res);
 
-            let mouse_state_res = crate::input_state::MouseState::default();
+            let mouse_state_res = MouseState::default();
             world.insert_resource(mouse_state_res);
 
-            world.insert_resource(crate::body_creation::CreationData::default());
-            world.insert_resource(crate::body_creation::CreationState::Unstarted);
+            world.insert_resource(CreationData::default());
+            world.insert_resource(CreationState::Unstarted);
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
@@ -91,8 +94,8 @@ impl Default for MainState {
             input_schedule.add_stage(
                 "update_mouse_input",
                 SystemStage::single_threaded()
-                    .with_system(crate::input_state::update_mouse_input_sys.system())
-                    .with_system(crate::body_creation::create_body_sys.system()),
+                    .with_system(crate::ui::input_state::update_mouse_input_sys.system())
+                    .with_system(crate::ui::body_creation::create_body_sys.system()),
             );
 
             input_schedule

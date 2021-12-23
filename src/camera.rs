@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::input_state::MouseState;
+use crate::ui::input_state::MouseState;
 
 const SCREEN_WIDTH: f32 = 10_000.0;
 const SCREEN_HEIGHT: f32 = 10_000.0;

@@ -2,7 +2,8 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad;
 use macroquad::prelude::*;
 
-use crate::{input_state::MouseState, physics::KinematicBody};
+use super::input_state::MouseState;
+use crate::physics::KinematicBody;
 
 pub enum CreationState {
     Unstarted,
@@ -43,8 +44,8 @@ pub fn create_body_sys(
                 }
             }
 
-            if is_key_down(KeyCode::LeftShift) {
-                let scale = 1.0 + mouse_wheel().1 * 0.1;
+            if is_key_down(KeyCode::LeftShift) && mouse_wheel().1 != 0.0 {
+                let scale = 1.0 + mouse_wheel().1.signum() * -0.1;
                 creation_data.radius *= scale;
             }
         }

@@ -2,10 +2,10 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
 use crate::{
-    body_creation::{CreationData, CreationState},
     camera::CameraRes,
-    input_state::MouseState,
     physics::KinematicBody,
+    ui::body_creation::{CreationData, CreationState},
+    ui::input_state::MouseState,
 };
 
 const PREVIEW_COLOR: Color = Color::new(1.0, 1.0, 1.0, 0.75);
