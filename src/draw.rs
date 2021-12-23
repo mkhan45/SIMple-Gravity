@@ -1,10 +1,51 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::physics::KinematicBody;
+use crate::{
+    camera::CameraRes,
+    input_state::{CreationData, CreationState, MouseState},
+    physics::KinematicBody,
+};
 
-pub fn draw_bodies_sys(query: Query<&KinematicBody>) {
-    for body in query.iter() {
-        draw_circle(body.pos.x, body.pos.y, body.radius, WHITE);
+const PREVIEW_COLOR: Color = Color::new(1.0, 1.0, 1.0, 0.75);
+
+pub fn calculate_sides(radius: f32, camera_res: &CameraRes) -> u8 {
+    let camera_view_size = (camera_res.camera.screen_to_world(camera_res.screen_size)
+        - camera_res.camera.target)
+        .abs();
+    let screen_proportion = radius * radius / camera_view_size.x / camera_view_size.y;
+
+    let sides = (screen_proportion.cbrt() * 100.0).clamp(10.0, 100.0);
+    sides as u8
+}
+
+pub fn draw_bodies_sys(query: Query<(&KinematicBody, Option<&Color>)>, camera_res: Res<CameraRes>) {
+    for (body, color) in query.iter() {
+        let color = color.unwrap_or(&WHITE);
+
+        let sides = calculate_sides(body.radius, &camera_res);
+        draw_poly(body.pos.x, body.pos.y, sides, body.radius, 0.0, *color);
+    }
+}
+
+pub fn draw_create_preview(
+    creation_state: Res<CreationState>,
+    creation_data: Res<CreationData>,
+    camera_res: Res<CameraRes>,
+    mouse_state: Res<MouseState>,
+) {
+    match *creation_state {
+        CreationState::Initiated => {
+            let sides = calculate_sides(creation_data.radius, &camera_res);
+            draw_poly(
+                mouse_state.prev_position.x,
+                mouse_state.prev_position.y,
+                sides,
+                creation_data.radius,
+                0.0,
+                PREVIEW_COLOR,
+            );
+        }
+        _ => { /* TODO */ }
     }
 }
