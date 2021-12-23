@@ -25,7 +25,9 @@ pub fn inspect_body_sys(
                 (body.pos - mouse_state.prev_position).length_squared() < body.radius.powi(2)
             })
             .map(|(_, e)| e);
-    } else if *creation_state != CreationState::Initiated && is_key_pressed(KeyCode::Escape) {
+    } else if *creation_state != CreationState::Initiated
+        && (is_key_pressed(KeyCode::Escape) || is_mouse_button_pressed(MouseButton::Left))
+    {
         inspected_entity.0 = None;
     }
 }
@@ -44,9 +46,17 @@ pub fn inspect_panel_sys(
         egui::SidePanel::left("Inspect").show(&egui_ctx, |ui| {
             ui.spacing_mut().slider_width = 200.0;
 
-            ui.add(egui::Slider::new(&mut kinematic_body.radius, 0.0..=1_000.0).text("Radius"));
+            ui.add(
+                egui::Slider::new(&mut kinematic_body.radius, 0.0..=1_000.0)
+                    .text("Radius")
+                    .logarithmic(true),
+            );
 
-            ui.add(egui::Slider::new(&mut kinematic_body.mass, 0.0..=10_000.0).text("Mass"));
+            ui.add(
+                egui::Slider::new(&mut kinematic_body.mass, 0.0..=10_000.0)
+                    .text("Mass")
+                    .logarithmic(true),
+            );
 
             ui.label(format!(
                 "Position: <{:.2}, {:.2}>",

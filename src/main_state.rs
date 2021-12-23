@@ -117,8 +117,16 @@ impl Default for MainState {
                 "update_input",
                 SystemStage::single_threaded()
                     .with_system(crate::ui::input_state::update_mouse_input_sys.system())
-                    .with_system(crate::ui::inspect::inspect_body_sys.system().label("inspect"))
-                    .with_system(crate::ui::body_creation::create_body_sys.system().after("inspect"))
+                    .with_system(
+                        crate::ui::inspect::inspect_body_sys
+                            .system()
+                            .label("inspect"),
+                    )
+                    .with_system(
+                        crate::ui::body_creation::create_body_sys
+                            .system()
+                            .after("inspect"),
+                    ),
             );
 
             input_schedule
