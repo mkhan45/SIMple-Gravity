@@ -10,8 +10,8 @@ pub mod camera;
 pub mod draw;
 pub mod main_state;
 pub mod physics;
-pub mod ui;
 pub mod trails;
+pub mod ui;
 
 #[macroquad::main("Gravity")]
 async fn main() -> Result<(), SimError> {
