@@ -11,6 +11,7 @@ pub mod draw;
 pub mod main_state;
 pub mod physics;
 pub mod ui;
+pub mod trails;
 
 #[macroquad::main("Gravity")]
 async fn main() -> Result<(), SimError> {

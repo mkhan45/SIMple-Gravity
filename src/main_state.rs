@@ -67,7 +67,8 @@ impl Default for MainState {
                             .label("collision")
                             .after("gravity"),
                     )
-                    .with_system(crate::physics::integration_sys.system().after("collision")),
+                    .with_system(crate::physics::integration_sys.system().after("collision"))
+                    .with_system(crate::trails::trail_sys.system()),
             );
 
             main_physics_schedule
@@ -84,8 +85,9 @@ impl Default for MainState {
             draw_schedule.add_stage(
                 "draw",
                 SystemStage::single_threaded()
-                    .with_system(crate::draw::draw_bodies_sys.system())
+                    .with_system(crate::draw::draw_bodies_sys.system().label("bodies"))
                     .with_system(crate::draw::draw_create_preview.system())
+                    .with_system(crate::trails::draw_trail_sys.system().before("bodies"))
                     .with_system(crate::camera::update_camera_sys.system())
                     .with_system(crate::camera::camera_transform_sys.system()),
             );
