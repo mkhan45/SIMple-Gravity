@@ -10,6 +10,7 @@ pub mod camera;
 pub mod draw;
 pub mod main_state;
 pub mod physics;
+pub mod preview;
 pub mod trails;
 pub mod ui;
 

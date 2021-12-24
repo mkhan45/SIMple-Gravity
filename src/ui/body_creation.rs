@@ -1,9 +1,9 @@
 use bevy_ecs::prelude::*;
-use egui_macroquad::{macroquad, egui::CtxRef};
+use egui_macroquad::{egui::CtxRef, macroquad};
 use macroquad::prelude::*;
 
 use super::input_state::MouseState;
-use crate::physics::KinematicBody;
+use crate::{physics::{KinematicBody, Preview}, camera::CameraRes};
 
 #[derive(PartialEq, Debug)]
 pub enum CreationState {
@@ -31,6 +31,8 @@ pub fn create_body_sys(
     mut creation_data: ResMut<CreationData>,
     mouse_state: Res<MouseState>,
     mut commands: Commands,
+    preview_query: Query<Entity, With<Preview>>,
+    camera_res: Res<CameraRes>,
     egui_ctx: Res<CtxRef>,
 ) {
     match *creation_state {
@@ -44,7 +46,8 @@ pub fn create_body_sys(
                 *creation_state = CreationState::Unstarted;
             }
 
-            if is_mouse_button_pressed(MouseButton::Left) && !egui_ctx.input().pointer.has_pointer() {
+            if is_mouse_button_pressed(MouseButton::Left)
+            {
                 *creation_state = CreationState::Clicked {
                     start_point: mouse_state.prev_position,
                 }
@@ -56,7 +59,11 @@ pub fn create_body_sys(
             }
         }
         CreationState::Clicked { start_point } => {
-            if is_mouse_button_released(MouseButton::Left) {
+            if is_mouse_button_released(MouseButton::Left) && !egui_ctx.is_pointer_over_area() {
+                preview_query.iter().for_each(|entity| {
+                    commands.entity(entity).despawn();
+                });
+
                 commands.spawn().insert(KinematicBody {
                     pos: start_point,
                     mass: creation_data.mass,
@@ -66,6 +73,26 @@ pub fn create_body_sys(
                 });
 
                 *creation_state = CreationState::Initiated;
+            } else {
+                let current_mouse_position = camera_res.camera.screen_to_world(mouse_position().into());
+                let mouse_diff = mouse_state.prev_position - current_mouse_position;
+                
+                if mouse_diff.length_squared() > 5.0 {
+                    preview_query.iter().for_each(|entity| {
+                        commands.entity(entity).despawn();
+                    });
+
+                    commands.spawn()
+                        .insert(KinematicBody {
+                            pos: start_point,
+                            vel: (start_point - mouse_state.prev_position) / 100.0,
+                            mass: 1.0,
+                            radius: creation_data.radius,
+                            ..KinematicBody::default()
+                        })
+                    .insert(Color::new(0.5, 0.7, 1.0, 0.8))
+                    .insert(Preview);
+                }
             }
         }
     }

@@ -75,7 +75,16 @@ impl Default for MainState {
         };
 
         let preview_physics_schedule = {
-            let preview_physics_schedule = Schedule::default();
+            let mut preview_physics_schedule = Schedule::default();
+
+            preview_physics_schedule.add_stage(
+                "preview",
+                SystemStage::single_threaded()
+                    .with_system(crate::preview::preview_gravity_sys.system().label("gravity"))
+                    .with_system(crate::physics::preview_integration_sys.system().label("integration").after("gravity"))
+                    .with_system(crate::trails::preview_trail_sys.system().after("integration")),
+            );
+
             preview_physics_schedule
         };
 
@@ -118,7 +127,7 @@ impl Default for MainState {
             input_schedule.add_stage(
                 "update_input",
                 SystemStage::single_threaded()
-                    .with_system(crate::ui::input_state::update_mouse_input_sys.system())
+                    .with_system(crate::ui::input_state::update_mouse_input_sys.system().label("update_mouse"))
                     .with_system(
                         crate::ui::inspect::inspect_body_sys
                             .system()
@@ -127,7 +136,8 @@ impl Default for MainState {
                     .with_system(
                         crate::ui::body_creation::create_body_sys
                             .system()
-                            .after("inspect"),
+                            .after("inspect")
+                            .before("update_mouse"),
                     ),
             );
 
@@ -148,7 +158,8 @@ impl MainState {
     pub fn update(&mut self) -> Result<(), crate::error::SimError> {
         self.main_physics_schedule.run(&mut self.world);
 
-        for _ in 0..10 {
+        let start_time = get_time();
+        while get_time() - start_time < 0.005 {
             self.preview_physics_schedule.run(&mut self.world);
         }
 
