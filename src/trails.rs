@@ -41,18 +41,20 @@ pub fn trail_sys(
     }
 }
 
-pub fn draw_trail_sys(query: Query<&Trail>) {
-    for trail in query.iter() {
+pub fn draw_trail_sys(query: Query<(&KinematicBody, &Trail)>) {
+    for (body, trail) in query.iter() {
         let points_len = trail.points.len();
-        let opacity = |i: usize| i as f32 / points_len as f32;
+        let proportion = |i: usize| i as f32 / points_len as f32;
         for (i, (p1, p2)) in trail
             .points
             .iter()
             .zip(trail.points.iter().skip(1))
             .enumerate()
         {
-            let color = Color::new(0.5, 0.7, 1.0, opacity(i));
-            draw_line(p1.x, p1.y, p2.x, p2.y, 15.0, color);
+            let proportion = proportion(i);
+            let color = Color::new(0.5, 0.7, 1.0, proportion);
+            let thickness = proportion * body.radius;
+            draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
         }
     }
 }
