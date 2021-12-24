@@ -36,6 +36,8 @@ impl Default for MainState {
 
             world.insert_resource(Paused(false));
 
+            world.insert_resource(crate::preview::PreviewTrailTick::default());
+
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
                 mass: 2500.0,
@@ -159,7 +161,7 @@ impl MainState {
         self.main_physics_schedule.run(&mut self.world);
 
         let start_time = get_time();
-        while get_time() - start_time < 0.005 {
+        while get_time() - start_time < 0.0075 {
             self.preview_physics_schedule.run(&mut self.world);
         }
 

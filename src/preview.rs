@@ -3,6 +3,17 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::physics::{KinematicBody, Preview};
 
+pub struct PreviewTrailTick {
+    pub current_tick: u8,
+    pub tick_increment: u8,
+}
+
+impl Default for PreviewTrailTick {
+    fn default() -> Self {
+        Self { current_tick: 0, tick_increment: 7 }
+    }
+}
+
 pub fn preview_gravity_sys(
     query_set: QuerySet<(
         Query<&mut KinematicBody, With<Preview>>,

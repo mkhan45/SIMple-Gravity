@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::physics::{KinematicBody, Paused, Preview};
+use crate::{physics::{KinematicBody, Paused, Preview}, preview::PreviewTrailTick};
 
 #[derive(Debug)]
 pub struct Trail {
@@ -23,7 +23,7 @@ impl Default for Trail {
 impl Trail {
     pub fn preview() -> Self {
         Self {
-            max_len: 5_000,
+            max_len: 7_500,
             ..Self::default()
         }
     }
@@ -53,15 +53,21 @@ pub fn trail_sys(
 pub fn preview_trail_sys(
     mut query: Query<(&KinematicBody, Option<&mut Trail>, Entity), With<Preview>>,
     mut commands: Commands,
+    mut preview_trail_tick: ResMut<PreviewTrailTick>,
 ) {
-    for (body, trail, entity) in query.iter_mut() {
-        if let Some(mut trail) = trail {
-            trail.points.push_back(body.pos);
-            while trail.points.len() > trail.max_len {
-                trail.points.pop_front();
+    preview_trail_tick.current_tick += 1;
+    preview_trail_tick.current_tick %= preview_trail_tick.tick_increment;
+
+    if preview_trail_tick.current_tick == 0 {
+        for (body, trail, entity) in query.iter_mut() {
+            if let Some(mut trail) = trail {
+                trail.points.push_back(body.pos);
+                while trail.points.len() > trail.max_len {
+                    trail.points.pop_front();
+                }
+            } else {
+                commands.entity(entity).insert(Trail::preview());
             }
-        } else {
-            commands.entity(entity).insert(Trail::preview());
         }
     }
 }
