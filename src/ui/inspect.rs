@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::*;
-use egui_macroquad::egui;
+use egui_macroquad::egui::{self, CtxRef};
 use egui_macroquad::macroquad::prelude::*;
 
 use crate::physics::KinematicBody;
@@ -14,6 +14,7 @@ pub fn inspect_body_sys(
     kinematic_bodies: Query<(&KinematicBody, Entity)>,
     creation_state: Res<CreationState>,
     mouse_state: Res<MouseState>,
+    egui_ctx: Res<CtxRef>,
 ) {
     if inspected_entity.0.is_none()
         && *creation_state != CreationState::Initiated
@@ -26,7 +27,9 @@ pub fn inspect_body_sys(
             })
             .map(|(_, e)| e);
     } else if *creation_state != CreationState::Initiated
-        && (is_key_pressed(KeyCode::Escape) || is_mouse_button_pressed(MouseButton::Left))
+        && (is_key_pressed(KeyCode::Escape)
+            || (is_mouse_button_pressed(MouseButton::Left)
+                && !egui_ctx.input().pointer.has_pointer()))
     {
         inspected_entity.0 = None;
     }

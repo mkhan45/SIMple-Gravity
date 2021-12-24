@@ -26,7 +26,7 @@ pub fn trail_sys(
     paused: Res<Paused>,
 ) {
     if paused.0 {
-        return
+        return;
     }
 
     for (body, trail, entity) in query.iter_mut() {

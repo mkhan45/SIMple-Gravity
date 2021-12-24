@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::*;
-use egui_macroquad::macroquad;
+use egui_macroquad::{macroquad, egui::CtxRef};
 use macroquad::prelude::*;
 
 use super::input_state::MouseState;
@@ -31,6 +31,7 @@ pub fn create_body_sys(
     mut creation_data: ResMut<CreationData>,
     mouse_state: Res<MouseState>,
     mut commands: Commands,
+    egui_ctx: Res<CtxRef>,
 ) {
     match *creation_state {
         CreationState::Unstarted => {
@@ -43,7 +44,7 @@ pub fn create_body_sys(
                 *creation_state = CreationState::Unstarted;
             }
 
-            if is_mouse_button_pressed(MouseButton::Left) {
+            if is_mouse_button_pressed(MouseButton::Left) && !egui_ctx.input().pointer.has_pointer() {
                 *creation_state = CreationState::Clicked {
                     start_point: mouse_state.prev_position,
                 }
