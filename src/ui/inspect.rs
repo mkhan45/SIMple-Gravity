@@ -39,6 +39,7 @@ pub fn inspect_panel_sys(
     egui_ctx: Res<egui::CtxRef>,
     inspected_entity: Res<InspectedEntity>,
     mut body_info: Query<(&mut KinematicBody, &mut Trail)>,
+    mut commands: Commands,
 ) {
     if let Some(entity) = inspected_entity.0 {
         let (mut kinematic_body, mut trail) = match body_info.get_mut(entity) {
@@ -75,6 +76,10 @@ pub fn inspect_panel_sys(
             ));
 
             ui.add(egui::Slider::new(&mut trail.max_len, 0..=10_000).text("Trail Max Length"));
+
+            if ui.button("Delete").clicked() {
+                commands.entity(entity).despawn();
+            }
         });
     }
 }
