@@ -83,7 +83,6 @@ pub fn clear_trails_sys(
     draw_trails: Res<DrawTrails>,
     relative_trails_body: Res<RelativeTrails>,
 ) {
-
     if (draw_trails.is_changed() && !draw_trails.0) || relative_trails_body.is_changed() {
         for mut trail in query.iter_mut() {
             trail.points.clear();
@@ -134,7 +133,9 @@ pub fn draw_trail_sys(
     let relative_pos = {
         relative_trails_body
             .0
-            .and_then(|relative_entity| query.get(relative_entity).map(|(body, _, _)| body.pos).ok())
+            .and_then(|relative_entity| {
+                query.get(relative_entity).map(|(body, _, _)| body.pos).ok()
+            })
             .unwrap_or(Vec2::new(0.0, 0.0))
     };
 

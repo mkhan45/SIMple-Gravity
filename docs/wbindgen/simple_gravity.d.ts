@@ -24,6 +24,8 @@ export interface InitOutput {
   readonly key_up: (a: number) => void;
   readonly resize: (a: number, b: number) => void;
   readonly touch: (a: number, b: number, c: number, d: number) => void;
+  readonly __wbindgen_malloc: (a: number) => number;
+  readonly __wbindgen_realloc: (a: number, b: number, c: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __wbindgen_start: () => void;
 }

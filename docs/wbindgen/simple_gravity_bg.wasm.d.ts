@@ -20,5 +20,7 @@ export function key_press(a: number): void;
 export function key_up(a: number): void;
 export function resize(a: number, b: number): void;
 export function touch(a: number, b: number, c: number, d: number): void;
+export function __wbindgen_malloc(a: number): number;
+export function __wbindgen_realloc(a: number, b: number, c: number): number;
 export function __wbindgen_exn_store(a: number): void;
 export function __wbindgen_start(): void;

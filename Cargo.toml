@@ -6,10 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui-macroquad = "0.6.1"
+egui-macroquad = "0.7.0"
 bevy_ecs = "0.5.0"
 
 wasm-bindgen = "0.2.74"
+
+rhai = { version = "1.3.0", features = ["sync"] }
 
 [profile.dev.package.'*']
 opt-level = 3

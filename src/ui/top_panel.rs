@@ -8,7 +8,10 @@ use crate::{
     trails::{DrawTrails, RelativeTrails},
 };
 
-use super::body_creation::{CreationData, CreationState};
+use super::{
+    body_creation::{CreationData, CreationState},
+    code_editor::CodeEditor,
+};
 
 pub fn top_panel_sys(
     egui_ctx: Res<egui::CtxRef>,
@@ -18,6 +21,7 @@ pub fn top_panel_sys(
     mut draw_force_lines: ResMut<DrawForceLines>,
     mut draw_trails: ResMut<DrawTrails>,
     mut relative_trails_body: ResMut<RelativeTrails>,
+    mut code_editor: ResMut<CodeEditor>,
     mut dt: ResMut<DT>,
     entities: Query<Entity>,
     mut commands: Commands,
@@ -51,6 +55,10 @@ pub fn top_panel_sys(
                     *relative_trails_body = RelativeTrails(None);
                 }
             });
+
+            if ui.button("Scripting").clicked() {
+                code_editor.shown = !code_editor.shown;
+            }
 
             if ui.button("Pause").clicked() {
                 paused.0 = !paused.0;

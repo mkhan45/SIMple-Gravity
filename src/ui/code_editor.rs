@@ -1,0 +1,57 @@
+use bevy_ecs::prelude::*;
+use egui_macroquad::egui;
+use egui_macroquad::macroquad::prelude::*;
+
+use std::sync::{Arc, Mutex, RwLock};
+
+pub struct CodeEditor {
+    pub shown: bool,
+    pub code: Arc<Mutex<String>>,
+    pub should_run: bool,
+    pub output: Option<Arc<RwLock<String>>>,
+}
+
+impl Default for CodeEditor {
+    fn default() -> Self {
+        Self {
+            shown: false,
+            code: Arc::new(Mutex::new("".to_string())),
+            should_run: false,
+            output: None,
+        }
+    }
+}
+
+pub fn code_editor_sys(egui_ctx: Res<egui::CtxRef>, mut code_editor: ResMut<CodeEditor>) {
+    let mut shown = code_editor.shown;
+    egui::Window::new("Scripting")
+        .open(&mut shown)
+        .resizable(true)
+        .show(&egui_ctx, |ui| {
+            ui.set_min_width(0.4 * screen_width());
+
+            let mut code = code_editor.code.lock().unwrap();
+            ui.add(
+                egui::TextEdit::multiline(&mut *code)
+                    .code_editor()
+                    .desired_width(0.4 * screen_width())
+                    .desired_rows(40),
+            );
+            std::mem::drop(code);
+
+            if ui.button("Run").clicked() {
+                code_editor.should_run = true;
+            }
+
+            if let Some(output) = code_editor.output.clone() {
+                let output = output.read().unwrap();
+                ui.add(
+                    egui::Label::new(format!("Output:\n{}", &output))
+                    .monospace()
+                    .wrap(true),
+                );
+            }
+        });
+
+    code_editor.shown = shown;
+}

@@ -12,6 +12,7 @@ pub mod force_lines;
 pub mod main_state;
 pub mod physics;
 pub mod preview;
+pub mod scripting;
 pub mod trails;
 pub mod ui;
 

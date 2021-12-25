@@ -3,6 +3,7 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::physics::{KinematicBody, Paused};
 
+use crate::scripting::RhaiRes;
 use crate::ui::body_creation::{CreationData, CreationState};
 use crate::ui::input_state::MouseState;
 use crate::ui::inspect::InspectedEntity;
@@ -41,6 +42,10 @@ impl Default for MainState {
             world.insert_resource(crate::preview::PreviewTrailTick::default());
             world.insert_resource(crate::force_lines::DrawForceLines(false));
             world.insert_resource(crate::trails::DrawTrails(true));
+
+            world.insert_resource(crate::ui::code_editor::CodeEditor::default());
+
+            world.insert_resource(RhaiRes::default());
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
@@ -131,15 +136,18 @@ impl Default for MainState {
             draw_schedule.add_stage(
                 "gui",
                 SystemStage::single_threaded()
-                    .with_system(crate::ui::initialize_gui_sys.system().label("initialize"))
                     .with_system(
                         crate::ui::top_panel::top_panel_sys
                             .system()
-                            .label("top_panel")
-                            .after("initialize"),
+                            .label("top_panel"),
                     )
                     .with_system(
                         crate::ui::inspect::inspect_panel_sys
+                            .system()
+                            .after("top_panel"),
+                    )
+                    .with_system(
+                        crate::ui::code_editor::code_editor_sys
                             .system()
                             .after("top_panel"),
                     ),
@@ -173,6 +181,11 @@ impl Default for MainState {
                     .with_system(crate::ui::pause_unpause_sys.system()),
             );
 
+            input_schedule.add_stage(
+                "scripting",
+                SystemStage::single_threaded().with_system(crate::scripting::run_code_sys.system())
+            );
+
             input_schedule
         };
 
@@ -199,8 +212,19 @@ impl MainState {
         self.world.insert_resource(Paused(was_paused));
 
         clear_background(BLACK);
-        self.draw_schedule.run(&mut self.world);
+
+        egui_macroquad::ui(|egui_ctx| {
+            use egui_macroquad::egui::{FontDefinitions, TextStyle};
+            let mut fonts = FontDefinitions::default();
+            fonts.family_and_size.get_mut(&TextStyle::Button).unwrap().1 = 28.0;
+            fonts.family_and_size.get_mut(&TextStyle::Body).unwrap().1 = 28.0;
+            egui_ctx.set_fonts(fonts);
+
+            self.world.insert_resource(egui_ctx.clone());
+            self.draw_schedule.run(&mut self.world);
+        });
         egui_macroquad::draw();
+
         self.input_schedule.run(&mut self.world);
 
         Ok(())

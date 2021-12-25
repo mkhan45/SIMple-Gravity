@@ -1,7 +1,10 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::{physics::{KinematicBody, Preview}, trails::Trail};
+use crate::{
+    physics::{KinematicBody, Preview},
+    trails::Trail,
+};
 
 pub struct PreviewTrailTick {
     pub current_tick: u8,
