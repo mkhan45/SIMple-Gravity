@@ -28,7 +28,7 @@ impl Default for Trail {
 impl Trail {
     pub fn preview() -> Self {
         Self {
-            max_len: 7_500,
+            max_len: 10_000,
             ..Self::default()
         }
     }
@@ -107,6 +107,10 @@ pub fn preview_trail_sys(
     if preview_trail_tick.current_tick == 0 {
         for (body, trail, entity) in query.iter_mut() {
             if let Some(mut trail) = trail {
+                if trail.points.len() == trail.max_len {
+                    continue;
+                }
+
                 trail.points.push_back(body.pos);
                 while trail.points.len() > trail.max_len {
                     trail.points.pop_front();
@@ -119,7 +123,7 @@ pub fn preview_trail_sys(
 }
 
 pub fn draw_trail_sys(
-    query: Query<(&KinematicBody, &Trail)>,
+    query: Query<(&KinematicBody, &Trail, Option<&Preview>)>,
     draw_trails: Res<DrawTrails>,
     relative_trails_body: Res<RelativeTrails>,
 ) {
@@ -130,11 +134,11 @@ pub fn draw_trail_sys(
     let relative_pos = {
         relative_trails_body
             .0
-            .and_then(|relative_entity| query.get(relative_entity).map(|(body, _)| body.pos).ok())
+            .and_then(|relative_entity| query.get(relative_entity).map(|(body, _, _)| body.pos).ok())
             .unwrap_or(Vec2::new(0.0, 0.0))
     };
 
-    for (body, trail) in query.iter() {
+    for (body, trail, preview_opt) in query.iter() {
         let points_len = trail.points.len();
         let proportion = |i: usize| i as f32 / points_len as f32;
         for (i, (p1, p2)) in trail
@@ -143,7 +147,12 @@ pub fn draw_trail_sys(
             .zip(trail.points.iter().skip(1))
             .enumerate()
         {
-            let proportion = proportion(i);
+            let proportion = if preview_opt.is_some() {
+                proportion(i) + 0.5
+            } else {
+                proportion(i)
+            };
+
             let color = Color::new(0.5, 0.7, 1.0, proportion);
             let thickness = proportion * body.radius;
 

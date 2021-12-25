@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::physics::{KinematicBody, Preview};
+use crate::{physics::{KinematicBody, Preview}, trails::Trail};
 
 pub struct PreviewTrailTick {
     pub current_tick: u8,
@@ -12,14 +12,14 @@ impl Default for PreviewTrailTick {
     fn default() -> Self {
         Self {
             current_tick: 0,
-            tick_increment: 7,
+            tick_increment: 10,
         }
     }
 }
 
 pub fn preview_gravity_sys(
     query_set: QuerySet<(
-        Query<&mut KinematicBody, With<Preview>>,
+        Query<(&mut KinematicBody, &Trail), With<Preview>>,
         Query<&KinematicBody, Without<Preview>>,
     )>,
 ) {
@@ -27,7 +27,12 @@ pub fn preview_gravity_sys(
     let body_query = query_set.q1();
 
     unsafe {
-        for mut preview_body in preview_query.iter_unsafe() {
+        for (mut preview_body, trail) in preview_query.iter_unsafe() {
+            if trail.points.len() == trail.max_len {
+                preview_body.vel = Vec2::new(0.0, 0.0);
+                continue;
+            }
+
             let mut cumulative_force = Vec2::new(0.0, 0.0);
             let p1 = preview_body.pos;
             let m1 = preview_body.mass;
