@@ -8,7 +8,8 @@ use crate::{
     preview::PreviewTrailTick,
 };
 
-#[derive(Debug)]
+pub struct DrawTrails(pub bool);
+
 pub struct Trail {
     pub points: VecDeque<Vec2>,
     pub max_len: usize,
@@ -36,8 +37,9 @@ pub fn trail_sys(
     mut query: Query<(&KinematicBody, Option<&mut Trail>, Entity), Without<Preview>>,
     mut commands: Commands,
     paused: Res<Paused>,
+    draw_trails: Res<DrawTrails>,
 ) {
-    if paused.0 {
+    if paused.0 || !draw_trails.0 {
         return;
     }
 
@@ -49,6 +51,14 @@ pub fn trail_sys(
             }
         } else {
             commands.entity(entity).insert(Trail::default());
+        }
+    }
+}
+
+pub fn clear_trails_sys(mut query: Query<&mut Trail, Without<Preview>>, draw_trails: Res<DrawTrails>) {
+    if draw_trails.is_changed() && !draw_trails.0 {
+        for mut trail in query.iter_mut() {
+            trail.points.clear();
         }
     }
 }
@@ -75,7 +85,11 @@ pub fn preview_trail_sys(
     }
 }
 
-pub fn draw_trail_sys(query: Query<(&KinematicBody, &Trail)>) {
+pub fn draw_trail_sys(query: Query<(&KinematicBody, &Trail)>, draw_trails: Res<DrawTrails>) {
+    if !draw_trails.0 {
+        return
+    }
+
     for (body, trail) in query.iter() {
         let points_len = trail.points.len();
         let proportion = |i: usize| i as f32 / points_len as f32;

@@ -38,6 +38,7 @@ impl Default for MainState {
 
             world.insert_resource(crate::preview::PreviewTrailTick::default());
             world.insert_resource(crate::force_lines::DrawForceLines(false));
+            world.insert_resource(crate::trails::DrawTrails(true));
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
@@ -72,6 +73,7 @@ impl Default for MainState {
                     )
                     .with_system(crate::physics::integration_sys.system().after("collision"))
                     .with_system(crate::trails::trail_sys.system())
+                    .with_system(crate::trails::clear_trails_sys.system())
                     .with_system(crate::force_lines::force_line_sys.system())
             );
 
