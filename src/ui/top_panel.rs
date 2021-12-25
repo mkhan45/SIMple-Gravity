@@ -19,6 +19,8 @@ pub fn top_panel_sys(
     mut draw_trails: ResMut<DrawTrails>,
     mut relative_trails_body: ResMut<RelativeTrails>,
     mut dt: ResMut<DT>,
+    entities: Query<Entity>,
+    mut commands: Commands,
 ) {
     egui::TopBottomPanel::top("SIMple Gravity").show(&egui_ctx, |ui| {
         menu::bar(ui, |ui| {
@@ -52,6 +54,12 @@ pub fn top_panel_sys(
 
             if ui.button("Pause").clicked() {
                 paused.0 = !paused.0;
+            }
+
+            if ui.button("Clear Scene").clicked() {
+                for entity in entities.iter() {
+                    commands.entity(entity).despawn();
+                }
             }
         });
     });

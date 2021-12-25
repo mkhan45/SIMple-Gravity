@@ -87,7 +87,7 @@ pub fn inspect_panel_sys(
                     *followed_body = FollowBody(Some(entity));
                 }
             }
-            if ui.button("RelativeTrails").clicked() {
+            if ui.button("Relative Trails").clicked() {
                 if relative_trails_body.0.contains(&entity) {
                     *relative_trails_body = RelativeTrails(None);
                 } else {
