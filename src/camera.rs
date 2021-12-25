@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::ui::input_state::MouseState;
+use crate::{physics::KinematicBody, ui::input_state::MouseState};
 
 const SCREEN_WIDTH: f32 = 10_000.0;
 const SCREEN_HEIGHT: f32 = 10_000.0;
@@ -22,6 +22,8 @@ impl CameraRes {
             && (camera_top..camera_bottom).contains(&point.y)
     }
 }
+
+pub struct FollowBody(pub Option<Entity>);
 
 impl Default for CameraRes {
     fn default() -> Self {
@@ -55,7 +57,11 @@ pub fn update_camera_sys(mut camera_res: ResMut<CameraRes>) {
     set_camera(&camera_res.camera);
 }
 
-pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>, mouse_state: Res<MouseState>) {
+pub fn camera_transform_sys(
+    mut camera_res: ResMut<CameraRes>,
+    mouse_state: Res<MouseState>,
+    mut followed_body: ResMut<FollowBody>,
+) {
     let mouse_screen_pos: Vec2 = mouse_position().into();
     let current_mouse_pos = camera_res.camera.screen_to_world(mouse_screen_pos);
 
@@ -63,6 +69,7 @@ pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>, mouse_state: Res<
     if is_mouse_button_down(MouseButton::Middle) {
         let offset = current_mouse_pos - mouse_state.prev_position;
         camera_res.camera.target -= offset;
+        followed_body.0 = None;
     }
 
     // zooming
@@ -80,5 +87,19 @@ pub fn camera_transform_sys(mut camera_res: ResMut<CameraRes>, mouse_state: Res<
         let mouse_delta = old_world_mouse_pos - new_world_mouse_pos;
 
         camera_res.camera.target += mouse_delta * 2.0;
+    }
+}
+
+pub fn camera_follow_sys(
+    mut camera_res: ResMut<CameraRes>,
+    mut followed_body_opt: ResMut<FollowBody>,
+    bodies: Query<&KinematicBody>,
+) {
+    if let Some(followed_entity) = followed_body_opt.0 {
+        if let Ok(followed_body) = bodies.get(followed_entity) {
+            camera_res.camera.target = followed_body.pos;
+        } else {
+            *followed_body_opt = FollowBody(None);
+        }
     }
 }

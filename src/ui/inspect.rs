@@ -2,6 +2,7 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::egui::{self, CtxRef};
 use egui_macroquad::macroquad::prelude::*;
 
+use crate::camera::FollowBody;
 use crate::physics::KinematicBody;
 use crate::trails::Trail;
 
@@ -38,6 +39,7 @@ pub fn inspect_body_sys(
 pub fn inspect_panel_sys(
     egui_ctx: Res<egui::CtxRef>,
     inspected_entity: Res<InspectedEntity>,
+    mut followed_body: ResMut<FollowBody>,
     mut body_info: Query<(&mut KinematicBody, &mut Trail)>,
     mut commands: Commands,
 ) {
@@ -77,6 +79,9 @@ pub fn inspect_panel_sys(
 
             ui.add(egui::Slider::new(&mut trail.max_len, 0..=10_000).text("Trail Max Length"));
 
+            if ui.button("Follow").clicked() {
+                followed_body.0 = Some(entity);
+            }
             if ui.button("Delete").clicked() {
                 commands.entity(entity).despawn();
             }

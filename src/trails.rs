@@ -55,7 +55,10 @@ pub fn trail_sys(
     }
 }
 
-pub fn clear_trails_sys(mut query: Query<&mut Trail, Without<Preview>>, draw_trails: Res<DrawTrails>) {
+pub fn clear_trails_sys(
+    mut query: Query<&mut Trail, Without<Preview>>,
+    draw_trails: Res<DrawTrails>,
+) {
     if draw_trails.is_changed() && !draw_trails.0 {
         for mut trail in query.iter_mut() {
             trail.points.clear();
@@ -87,7 +90,7 @@ pub fn preview_trail_sys(
 
 pub fn draw_trail_sys(query: Query<(&KinematicBody, &Trail)>, draw_trails: Res<DrawTrails>) {
     if !draw_trails.0 {
-        return
+        return;
     }
 
     for (body, trail) in query.iter() {

@@ -12,7 +12,10 @@ pub struct ForceLine {
 }
 
 pub fn force_line_sys(
-    mut force_line_query: Query<(&KinematicBody, Option<&mut Vec<ForceLine>>, Entity), Without<Preview>>,
+    mut force_line_query: Query<
+        (&KinematicBody, Option<&mut Vec<ForceLine>>, Entity),
+        Without<Preview>,
+    >,
     body_query: Query<(&KinematicBody, Entity), Without<Preview>>,
     draw_force_lines: Res<DrawForceLines>,
     mut commands: Commands,

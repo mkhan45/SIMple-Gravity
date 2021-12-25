@@ -2,7 +2,11 @@ use bevy_ecs::prelude::*;
 use egui::menu;
 use egui_macroquad::egui;
 
-use crate::{physics::{Paused, DT}, force_lines::DrawForceLines, trails::DrawTrails};
+use crate::{
+    force_lines::DrawForceLines,
+    physics::{Paused, DT},
+    trails::DrawTrails,
+};
 
 use super::body_creation::{CreationData, CreationState};
 
@@ -38,10 +42,7 @@ pub fn top_panel_sys(
             menu::menu(ui, "Options", |ui| {
                 ui.checkbox(&mut draw_force_lines.0, "Draw Force Lines");
                 ui.checkbox(&mut draw_trails.0, "Draw Trails");
-                ui.add(
-                    egui::Slider::new(&mut dt.0, 0.0..=10.0)
-                        .text("Timestep")
-                );
+                ui.add(egui::Slider::new(&mut dt.0, 0.0..=10.0).text("Timestep"));
             });
 
             if ui.button("Pause").clicked() {

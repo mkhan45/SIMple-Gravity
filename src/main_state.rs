@@ -25,6 +25,7 @@ impl Default for MainState {
             let camera_res = crate::camera::CameraRes::default();
             set_camera(&camera_res.camera);
             world.insert_resource(camera_res);
+            world.insert_resource(crate::camera::FollowBody(None));
 
             let mouse_state_res = MouseState::default();
             world.insert_resource(mouse_state_res);
@@ -74,7 +75,7 @@ impl Default for MainState {
                     .with_system(crate::physics::integration_sys.system().after("collision"))
                     .with_system(crate::trails::trail_sys.system())
                     .with_system(crate::trails::clear_trails_sys.system())
-                    .with_system(crate::force_lines::force_line_sys.system())
+                    .with_system(crate::force_lines::force_line_sys.system()),
             );
 
             main_physics_schedule
@@ -118,7 +119,12 @@ impl Default for MainState {
                     .with_system(crate::trails::draw_trail_sys.system().before("bodies"))
                     .with_system(crate::draw::draw_force_lines.system().before("bodies"))
                     .with_system(crate::camera::update_camera_sys.system())
-                    .with_system(crate::camera::camera_transform_sys.system()),
+                    .with_system(
+                        crate::camera::camera_transform_sys
+                            .system()
+                            .label("transform"),
+                    )
+                    .with_system(crate::camera::camera_follow_sys.system().after("transform")),
             );
 
             draw_schedule.add_stage(
