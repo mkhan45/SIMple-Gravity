@@ -10,7 +10,10 @@ pub struct PreviewTrailTick {
 
 impl Default for PreviewTrailTick {
     fn default() -> Self {
-        Self { current_tick: 0, tick_increment: 7 }
+        Self {
+            current_tick: 0,
+            tick_increment: 7,
+        }
     }
 }
 

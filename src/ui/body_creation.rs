@@ -3,7 +3,10 @@ use egui_macroquad::{egui::CtxRef, macroquad};
 use macroquad::prelude::*;
 
 use super::input_state::MouseState;
-use crate::{physics::{KinematicBody, Preview}, camera::CameraRes};
+use crate::{
+    camera::CameraRes,
+    physics::{KinematicBody, Preview},
+};
 
 #[derive(PartialEq, Debug)]
 pub enum CreationState {
@@ -46,8 +49,7 @@ pub fn create_body_sys(
                 *creation_state = CreationState::Unstarted;
             }
 
-            if is_mouse_button_pressed(MouseButton::Left)
-            {
+            if is_mouse_button_pressed(MouseButton::Left) && !egui_ctx.is_pointer_over_area() {
                 *creation_state = CreationState::Clicked {
                     start_point: mouse_state.prev_position,
                 }
@@ -74,15 +76,17 @@ pub fn create_body_sys(
 
                 *creation_state = CreationState::Initiated;
             } else {
-                let current_mouse_position = camera_res.camera.screen_to_world(mouse_position().into());
+                let current_mouse_position =
+                    camera_res.camera.screen_to_world(mouse_position().into());
                 let mouse_diff = mouse_state.prev_position - current_mouse_position;
-                
+
                 if mouse_diff.length_squared() > 5.0 {
                     preview_query.iter().for_each(|entity| {
                         commands.entity(entity).despawn();
                     });
 
-                    commands.spawn()
+                    commands
+                        .spawn()
                         .insert(KinematicBody {
                             pos: start_point,
                             vel: (start_point - mouse_state.prev_position) / 100.0,
@@ -90,8 +94,8 @@ pub fn create_body_sys(
                             radius: creation_data.radius,
                             ..KinematicBody::default()
                         })
-                    .insert(Color::new(0.5, 0.7, 1.0, 0.8))
-                    .insert(Preview);
+                        .insert(Color::new(0.5, 0.7, 1.0, 0.8))
+                        .insert(Preview);
                 }
             }
         }

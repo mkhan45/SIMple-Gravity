@@ -3,7 +3,10 @@ use std::collections::VecDeque;
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::{physics::{KinematicBody, Paused, Preview}, preview::PreviewTrailTick};
+use crate::{
+    physics::{KinematicBody, Paused, Preview},
+    preview::PreviewTrailTick,
+};
 
 #[derive(Debug)]
 pub struct Trail {
@@ -78,14 +81,14 @@ pub fn draw_trail_sys(query: Query<(&KinematicBody, &Trail)>) {
         let proportion = |i: usize| i as f32 / points_len as f32;
         for (i, (p1, p2)) in trail
             .points
-                .iter()
-                .zip(trail.points.iter().skip(1))
-                .enumerate()
-                {
-                    let proportion = proportion(i);
-                    let color = Color::new(0.5, 0.7, 1.0, proportion);
-                    let thickness = proportion * body.radius;
-                    draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
-                }
+            .iter()
+            .zip(trail.points.iter().skip(1))
+            .enumerate()
+        {
+            let proportion = proportion(i);
+            let color = Color::new(0.5, 0.7, 1.0, proportion);
+            let thickness = proportion * body.radius;
+            draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
+        }
     }
 }

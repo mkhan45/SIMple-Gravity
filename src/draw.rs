@@ -3,6 +3,7 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::{
     camera::CameraRes,
+    force_lines::{DrawForceLines, ForceLine},
     physics::KinematicBody,
     ui::body_creation::{CreationData, CreationState},
     ui::input_state::MouseState,
@@ -64,5 +65,27 @@ pub fn draw_create_preview(
             );
         }
         _ => {}
+    }
+}
+
+#[rustfmt::skip]
+pub fn draw_force_lines(
+    query: Query<(&KinematicBody, &Vec<ForceLine>)>,
+    draw_force_lines: Res<DrawForceLines>,
+) {
+    if draw_force_lines.0 {
+        for (body, force_lines) in query.iter() {
+            for ForceLine { end_point, magnitude, max_width } in force_lines {
+                let color = Color::new(1.0, 1.0, 1.0, (body.mass * magnitude * 300_000.0).min(0.8));
+                draw_line(
+                    body.pos.x,
+                    body.pos.y,
+                    end_point.x,
+                    end_point.y,
+                    (body.mass * magnitude * 5_000_000.0).min(*max_width),
+                    color,
+                );
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ use error::SimError;
 
 pub mod camera;
 pub mod draw;
+pub mod force_lines;
 pub mod main_state;
 pub mod physics;
 pub mod preview;

@@ -29,8 +29,7 @@ pub fn inspect_body_sys(
             .map(|(_, e)| e);
     } else if *creation_state != CreationState::Initiated
         && (is_key_pressed(KeyCode::Escape)
-            || (is_mouse_button_pressed(MouseButton::Left)
-                && !egui_ctx.is_pointer_over_area()))
+            || (is_mouse_button_pressed(MouseButton::Left) && !egui_ctx.is_pointer_over_area()))
     {
         inspected_entity.0 = None;
     }
@@ -75,10 +74,7 @@ pub fn inspect_panel_sys(
                 kinematic_body.accel.x, kinematic_body.accel.y
             ));
 
-            ui.add(
-                egui::Slider::new(&mut trail.max_len, 0..=10_000)
-                    .text("Trail Max Length")
-            );
+            ui.add(egui::Slider::new(&mut trail.max_len, 0..=10_000).text("Trail Max Length"));
         });
     }
 }

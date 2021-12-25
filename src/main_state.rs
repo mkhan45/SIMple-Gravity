@@ -37,6 +37,7 @@ impl Default for MainState {
             world.insert_resource(Paused(false));
 
             world.insert_resource(crate::preview::PreviewTrailTick::default());
+            world.insert_resource(crate::force_lines::DrawForceLines(false));
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
@@ -70,7 +71,8 @@ impl Default for MainState {
                             .after("gravity"),
                     )
                     .with_system(crate::physics::integration_sys.system().after("collision"))
-                    .with_system(crate::trails::trail_sys.system()),
+                    .with_system(crate::trails::trail_sys.system())
+                    .with_system(crate::force_lines::force_line_sys.system())
             );
 
             main_physics_schedule
@@ -82,9 +84,22 @@ impl Default for MainState {
             preview_physics_schedule.add_stage(
                 "preview",
                 SystemStage::single_threaded()
-                    .with_system(crate::preview::preview_gravity_sys.system().label("gravity"))
-                    .with_system(crate::physics::preview_integration_sys.system().label("integration").after("gravity"))
-                    .with_system(crate::trails::preview_trail_sys.system().after("integration")),
+                    .with_system(
+                        crate::preview::preview_gravity_sys
+                            .system()
+                            .label("gravity"),
+                    )
+                    .with_system(
+                        crate::physics::preview_integration_sys
+                            .system()
+                            .label("integration")
+                            .after("gravity"),
+                    )
+                    .with_system(
+                        crate::trails::preview_trail_sys
+                            .system()
+                            .after("integration"),
+                    ),
             );
 
             preview_physics_schedule
@@ -99,6 +114,7 @@ impl Default for MainState {
                     .with_system(crate::draw::draw_bodies_sys.system().label("bodies"))
                     .with_system(crate::draw::draw_create_preview.system())
                     .with_system(crate::trails::draw_trail_sys.system().before("bodies"))
+                    .with_system(crate::draw::draw_force_lines.system().before("bodies"))
                     .with_system(crate::camera::update_camera_sys.system())
                     .with_system(crate::camera::camera_transform_sys.system()),
             );
@@ -129,7 +145,11 @@ impl Default for MainState {
             input_schedule.add_stage(
                 "update_input",
                 SystemStage::single_threaded()
-                    .with_system(crate::ui::input_state::update_mouse_input_sys.system().label("update_mouse"))
+                    .with_system(
+                        crate::ui::input_state::update_mouse_input_sys
+                            .system()
+                            .label("update_mouse"),
+                    )
                     .with_system(
                         crate::ui::inspect::inspect_body_sys
                             .system()
@@ -140,7 +160,8 @@ impl Default for MainState {
                             .system()
                             .after("inspect")
                             .before("update_mouse"),
-                    ),
+                    )
+                    .with_system(crate::ui::pause_unpause_sys.system()),
             );
 
             input_schedule
@@ -160,10 +181,13 @@ impl MainState {
     pub fn update(&mut self) -> Result<(), crate::error::SimError> {
         self.main_physics_schedule.run(&mut self.world);
 
+        let was_paused = self.world.get_resource::<Paused>().unwrap().0;
+        self.world.insert_resource(Paused(false));
         let start_time = get_time();
         while get_time() - start_time < 0.0075 {
             self.preview_physics_schedule.run(&mut self.world);
         }
+        self.world.insert_resource(Paused(was_paused));
 
         clear_background(BLACK);
         self.draw_schedule.run(&mut self.world);

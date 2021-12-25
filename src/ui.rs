@@ -6,6 +6,8 @@ pub mod top_panel;
 use bevy_ecs::prelude::*;
 use egui_macroquad::egui;
 
+use crate::physics::Paused;
+
 pub fn initialize_gui_sys(mut egui_ctx_res: ResMut<egui::CtxRef>) {
     egui_macroquad::ui(|egui_ctx| {
         use egui::{FontDefinitions, TextStyle};
@@ -16,4 +18,12 @@ pub fn initialize_gui_sys(mut egui_ctx_res: ResMut<egui::CtxRef>) {
 
         *egui_ctx_res = egui_ctx.clone();
     });
+}
+
+pub fn pause_unpause_sys(mut paused: ResMut<Paused>) {
+    use egui_macroquad::macroquad::prelude::*;
+
+    if is_key_pressed(KeyCode::Space) {
+        paused.0 = !paused.0;
+    }
 }
