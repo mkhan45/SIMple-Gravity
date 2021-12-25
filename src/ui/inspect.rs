@@ -4,7 +4,7 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::camera::FollowBody;
 use crate::physics::KinematicBody;
-use crate::trails::Trail;
+use crate::trails::{RelativeTrails, Trail};
 
 use super::body_creation::CreationState;
 use super::input_state::MouseState;
@@ -40,6 +40,7 @@ pub fn inspect_panel_sys(
     egui_ctx: Res<egui::CtxRef>,
     inspected_entity: Res<InspectedEntity>,
     mut followed_body: ResMut<FollowBody>,
+    mut relative_trails_body: ResMut<RelativeTrails>,
     mut body_info: Query<(&mut KinematicBody, &mut Trail)>,
     mut commands: Commands,
 ) {
@@ -80,7 +81,18 @@ pub fn inspect_panel_sys(
             ui.add(egui::Slider::new(&mut trail.max_len, 0..=10_000).text("Trail Max Length"));
 
             if ui.button("Follow").clicked() {
-                followed_body.0 = Some(entity);
+                if followed_body.0.contains(&entity) {
+                    *followed_body = FollowBody(None)
+                } else {
+                    *followed_body = FollowBody(Some(entity));
+                }
+            }
+            if ui.button("RelativeTrails").clicked() {
+                if relative_trails_body.0.contains(&entity) {
+                    *relative_trails_body = RelativeTrails(None);
+                } else {
+                    *relative_trails_body = RelativeTrails(Some(entity));
+                }
             }
             if ui.button("Delete").clicked() {
                 commands.entity(entity).despawn();

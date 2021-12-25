@@ -26,6 +26,7 @@ impl Default for MainState {
             set_camera(&camera_res.camera);
             world.insert_resource(camera_res);
             world.insert_resource(crate::camera::FollowBody(None));
+            world.insert_resource(crate::trails::RelativeTrails(None));
 
             let mouse_state_res = MouseState::default();
             world.insert_resource(mouse_state_res);

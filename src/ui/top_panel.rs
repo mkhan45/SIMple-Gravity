@@ -5,7 +5,7 @@ use egui_macroquad::egui;
 use crate::{
     force_lines::DrawForceLines,
     physics::{Paused, DT},
-    trails::DrawTrails,
+    trails::{DrawTrails, RelativeTrails},
 };
 
 use super::body_creation::{CreationData, CreationState};
@@ -17,6 +17,7 @@ pub fn top_panel_sys(
     mut paused: ResMut<Paused>,
     mut draw_force_lines: ResMut<DrawForceLines>,
     mut draw_trails: ResMut<DrawTrails>,
+    mut relative_trails_body: ResMut<RelativeTrails>,
     mut dt: ResMut<DT>,
 ) {
     egui::TopBottomPanel::top("SIMple Gravity").show(&egui_ctx, |ui| {
@@ -43,6 +44,10 @@ pub fn top_panel_sys(
                 ui.checkbox(&mut draw_force_lines.0, "Draw Force Lines");
                 ui.checkbox(&mut draw_trails.0, "Draw Trails");
                 ui.add(egui::Slider::new(&mut dt.0, 0.0..=10.0).text("Timestep"));
+
+                if ui.button("Stop Relative Trails").clicked() {
+                    *relative_trails_body = RelativeTrails(None);
+                }
             });
 
             if ui.button("Pause").clicked() {

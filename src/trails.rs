@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub struct DrawTrails(pub bool);
+pub struct RelativeTrails(pub Option<Entity>);
 
 pub struct Trail {
     pub points: VecDeque<Vec2>,
@@ -34,8 +35,12 @@ impl Trail {
 }
 
 pub fn trail_sys(
-    mut query: Query<(&KinematicBody, Option<&mut Trail>, Entity), Without<Preview>>,
+    mut query_set: QuerySet<(
+        Query<(&KinematicBody, Option<&mut Trail>, Entity), Without<Preview>>,
+        Query<&KinematicBody>,
+    )>,
     mut commands: Commands,
+    mut relative_trails_body: ResMut<RelativeTrails>,
     paused: Res<Paused>,
     draw_trails: Res<DrawTrails>,
 ) {
@@ -43,9 +48,27 @@ pub fn trail_sys(
         return;
     }
 
-    for (body, trail, entity) in query.iter_mut() {
+    let relative_pos = {
+        let relative_query = query_set.q1();
+        relative_trails_body
+            .0
+            .and_then(|relative_entity| {
+                match relative_query.get(relative_entity).map(|body| body.pos) {
+                    Ok(pos) => Some(pos),
+                    Err(_) => {
+                        *relative_trails_body = RelativeTrails(None);
+                        None
+                    }
+                }
+            })
+            .unwrap_or(Vec2::new(0.0, 0.0))
+    };
+
+    let trail_query = query_set.q0_mut();
+
+    for (body, trail, entity) in trail_query.iter_mut() {
         if let Some(mut trail) = trail {
-            trail.points.push_back(body.pos);
+            trail.points.push_back(body.pos - relative_pos);
             while trail.points.len() > trail.max_len {
                 trail.points.pop_front();
             }
@@ -58,8 +81,10 @@ pub fn trail_sys(
 pub fn clear_trails_sys(
     mut query: Query<&mut Trail, Without<Preview>>,
     draw_trails: Res<DrawTrails>,
+    relative_trails_body: Res<RelativeTrails>,
 ) {
-    if draw_trails.is_changed() && !draw_trails.0 {
+
+    if (draw_trails.is_changed() && !draw_trails.0) || relative_trails_body.is_changed() {
         for mut trail in query.iter_mut() {
             trail.points.clear();
         }
@@ -70,7 +95,12 @@ pub fn preview_trail_sys(
     mut query: Query<(&KinematicBody, Option<&mut Trail>, Entity), With<Preview>>,
     mut commands: Commands,
     mut preview_trail_tick: ResMut<PreviewTrailTick>,
+    relative_trails_body: Res<RelativeTrails>,
 ) {
+    if relative_trails_body.0.is_some() {
+        return;
+    }
+
     preview_trail_tick.current_tick += 1;
     preview_trail_tick.current_tick %= preview_trail_tick.tick_increment;
 
@@ -88,10 +118,21 @@ pub fn preview_trail_sys(
     }
 }
 
-pub fn draw_trail_sys(query: Query<(&KinematicBody, &Trail)>, draw_trails: Res<DrawTrails>) {
+pub fn draw_trail_sys(
+    query: Query<(&KinematicBody, &Trail)>,
+    draw_trails: Res<DrawTrails>,
+    relative_trails_body: Res<RelativeTrails>,
+) {
     if !draw_trails.0 {
         return;
     }
+
+    let relative_pos = {
+        relative_trails_body
+            .0
+            .and_then(|relative_entity| query.get(relative_entity).map(|(body, _)| body.pos).ok())
+            .unwrap_or(Vec2::new(0.0, 0.0))
+    };
 
     for (body, trail) in query.iter() {
         let points_len = trail.points.len();
@@ -105,6 +146,9 @@ pub fn draw_trail_sys(query: Query<(&KinematicBody, &Trail)>, draw_trails: Res<D
             let proportion = proportion(i);
             let color = Color::new(0.5, 0.7, 1.0, proportion);
             let thickness = proportion * body.radius;
+
+            let p1 = *p1 + relative_pos;
+            let p2 = *p2 + relative_pos;
             draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
         }
     }
