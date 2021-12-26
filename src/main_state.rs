@@ -49,16 +49,16 @@ impl Default for MainState {
 
             world.spawn().insert(KinematicBody {
                 pos: Vec2::new(0.0, 0.0),
-                mass: 2500.0,
-                radius: 150.0,
+                mass: 10_000.0,
+                radius: 300.0,
                 ..Default::default()
             });
 
             world.spawn().insert(KinematicBody {
-                pos: Vec2::new(3500.0, 0.0),
+                pos: Vec2::new(4000.0, 0.0),
                 mass: 0.01,
-                radius: 25.0,
-                vel: Vec2::new(0.0, -7.5),
+                radius: 50.0,
+                vel: Vec2::new(0.0, -15.0),
                 ..Default::default()
             });
 

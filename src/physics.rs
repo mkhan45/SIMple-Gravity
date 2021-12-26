@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::ui::inspect::InspectedEntity;
+use crate::{trails::Trail, ui::inspect::InspectedEntity};
 
 pub struct DT(pub f32);
 pub struct Steps(pub usize);
@@ -103,7 +103,7 @@ pub fn gravity_sys(
 
 pub fn collision_sys(
     query_set: QuerySet<(
-        Query<(&mut KinematicBody, Entity), Without<Preview>>,
+        Query<(&mut KinematicBody, Option<&mut Trail>, Entity), Without<Preview>>,
         Query<(&KinematicBody, Entity), Without<Preview>>,
     )>,
     mut inspected_entity: ResMut<InspectedEntity>,
@@ -122,7 +122,7 @@ pub fn collision_sys(
     let mut collided_bodies = HashSet::<Entity>::new();
 
     unsafe {
-        for (mut b1, e1) in affected_query.iter_unsafe() {
+        for (mut b1, mut trail, e1) in affected_query.iter_unsafe() {
             if collided_bodies.contains(&e1) {
                 continue;
             }
@@ -143,6 +143,7 @@ pub fn collision_sys(
             let mut total_mass = b1.mass;
             let mut total_volume = b1.radius.powi(3);
             let mut total_moment = b1.pos * b1.mass;
+            let mut total_force = b1.force;
 
             let mut inspected_is_collided = false;
 
@@ -159,6 +160,7 @@ pub fn collision_sys(
                 total_mass += b2.mass;
                 total_volume += b2.radius.powi(3);
                 total_moment += b2.pos * b2.mass;
+                total_force += b2.force;
 
                 commands.entity(e2).despawn();
 
@@ -168,6 +170,10 @@ pub fn collision_sys(
             }
 
             if e1_has_collided {
+                if let Some(Trail { points, .. }) = trail.as_deref_mut() {
+                    points.clear();
+                }
+
                 collided_bodies.insert(e1);
 
                 b1.mass = total_mass;
@@ -175,6 +181,8 @@ pub fn collision_sys(
                 b1.radius = total_volume.powf(1.0 / 3.0);
 
                 b1.pos = total_moment / total_mass;
+                b1.force = total_force;
+                b1.accel = total_force / total_mass;
 
                 if inspected_is_collided {
                     inspected_entity.0 = Some(e1);

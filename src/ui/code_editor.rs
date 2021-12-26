@@ -35,9 +35,9 @@ pub fn code_editor_sys(egui_ctx: Res<egui::CtxRef>, mut code_editor: ResMut<Code
                     let mut code = code_editor.code.lock().unwrap();
                     ui.add(
                         egui::TextEdit::multiline(&mut *code)
-                        .code_editor()
-                        .desired_width(0.4 * screen_width())
-                        .desired_rows(40),
+                            .code_editor()
+                            .desired_width(0.4 * screen_width())
+                            .desired_rows(40),
                     );
                     std::mem::drop(code);
 
@@ -49,8 +49,8 @@ pub fn code_editor_sys(egui_ctx: Res<egui::CtxRef>, mut code_editor: ResMut<Code
                         let output = output.read().unwrap();
                         ui.add(
                             egui::Label::new(format!("Output:\n{}", &output))
-                            .monospace()
-                            .wrap(true),
+                                .monospace()
+                                .wrap(true),
                         );
                     }
                 });
