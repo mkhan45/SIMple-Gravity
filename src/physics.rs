@@ -123,10 +123,13 @@ pub fn collision_sys(
 
     unsafe {
         for (mut b1, e1) in affected_query.iter_unsafe() {
+            if collided_bodies.contains(&e1) {
+                continue;
+            }
+
             let collided = affecting_query
                 .iter()
                 .filter(|(_, e2)| e1 != *e2)
-                .filter(|(_, e2)| !collided_bodies.contains(e2))
                 .filter(|(b2, _)| {
                     let distance_sqr = (b1.pos - b2.pos).length_squared();
                     let total_radius_sqr = (b1.radius + b2.radius).powi(2);
@@ -144,6 +147,12 @@ pub fn collision_sys(
             let mut inspected_is_collided = false;
 
             for (b2, e2) in collided {
+                if collided_bodies.contains(&e2) {
+                    continue;
+                } else {
+                    collided_bodies.insert(e2);
+                }
+
                 e1_has_collided = true;
 
                 total_momentum += b2.mass * b2.vel;
