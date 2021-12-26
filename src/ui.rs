@@ -5,7 +5,7 @@ pub mod inspect;
 pub mod top_panel;
 
 use bevy_ecs::prelude::*;
-    use egui_macroquad::egui::CtxRef;
+use egui_macroquad::egui::CtxRef;
 
 use crate::physics::Paused;
 

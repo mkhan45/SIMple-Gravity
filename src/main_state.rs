@@ -183,7 +183,7 @@ impl Default for MainState {
 
             input_schedule.add_stage(
                 "scripting",
-                SystemStage::single_threaded().with_system(crate::scripting::run_code_sys.system())
+                SystemStage::single_threaded().with_system(crate::scripting::run_code_sys.system()),
             );
 
             input_schedule

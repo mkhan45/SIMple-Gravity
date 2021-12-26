@@ -47,8 +47,8 @@ pub fn code_editor_sys(egui_ctx: Res<egui::CtxRef>, mut code_editor: ResMut<Code
                 let output = output.read().unwrap();
                 ui.add(
                     egui::Label::new(format!("Output:\n{}", &output))
-                    .monospace()
-                    .wrap(true),
+                        .monospace()
+                        .wrap(true),
                 );
             }
         });
