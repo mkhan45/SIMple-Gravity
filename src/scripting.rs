@@ -12,6 +12,7 @@ use std::{
 };
 
 mod util;
+pub mod samples;
 
 pub enum RhaiCommand {
     AddForce {

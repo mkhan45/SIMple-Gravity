@@ -28,29 +28,42 @@ pub fn code_editor_sys(egui_ctx: Res<egui::CtxRef>, mut code_editor: ResMut<Code
         .open(&mut shown)
         .resizable(true)
         .show(&egui_ctx, |ui| {
-            ui.set_min_width(0.4 * screen_width());
+            ui.set_min_width(0.5 * screen_width());
 
-            let mut code = code_editor.code.lock().unwrap();
-            ui.add(
-                egui::TextEdit::multiline(&mut *code)
-                    .code_editor()
-                    .desired_width(0.4 * screen_width())
-                    .desired_rows(40),
-            );
-            std::mem::drop(code);
+            ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    let mut code = code_editor.code.lock().unwrap();
+                    ui.add(
+                        egui::TextEdit::multiline(&mut *code)
+                        .code_editor()
+                        .desired_width(0.4 * screen_width())
+                        .desired_rows(40),
+                    );
+                    std::mem::drop(code);
 
-            if ui.button("Run").clicked() {
-                code_editor.should_run = true;
-            }
+                    if ui.button("Run").clicked() {
+                        code_editor.should_run = true;
+                    }
 
-            if let Some(output) = code_editor.output.clone() {
-                let output = output.read().unwrap();
-                ui.add(
-                    egui::Label::new(format!("Output:\n{}", &output))
-                        .monospace()
-                        .wrap(true),
-                );
-            }
+                    if let Some(output) = code_editor.output.clone() {
+                        let output = output.read().unwrap();
+                        ui.add(
+                            egui::Label::new(format!("Output:\n{}", &output))
+                            .monospace()
+                            .wrap(true),
+                        );
+                    }
+                });
+
+                ui.vertical(|ui| {
+                    let mut code = code_editor.code.lock().unwrap();
+                    for (name, script) in crate::scripting::samples::SAMPLE_SCRIPTS {
+                        if ui.button(name).clicked() {
+                            *code = script.to_string();
+                        }
+                    }
+                });
+            });
         });
 
     code_editor.shown = shown;
