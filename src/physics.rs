@@ -18,49 +18,6 @@ pub struct KinematicBody {
     pub radius: f32,
 }
 
-impl KinematicBody {
-    pub fn from_rhai(body: rhai::Map) -> Self {
-        let pos = body
-            .get("pos")
-            .and_then(|pos| pos.clone().try_cast::<Vec2>())
-            .unwrap_or(Vec2::new(0.0, 0.0));
-
-        let vel = body
-            .get("vel")
-            .and_then(|vel| vel.clone().try_cast::<Vec2>())
-            .unwrap_or(Vec2::new(0.0, 0.0));
-
-        let accel = body
-            .get("accel")
-            .and_then(|accel| accel.clone().try_cast::<Vec2>())
-            .unwrap_or(Vec2::new(0.0, 0.0));
-
-        let force = body
-            .get("force")
-            .and_then(|force| force.clone().try_cast::<Vec2>())
-            .unwrap_or(Vec2::new(0.0, 0.0));
-
-        let mass = body
-            .get("mass")
-            .and_then(|mass| mass.clone().try_cast::<f32>())
-            .unwrap_or(10.0);
-
-        let radius = body
-            .get("radius")
-            .and_then(|radius| radius.clone().try_cast::<f32>())
-            .unwrap_or(10.0);
-
-        KinematicBody {
-            pos,
-            vel,
-            accel,
-            force,
-            mass,
-            radius,
-        }
-    }
-}
-
 #[derive(Copy, Clone)]
 pub struct CumulativeMass {
     pub pos: Vec2,
