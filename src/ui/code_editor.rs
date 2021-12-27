@@ -22,7 +22,12 @@ impl Default for CodeEditor {
     }
 }
 
-pub fn code_editor_sys(egui_ctx: Res<egui::CtxRef>, mut code_editor: ResMut<CodeEditor>) {
+pub fn code_editor_sys(
+    egui_ctx: Res<egui::CtxRef>,
+    mut code_editor: ResMut<CodeEditor>,
+    entities: Query<Entity>,
+    mut commands: Commands,
+) {
     let mut shown = code_editor.shown;
     egui::Window::new("Scripting")
         .open(&mut shown)
@@ -42,6 +47,10 @@ pub fn code_editor_sys(egui_ctx: Res<egui::CtxRef>, mut code_editor: ResMut<Code
                     std::mem::drop(code);
 
                     if ui.button("Run").clicked() {
+                        code_editor.should_run = true;
+                    }
+                    if ui.button("Clear Scene & Run").clicked() {
+                        entities.iter().for_each(|e| commands.entity(e).despawn());
                         code_editor.should_run = true;
                     }
 
