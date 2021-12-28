@@ -184,9 +184,9 @@ impl Default for MainState {
             input_schedule.add_stage(
                 "scripting",
                 SystemStage::single_threaded()
-                    .with_system(crate::scripting::run_code_sys.system())
-                    .with_system(crate::scripting::run_rhai_commands_sys.system())
-                    .with_system(crate::scripting::run_script_update_sys.system()),
+                    .with_system(crate::scripting::run_code_sys.system().label("run"))
+                    .with_system(crate::scripting::run_rhai_commands_sys.system().label("commands").after("run"))
+                    .with_system(crate::scripting::run_script_update_sys.system().after("commands")),
             );
 
             input_schedule

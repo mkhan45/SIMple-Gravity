@@ -34,6 +34,8 @@ impl Default for RhaiRes {
         scope.push("_console_output", String::new());
 
         let mut engine = Engine::new();
+        engine.set_max_expr_depths(0, 0);
+
         let output = Arc::new(RwLock::new(String::new()));
 
         let logger = output.clone();
@@ -52,7 +54,11 @@ impl Default for RhaiRes {
                 KinematicBody::set_radius,
             );
 
-        engine.register_type::<Vec2>();
+
+        engine.register_type::<Vec2>()
+            .register_get_set("x", |v: &mut Vec2| v.x, |v: &mut Vec2, val: f32| v.x = val)
+            .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val);
+
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
         engine.register_type::<SlotMap<DefaultKey, KinematicBody>>();
@@ -99,13 +105,9 @@ pub fn run_code_sys(
     mut code_editor: ResMut<CodeEditor>,
     mut rhai: ResMut<RhaiRes>,
     mut commands: Commands,
-    mut query_set: QuerySet<(
-        Query<(Entity, &KinematicBody), With<RhaiBody>>,
-        Query<&mut KinematicBody, With<RhaiBody>>,
-    )>,
+    registered_bodies: Query<(Entity, &KinematicBody), With<RhaiBody>>,
 ) {
     let registered_bodies_map = {
-        let registered_bodies = query_set.q0();
         Arc::new(
             registered_bodies
                 .iter()
