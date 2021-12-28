@@ -15,6 +15,7 @@ pub mod samples;
 mod util;
 
 pub enum RhaiCommand {
+    SetPos { id: DefaultKey, pos: Vec2 },
     AddForce { id: DefaultKey, force: Vec2 },
 }
 
@@ -26,6 +27,7 @@ pub struct RhaiRes {
     pub newly_added_bodies: Arc<RwLock<SlotMap<DefaultKey, rhai::Map>>>,
     pub existing_bodies: Arc<RwLock<BTreeMap<DefaultKey, Entity>>>,
     pub commands: Arc<RwLock<Vec<RhaiCommand>>>,
+    pub last_code: rhai::AST,
 }
 
 impl Default for RhaiRes {
@@ -39,7 +41,7 @@ impl Default for RhaiRes {
         let output = Arc::new(RwLock::new(String::new()));
 
         let logger = output.clone();
-        engine.on_print(move |s| logger.write().unwrap().push_str(s));
+        engine.on_print(move |s| logger.write().unwrap().push_str(&format!("{}\n", s)));
 
         engine
             .register_type::<KinematicBody>()
@@ -54,10 +56,11 @@ impl Default for RhaiRes {
                 KinematicBody::set_radius,
             );
 
-
-        engine.register_type::<Vec2>()
+        engine
+            .register_type::<Vec2>()
             .register_get_set("x", |v: &mut Vec2| v.x, |v: &mut Vec2, val: f32| v.x = val)
             .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val);
+        engine.register_fn("-", |v: Vec2| -v);
 
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
@@ -79,6 +82,18 @@ impl Default for RhaiRes {
 
         let commands = Arc::new(RwLock::new(Vec::new()));
 
+        let command_ref = commands.clone();
+        engine.register_fn("add_force", move |id, force| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::AddForce { id, force });
+        });
+
+        let command_ref = commands.clone();
+        engine.register_fn("set_pos", move |id, pos| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::SetPos { id, pos });
+        });
+
         Self {
             engine,
             scope,
@@ -86,6 +101,7 @@ impl Default for RhaiRes {
             newly_added_bodies,
             existing_bodies,
             commands,
+            last_code: rhai::AST::default(),
         }
     }
 }
@@ -94,7 +110,25 @@ impl RhaiRes {
     pub fn run_code(&mut self, code: &str) {
         match self.engine.eval_with_scope::<()>(&mut self.scope, code) {
             Ok(_) => {}
-            Err(e) => *self.output.write().unwrap() = e.to_string(),
+            Err(e) => self
+                .output
+                .write()
+                .unwrap()
+                .push_str(e.to_string().as_str()),
+        }
+    }
+
+    pub fn run_ast(&mut self, code: &rhai::AST) {
+        match self
+            .engine
+            .eval_ast_with_scope::<rhai::Dynamic>(&mut self.scope, code)
+        {
+            Ok(_) => {}
+            Err(e) => self
+                .output
+                .write()
+                .unwrap()
+                .push_str(e.to_string().as_str()),
         }
     }
 }
@@ -105,44 +139,32 @@ pub fn run_code_sys(
     mut code_editor: ResMut<CodeEditor>,
     mut rhai: ResMut<RhaiRes>,
     mut commands: Commands,
-    registered_bodies: Query<(Entity, &KinematicBody), With<RhaiBody>>,
 ) {
-    let registered_bodies_map = {
-        Arc::new(
-            registered_bodies
-                .iter()
-                .map(|(e, b)| (e, b.clone()))
-                .collect::<BTreeMap<Entity, KinematicBody>>(),
-        )
-    };
-
-    let existing_bodies = rhai.existing_bodies.clone();
-    rhai.engine.register_fn("get_body", move |id| {
-        let body_reader = existing_bodies.read().unwrap();
-        body_reader
-            .get(&id)
-            .and_then(|entity| {
-                registered_bodies_map
-                    .get(entity)
-                    .cloned()
-                    .map(|body| rhai::Dynamic::from(body))
-            })
-            .unwrap_or(rhai::Dynamic::UNIT)
-    });
-
-    let command_ref = rhai.commands.clone();
-    rhai.engine.register_fn("add_force", move |id, force| {
-        let mut commands_writer = command_ref.write().unwrap();
-        commands_writer.push(RhaiCommand::AddForce { id, force });
-    });
-
     if code_editor.should_run {
         rhai.output.write().unwrap().clear();
+        code_editor.should_run = false;
 
-        {
-            let code = code_editor.code.lock().unwrap();
-            rhai.run_code(&code);
-        }
+        rhai.run_code("fn get_pos(id) { get_body(body).pos }");
+        rhai.run_code("fn get_vel(id) { get_body(body).vel }");
+        rhai.run_code("fn get_accel(id) { get_body(body).accel }");
+        rhai.run_code("fn get_force(id) { get_body(body).force }");
+        rhai.run_code("fn get_mass(id) { get_body(body).mass }");
+        rhai.run_code("fn get_radius(id) { get_body(body).radius }");
+        let code_lock = code_editor.code.lock().unwrap();
+        let ast = match rhai.engine.compile_with_scope(&rhai.scope, &*code_lock) {
+            Ok(ast) => ast,
+            Err(e) => {
+                *rhai.output.write().unwrap() = e.to_string();
+                std::mem::drop(e);
+                std::mem::drop(code_lock);
+                code_editor.output = Some(rhai.output.clone());
+                return;
+            }
+        };
+        std::mem::drop(code_lock);
+        rhai.run_ast(&ast);
+        rhai.last_code = ast;
+        code_editor.output = Some(rhai.output.clone());
 
         for (key, added_body) in rhai.newly_added_bodies.write().unwrap().drain() {
             let registered = added_body
@@ -160,9 +182,6 @@ pub fn run_code_sys(
             let entity = builder.id();
             rhai.existing_bodies.write().unwrap().insert(key, entity);
         }
-
-        code_editor.output = Some(rhai.output.clone());
-        code_editor.should_run = false;
     }
 }
 
@@ -174,8 +193,18 @@ pub fn run_rhai_commands_sys(
     let mut rhai_commands = rhai_res.commands.write().unwrap();
     for command in rhai_commands.drain(..) {
         match command {
+            RhaiCommand::SetPos { id, pos } => {
+                let body_opt = body_reader
+                    .get(&id)
+                    .and_then(|entity| query.get_mut(*entity).ok());
+                if let Some(mut body) = body_opt {
+                    body.force += pos;
+                }
+            }
             RhaiCommand::AddForce { id, force } => {
-                let body_opt = body_reader.get(&id).and_then(|entity| query.get_mut(*entity).ok());
+                let body_opt = body_reader
+                    .get(&id)
+                    .and_then(|entity| query.get_mut(*entity).ok());
                 if let Some(mut body) = body_opt {
                     body.force += force;
                 }
@@ -184,10 +213,57 @@ pub fn run_rhai_commands_sys(
     }
 }
 
-pub fn run_script_update_sys(rhai: ResMut<RhaiRes>, code_editor: Res<CodeEditor>) {
+pub fn run_script_update_sys(
+    mut rhai: ResMut<RhaiRes>,
+    mut code_editor: ResMut<CodeEditor>,
+    registered_bodies: Query<(Entity, &KinematicBody), With<RhaiBody>>,
+) {
     if let Some(update_fn) = rhai.scope.get_value::<rhai::FnPtr>("update") {
-        let code = code_editor.code.lock().unwrap();
-        let ast = rhai.engine.compile(&*code).unwrap();
-        let () = update_fn.call(&rhai.engine, &ast, ()).unwrap();
+        let registered_bodies_map = {
+            Arc::new(
+                registered_bodies
+                    .iter()
+                    .map(|(e, b)| (e, b.clone()))
+                    .collect::<BTreeMap<Entity, KinematicBody>>(),
+            )
+        };
+
+        let existing_bodies = rhai.existing_bodies.clone();
+        rhai.engine.register_fn("get_body", move |id| {
+            let body_reader = existing_bodies.read().unwrap();
+            body_reader
+                .get(&id)
+                .and_then(|entity| {
+                    registered_bodies_map
+                        .get(entity)
+                        .cloned()
+                        .map(|body| rhai::Dynamic::from(body))
+                })
+                .unwrap_or(rhai::Dynamic::UNIT)
+        });
+
+        let ast = rhai.last_code.merge(
+            &rhai
+                .engine
+                .compile_with_scope(
+                    &rhai.scope,
+                    "
+            fn get_pos(b) { b.get_body().pos }
+            fn get_vel(b) { b.get_body().vel }
+            fn get_accel(b) { b.get_body().accel }
+            fn get_force(b) { b.get_body().force }
+            fn get_mass(b) { b.get_body().mass }
+            fn get_radius(b) { b.get_body().radius }
+        ",
+                )
+                .unwrap(),
+        );
+
+        let res: Result<rhai::Dynamic, _> = update_fn.call(&rhai.engine, &ast, ());
+        if let Err(e) = res {
+            *rhai.output.write().unwrap() = e.to_string();
+            rhai.scope.set_value("update", ());
+            code_editor.output = Some(rhai.output.clone());
+        }
     }
 }
