@@ -14,9 +14,27 @@ use std::{
 pub mod samples;
 mod util;
 
+const LIB_CODE: &str = "
+    fn add_force(force) { this.update_body(#{add_force: force}) }
+    fn add_force(b, force) { update_body(b, #{add_force: force}) }
+    fn set_pos(pos) { this.update_body(#{set_pos: pos}) }
+    fn set_pos(b, pos) { update_body(b, #{set_pos: pos}) }
+    fn get_pos(b) { b.get_body().pos }
+    fn get_pos() { this.get_body().pos }
+    fn get_vel(b) { b.get_body().vel }
+    fn get_vel() { this.get_body().vel }
+    fn get_accel(b) { b.get_body().accel }
+    fn get_accel() { this.get_body().accel }
+    fn get_force(b) { b.get_body().force }
+    fn get_force() { this.get_body().force }
+    fn get_mass(b) { b.get_body().mass }
+    fn get_mass() { this.get_body().mass }
+    fn get_radius(b) { b.get_body().radius }
+    fn get_radius() { this.get_body().radius }
+";
+
 pub enum RhaiCommand {
-    SetPos { id: DefaultKey, pos: Vec2 },
-    AddForce { id: DefaultKey, force: Vec2 },
+    UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
 }
 
 pub struct RhaiBody;
@@ -28,6 +46,7 @@ pub struct RhaiRes {
     pub existing_bodies: Arc<RwLock<BTreeMap<DefaultKey, Entity>>>,
     pub commands: Arc<RwLock<Vec<RhaiCommand>>>,
     pub last_code: rhai::AST,
+    pub lib_ast: rhai::AST,
 }
 
 impl Default for RhaiRes {
@@ -83,16 +102,12 @@ impl Default for RhaiRes {
         let commands = Arc::new(RwLock::new(Vec::new()));
 
         let command_ref = commands.clone();
-        engine.register_fn("add_force", move |id, force| {
+        engine.register_fn("update_body", move |id, params| {
             let mut commands_writer = command_ref.write().unwrap();
-            commands_writer.push(RhaiCommand::AddForce { id, force });
+            commands_writer.push(RhaiCommand::UpdateBody { id, params });
         });
 
-        let command_ref = commands.clone();
-        engine.register_fn("set_pos", move |id, pos| {
-            let mut commands_writer = command_ref.write().unwrap();
-            commands_writer.push(RhaiCommand::SetPos { id, pos });
-        });
+        let lib_ast = engine.compile(LIB_CODE).unwrap();
 
         Self {
             engine,
@@ -102,6 +117,7 @@ impl Default for RhaiRes {
             existing_bodies,
             commands,
             last_code: rhai::AST::default(),
+            lib_ast,
         }
     }
 }
@@ -144,15 +160,9 @@ pub fn run_code_sys(
         rhai.output.write().unwrap().clear();
         code_editor.should_run = false;
 
-        rhai.run_code("fn get_pos(id) { get_body(body).pos }");
-        rhai.run_code("fn get_vel(id) { get_body(body).vel }");
-        rhai.run_code("fn get_accel(id) { get_body(body).accel }");
-        rhai.run_code("fn get_force(id) { get_body(body).force }");
-        rhai.run_code("fn get_mass(id) { get_body(body).mass }");
-        rhai.run_code("fn get_radius(id) { get_body(body).radius }");
         let code_lock = code_editor.code.lock().unwrap();
         let ast = match rhai.engine.compile_with_scope(&rhai.scope, &*code_lock) {
-            Ok(ast) => ast,
+            Ok(ast) => ast.merge(&rhai.lib_ast),
             Err(e) => {
                 *rhai.output.write().unwrap() = e.to_string();
                 std::mem::drop(e);
@@ -193,20 +203,32 @@ pub fn run_rhai_commands_sys(
     let mut rhai_commands = rhai_res.commands.write().unwrap();
     for command in rhai_commands.drain(..) {
         match command {
-            RhaiCommand::SetPos { id, pos } => {
+            RhaiCommand::UpdateBody { id, params } => {
                 let body_opt = body_reader
                     .get(&id)
                     .and_then(|entity| query.get_mut(*entity).ok());
+
                 if let Some(mut body) = body_opt {
-                    body.force += pos;
-                }
-            }
-            RhaiCommand::AddForce { id, force } => {
-                let body_opt = body_reader
-                    .get(&id)
-                    .and_then(|entity| query.get_mut(*entity).ok());
-                if let Some(mut body) = body_opt {
-                    body.force += force;
+                    let get_vec = |field: &str| {
+                        params
+                            .get(field)
+                            .map(|dynamic| dynamic.clone().try_cast::<Vec2>())
+                            .flatten()
+                    };
+                    let _get_f32 = |field: &str| {
+                        params
+                            .get(field)
+                            .map(|dynamic| dynamic.clone().try_cast::<f32>())
+                            .flatten()
+                    };
+
+                    if let Some(pos) = get_vec("set_pos") {
+                        body.pos = pos;
+                    }
+
+                    if let Some(force) = get_vec("add_force") {
+                        body.force += force;
+                    }
                 }
             }
         }
@@ -242,22 +264,7 @@ pub fn run_script_update_sys(
                 .unwrap_or(rhai::Dynamic::UNIT)
         });
 
-        let ast = rhai.last_code.merge(
-            &rhai
-                .engine
-                .compile_with_scope(
-                    &rhai.scope,
-                    "
-            fn get_pos(b) { b.get_body().pos }
-            fn get_vel(b) { b.get_body().vel }
-            fn get_accel(b) { b.get_body().accel }
-            fn get_force(b) { b.get_body().force }
-            fn get_mass(b) { b.get_body().mass }
-            fn get_radius(b) { b.get_body().radius }
-        ",
-                )
-                .unwrap(),
-        );
+        let ast = rhai.last_code.merge(&rhai.lib_ast);
 
         let res: Result<rhai::Dynamic, _> = update_fn.call(&rhai.engine, &ast, ());
         if let Err(e) = res {
