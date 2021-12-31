@@ -5,7 +5,7 @@ use egui_macroquad::egui;
 use crate::{
     force_lines::DrawForceLines,
     physics::{Paused, DT},
-    trails::{DrawTrails, RelativeTrails},
+    trails::{DrawTrails, RelativeTrails}, preview::MultiPreview,
 };
 
 use super::{
@@ -22,6 +22,7 @@ pub fn top_panel_sys(
     mut draw_trails: ResMut<DrawTrails>,
     mut relative_trails_body: ResMut<RelativeTrails>,
     mut code_editor: ResMut<CodeEditor>,
+    mut multi_preview: ResMut<MultiPreview>,
     mut dt: ResMut<DT>,
     entities: Query<Entity>,
     mut commands: Commands,
@@ -50,6 +51,7 @@ pub fn top_panel_sys(
                 ui.checkbox(&mut draw_force_lines.0, "Draw Force Lines");
                 ui.checkbox(&mut draw_trails.0, "Draw Trails");
                 ui.add(egui::Slider::new(&mut dt.0, 0.0..=10.0).text("Timestep"));
+                ui.checkbox(&mut multi_preview.0, "Multi Preview");
 
                 if ui.button("Stop Relative Trails").clicked() {
                     *relative_trails_body = RelativeTrails(None);

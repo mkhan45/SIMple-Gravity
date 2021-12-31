@@ -91,7 +91,8 @@ impl Default for RhaiRes {
         // TODO: Constify via a macro
         let mut lib_code = "".to_string();
         for field in ["pos", "vel", "accel", "force", "mass", "radius"] {
-            lib_code.push_str(&format!("
+            lib_code.push_str(&format!(
+                "
                 fn get_{0}(body) {{ get_body(body).{0} }}
                 fn get_{0}() {{ get_body(this).{0} }}
 
@@ -100,7 +101,9 @@ impl Default for RhaiRes {
 
                 fn set_{0}(body, field) {{ update_body(body, #{{ set_{0}: field }}) }}
                 fn set_{0}(field) {{ update_body(this, #{{ set_{0}: field }} ) }}
-            ", field));
+            ",
+                field
+            ));
         }
         let lib_ast = engine.compile(&lib_code).unwrap();
 

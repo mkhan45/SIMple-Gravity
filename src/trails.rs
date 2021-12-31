@@ -5,7 +5,7 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::{
     physics::{KinematicBody, Paused, Preview},
-    preview::{PreviewTrailTick, MultiPreview},
+    preview::{MultiPreview, PreviewTrailTick},
 };
 
 pub struct DrawTrails(pub bool);
@@ -108,11 +108,7 @@ pub fn preview_trail_sys(
         for (body, trail, entity) in query.iter_mut() {
             if let Some(mut trail) = trail {
                 if trail.points.len() == trail.max_len {
-                    if multi_preview.0 {
-                        commands.entity(entity).despawn();
-                    } else {
-                        continue;
-                    }
+                    continue;
                 }
 
                 trail.points.push_back(body.pos);
@@ -120,7 +116,9 @@ pub fn preview_trail_sys(
                     trail.points.pop_front();
                 }
             } else {
-                commands.entity(entity).insert(Trail::preview(multi_preview.0));
+                commands
+                    .entity(entity)
+                    .insert(Trail::preview(multi_preview.0));
             }
         }
     }

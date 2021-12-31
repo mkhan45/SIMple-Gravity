@@ -5,7 +5,8 @@ use macroquad::prelude::*;
 use super::input_state::MouseState;
 use crate::{
     camera::CameraRes,
-    physics::{KinematicBody, Preview}, preview::MultiPreview,
+    physics::{KinematicBody, Preview},
+    preview::MultiPreview,
 };
 
 #[derive(PartialEq, Debug)]
@@ -83,19 +84,10 @@ pub fn create_body_sys(
                     camera_res.camera.screen_to_world(mouse_position().into());
                 let mouse_diff = mouse_state.prev_position - current_mouse_position;
 
-                let threshold = if multi_preview.0 {
-                    500.0
-                } else {
-                    15.0
-                };
+                let mouse_moved = mouse_diff.length_squared() > 15.0;
+                let preview_key_pressed = is_key_pressed(KeyCode::P);
 
-                if mouse_diff.length_squared() > threshold {
-                    if !multi_preview.0 {
-                        preview_query.iter().for_each(|entity| {
-                            commands.entity(entity).despawn();
-                        });
-                    }
-
+                if (!multi_preview.0 && mouse_moved) || (multi_preview.0 && preview_key_pressed) {
                     commands
                         .spawn()
                         .insert(KinematicBody {
@@ -105,7 +97,7 @@ pub fn create_body_sys(
                             radius: creation_data.radius,
                             ..KinematicBody::default()
                         })
-                    .insert(Color::new(0.5, 0.7, 1.0, 0.8))
+                        .insert(Color::new(0.5, 0.7, 1.0, 0.8))
                         .insert(Preview);
                 }
             }
