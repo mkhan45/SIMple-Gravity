@@ -42,7 +42,7 @@ pub fn code_editor_sys(
                         egui::TextEdit::multiline(&mut *code)
                             .code_editor()
                             .desired_width(0.4 * screen_width())
-                            .desired_rows(40),
+                            .desired_rows(30),
                     );
                     std::mem::drop(code);
 

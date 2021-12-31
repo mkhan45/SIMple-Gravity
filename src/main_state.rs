@@ -40,6 +40,8 @@ impl Default for MainState {
             world.insert_resource(Paused(false));
 
             world.insert_resource(crate::preview::PreviewTrailTick::default());
+            world.insert_resource(crate::preview::MultiPreview(false));
+
             world.insert_resource(crate::force_lines::DrawForceLines(false));
             world.insert_resource(crate::trails::DrawTrails(true));
 
@@ -178,7 +180,7 @@ impl Default for MainState {
                             .after("inspect")
                             .before("update_mouse"),
                     )
-                    .with_system(crate::ui::pause_unpause_sys.system()),
+                    .with_system(crate::ui::handle_keybinds_sys.system()),
             );
 
             input_schedule.add_stage(
@@ -230,6 +232,11 @@ impl MainState {
             let mut fonts = FontDefinitions::default();
             fonts.family_and_size.get_mut(&TextStyle::Button).unwrap().1 = 28.0;
             fonts.family_and_size.get_mut(&TextStyle::Body).unwrap().1 = 28.0;
+            fonts
+                .family_and_size
+                .get_mut(&TextStyle::Monospace)
+                .unwrap()
+                .1 = 24.0;
             egui_ctx.set_fonts(fonts);
 
             self.world.insert_resource(egui_ctx.clone());

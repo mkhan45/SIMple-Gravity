@@ -14,25 +14,6 @@ use std::{
 pub mod samples;
 mod util;
 
-const LIB_CODE: &str = "
-    fn add_force(force) { this.update_body(#{add_force: force}) }
-    fn add_force(b, force) { update_body(b, #{add_force: force}) }
-    fn set_pos(pos) { this.update_body(#{set_pos: pos}) }
-    fn set_pos(b, pos) { update_body(b, #{set_pos: pos}) }
-    fn get_pos(b) { b.get_body().pos }
-    fn get_pos() { this.get_body().pos }
-    fn get_vel(b) { b.get_body().vel }
-    fn get_vel() { this.get_body().vel }
-    fn get_accel(b) { b.get_body().accel }
-    fn get_accel() { this.get_body().accel }
-    fn get_force(b) { b.get_body().force }
-    fn get_force() { this.get_body().force }
-    fn get_mass(b) { b.get_body().mass }
-    fn get_mass() { this.get_body().mass }
-    fn get_radius(b) { b.get_body().radius }
-    fn get_radius() { this.get_body().radius }
-";
-
 pub enum RhaiCommand {
     UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
 }
@@ -107,7 +88,21 @@ impl Default for RhaiRes {
             commands_writer.push(RhaiCommand::UpdateBody { id, params });
         });
 
-        let lib_ast = engine.compile(LIB_CODE).unwrap();
+        // TODO: Constify via a macro
+        let mut lib_code = "".to_string();
+        for field in ["pos", "vel", "accel", "force", "mass", "radius"] {
+            lib_code.push_str(&format!("
+                fn get_{0}(body) {{ get_body(body).{0} }}
+                fn get_{0}() {{ get_body(this).{0} }}
+
+                fn add_{0}(body, field) {{ update_body(body, #{{ add_{0}: field }}) }}
+                fn add_{0}(field) {{ update_body(this, #{{ add_{0}: field }} ) }}
+
+                fn set_{0}(body, field) {{ update_body(body, #{{ set_{0}: field }}) }}
+                fn set_{0}(field) {{ update_body(this, #{{ set_{0}: field }} ) }}
+            ", field));
+        }
+        let lib_ast = engine.compile(&lib_code).unwrap();
 
         Self {
             engine,
@@ -209,26 +204,34 @@ pub fn run_rhai_commands_sys(
                     .and_then(|entity| query.get_mut(*entity).ok());
 
                 if let Some(mut body) = body_opt {
-                    let get_vec = |field: &str| {
-                        params
-                            .get(field)
-                            .map(|dynamic| dynamic.clone().try_cast::<Vec2>())
-                            .flatten()
-                    };
-                    let _get_f32 = |field: &str| {
-                        params
-                            .get(field)
-                            .map(|dynamic| dynamic.clone().try_cast::<f32>())
-                            .flatten()
-                    };
+                    macro_rules! generate_set_add {
+                        ($field:ident, $str:expr, $ty:ty) => {
+                            let set = params
+                                .get(concat!("set_", $str))
+                                .map(|dynamic| dynamic.clone().try_cast())
+                                .flatten();
 
-                    if let Some(pos) = get_vec("set_pos") {
-                        body.pos = pos;
+                            if let Some(field) = set {
+                                body.$field = field;
+                            }
+
+                            let add = params
+                                .get(concat!("add_", $str))
+                                .map(|dynamic| dynamic.clone().try_cast::<$ty>())
+                                .flatten();
+
+                            if let Some(field) = add {
+                                body.$field += field;
+                            }
+                        };
                     }
 
-                    if let Some(force) = get_vec("add_force") {
-                        body.force += force;
-                    }
+                    generate_set_add!(pos, "pos", Vec2);
+                    generate_set_add!(vel, "vel", Vec2);
+                    generate_set_add!(accel, "accel", Vec2);
+                    generate_set_add!(force, "force", Vec2);
+                    generate_set_add!(mass, "mass", f32);
+                    generate_set_add!(radius, "radius", f32);
                 }
             }
         }

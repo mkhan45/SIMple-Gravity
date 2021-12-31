@@ -5,7 +5,7 @@ use macroquad::prelude::*;
 use super::input_state::MouseState;
 use crate::{
     camera::CameraRes,
-    physics::{KinematicBody, Preview},
+    physics::{KinematicBody, Preview}, preview::MultiPreview,
 };
 
 #[derive(PartialEq, Debug)]
@@ -35,6 +35,7 @@ pub fn create_body_sys(
     mouse_state: Res<MouseState>,
     mut commands: Commands,
     preview_query: Query<Entity, With<Preview>>,
+    multi_preview: Res<MultiPreview>,
     camera_res: Res<CameraRes>,
     egui_ctx: Res<CtxRef>,
 ) {
@@ -62,9 +63,11 @@ pub fn create_body_sys(
         }
         CreationState::Clicked { start_point } => {
             if is_mouse_button_released(MouseButton::Left) && !egui_ctx.is_pointer_over_area() {
-                preview_query.iter().for_each(|entity| {
-                    commands.entity(entity).despawn();
-                });
+                if !multi_preview.0 {
+                    preview_query.iter().for_each(|entity| {
+                        commands.entity(entity).despawn();
+                    });
+                }
 
                 commands.spawn().insert(KinematicBody {
                     pos: start_point,
@@ -80,10 +83,18 @@ pub fn create_body_sys(
                     camera_res.camera.screen_to_world(mouse_position().into());
                 let mouse_diff = mouse_state.prev_position - current_mouse_position;
 
-                if mouse_diff.length_squared() > 5.0 {
-                    preview_query.iter().for_each(|entity| {
-                        commands.entity(entity).despawn();
-                    });
+                let threshold = if multi_preview.0 {
+                    500.0
+                } else {
+                    15.0
+                };
+
+                if mouse_diff.length_squared() > threshold {
+                    if !multi_preview.0 {
+                        preview_query.iter().for_each(|entity| {
+                            commands.entity(entity).despawn();
+                        });
+                    }
 
                     commands
                         .spawn()
@@ -94,7 +105,7 @@ pub fn create_body_sys(
                             radius: creation_data.radius,
                             ..KinematicBody::default()
                         })
-                        .insert(Color::new(0.5, 0.7, 1.0, 0.8))
+                    .insert(Color::new(0.5, 0.7, 1.0, 0.8))
                         .insert(Preview);
                 }
             }

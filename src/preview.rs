@@ -11,6 +11,8 @@ pub struct PreviewTrailTick {
     pub tick_increment: u8,
 }
 
+pub struct MultiPreview(pub bool);
+
 impl Default for PreviewTrailTick {
     fn default() -> Self {
         Self {

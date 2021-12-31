@@ -5,7 +5,7 @@ use egui_macroquad::macroquad::prelude::*;
 
 use crate::{
     physics::{KinematicBody, Paused, Preview},
-    preview::PreviewTrailTick,
+    preview::{PreviewTrailTick, MultiPreview},
 };
 
 pub struct DrawTrails(pub bool);
@@ -26,9 +26,9 @@ impl Default for Trail {
 }
 
 impl Trail {
-    pub fn preview() -> Self {
+    pub fn preview(multi_preview: bool) -> Self {
         Self {
-            max_len: 10_000,
+            max_len: if multi_preview { 5_000 } else { 10_000 },
             ..Self::default()
         }
     }
@@ -94,6 +94,7 @@ pub fn preview_trail_sys(
     mut query: Query<(&KinematicBody, Option<&mut Trail>, Entity), With<Preview>>,
     mut commands: Commands,
     mut preview_trail_tick: ResMut<PreviewTrailTick>,
+    multi_preview: Res<MultiPreview>,
     relative_trails_body: Res<RelativeTrails>,
 ) {
     if relative_trails_body.0.is_some() {
@@ -107,7 +108,11 @@ pub fn preview_trail_sys(
         for (body, trail, entity) in query.iter_mut() {
             if let Some(mut trail) = trail {
                 if trail.points.len() == trail.max_len {
-                    continue;
+                    if multi_preview.0 {
+                        commands.entity(entity).despawn();
+                    } else {
+                        continue;
+                    }
                 }
 
                 trail.points.push_back(body.pos);
@@ -115,7 +120,7 @@ pub fn preview_trail_sys(
                     trail.points.pop_front();
                 }
             } else {
-                commands.entity(entity).insert(Trail::preview());
+                commands.entity(entity).insert(Trail::preview(multi_preview.0));
             }
         }
     }
