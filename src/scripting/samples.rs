@@ -1,4 +1,4 @@
-pub const SAMPLE_SCRIPTS: [(&str, &str); 4] = [
+pub const SAMPLE_SCRIPTS: [(&str, &str); 5] = [
     ("Grid", include_str!("../../rhai_scripts/grid.rhai")),
     (
         "Basic Orbit",
@@ -11,5 +11,9 @@ pub const SAMPLE_SCRIPTS: [(&str, &str); 4] = [
     (
         "Basic Update",
         include_str!("../../rhai_scripts/basic_update.rhai"),
+    ),
+    (
+        "Scripted Gravity",
+        include_str!("../../rhai_scripts/scripted_gravity.rhai"),
     ),
 ];

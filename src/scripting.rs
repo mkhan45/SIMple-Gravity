@@ -2,7 +2,7 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 use rhai::{Engine, Scope};
 
-use crate::{physics::KinematicBody, ui::code_editor::CodeEditor};
+use crate::{physics::{KinematicBody, G}, ui::code_editor::CodeEditor};
 
 use slotmap::{DefaultKey, SlotMap};
 
@@ -16,6 +16,7 @@ mod util;
 
 pub enum RhaiCommand {
     UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
+    SetG(f32),
 }
 
 pub struct RhaiBody;
@@ -59,8 +60,16 @@ impl Default for RhaiRes {
         engine
             .register_type::<Vec2>()
             .register_get_set("x", |v: &mut Vec2| v.x, |v: &mut Vec2, val: f32| v.x = val)
-            .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val);
+            .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val)
+            .register_get("length", |v: &mut Vec2| v.length());
+
         engine.register_fn("-", |v: Vec2| -v);
+        engine.register_fn("-", |lhs: Vec2, rhs: Vec2| lhs - rhs);
+        engine.register_fn("+", |lhs: Vec2, rhs: Vec2| lhs + rhs);
+        engine.register_fn("/", |lhs: Vec2, rhs: f32| lhs / rhs);
+        engine.register_fn("/", |lhs: Vec2, rhs: i64| lhs / rhs as f32);
+        engine.register_fn("*", |lhs: Vec2, rhs: f32| lhs * rhs);
+        engine.register_fn("*", |lhs: Vec2, rhs: i64| lhs * rhs as f32);
 
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
@@ -86,6 +95,12 @@ impl Default for RhaiRes {
         engine.register_fn("update_body", move |id, params| {
             let mut commands_writer = command_ref.write().unwrap();
             commands_writer.push(RhaiCommand::UpdateBody { id, params });
+        });
+
+        let command_ref = commands.clone();
+        engine.register_fn("set_g", move |new_g| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::SetG(new_g));
         });
 
         // TODO: Constify via a macro
@@ -196,6 +211,7 @@ pub fn run_code_sys(
 pub fn run_rhai_commands_sys(
     rhai_res: Res<RhaiRes>,
     mut query: Query<&mut KinematicBody, With<RhaiBody>>,
+    mut g: ResMut<G>,
 ) {
     let body_reader = rhai_res.existing_bodies.read().unwrap();
     let mut rhai_commands = rhai_res.commands.write().unwrap();
@@ -237,6 +253,9 @@ pub fn run_rhai_commands_sys(
                     generate_set_add!(radius, "radius", f32);
                 }
             }
+            RhaiCommand::SetG(new_g) => {
+                g.0 = new_g;
+            }
         }
     }
 }
@@ -250,9 +269,9 @@ pub fn run_script_update_sys(
         let registered_bodies_map = {
             Arc::new(
                 registered_bodies
-                    .iter()
-                    .map(|(e, b)| (e, b.clone()))
-                    .collect::<BTreeMap<Entity, KinematicBody>>(),
+                .iter()
+                .map(|(e, b)| (e, b.clone()))
+                .collect::<BTreeMap<Entity, KinematicBody>>(),
             )
         };
 
@@ -267,7 +286,7 @@ pub fn run_script_update_sys(
                         .cloned()
                         .map(|body| rhai::Dynamic::from(body))
                 })
-                .unwrap_or(rhai::Dynamic::UNIT)
+            .unwrap_or(rhai::Dynamic::UNIT)
         });
 
         let ast = rhai.last_code.merge(&rhai.lib_ast);

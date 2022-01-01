@@ -22,6 +22,7 @@ impl Default for MainState {
             let mut world = World::new();
 
             world.insert_resource(crate::physics::DT(1.0));
+            world.insert_resource(crate::physics::G(100.0));
 
             let camera_res = crate::camera::CameraRes::default();
             set_camera(&camera_res.camera);

@@ -5,8 +5,7 @@ use crate::{trails::Trail, ui::inspect::InspectedEntity};
 
 pub struct DT(pub f32);
 pub struct Steps(pub usize);
-
-pub const G: f32 = 100.0;
+pub struct G(pub f32);
 
 #[derive(Default, Clone)]
 pub struct KinematicBody {
@@ -67,6 +66,7 @@ pub fn gravity_sys(
         Query<(&mut KinematicBody, Entity), Without<Preview>>,
         Query<(&KinematicBody, Entity), Without<Preview>>,
     )>,
+    g: Res<G>,
     paused: Res<Paused>,
 ) {
     if paused.0 {
@@ -90,7 +90,7 @@ pub fn gravity_sys(
                 let rad_sqr_dist = rad.length_squared();
                 let rad_dist = rad_sqr_dist.powf(0.5);
 
-                let current_force = G * m1 * m2 / rad_sqr_dist;
+                let current_force = g.0 * m1 * m2 / rad_sqr_dist;
 
                 cumulative_force.x += current_force * rad.x / rad_dist;
                 cumulative_force.y += current_force * rad.y / rad_dist;
