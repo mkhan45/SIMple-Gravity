@@ -5,7 +5,8 @@ use egui_macroquad::egui;
 use crate::{
     force_lines::DrawForceLines,
     physics::{Paused, DT, G},
-    trails::{DrawTrails, RelativeTrails}, preview::MultiPreview,
+    preview::MultiPreview,
+    trails::{DrawTrails, RelativeTrails},
 };
 
 use super::{

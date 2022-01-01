@@ -2,7 +2,10 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 use rhai::{Engine, Scope};
 
-use crate::{physics::{KinematicBody, G}, ui::code_editor::CodeEditor};
+use crate::{
+    physics::{KinematicBody, G},
+    ui::code_editor::CodeEditor,
+};
 
 use slotmap::{DefaultKey, SlotMap};
 
@@ -269,13 +272,31 @@ pub fn run_script_update_sys(
         let registered_bodies_map = {
             Arc::new(
                 registered_bodies
-                .iter()
-                .map(|(e, b)| (e, b.clone()))
-                .collect::<BTreeMap<Entity, KinematicBody>>(),
+                    .iter()
+                    .map(|(e, b)| (e, b.clone()))
+                    .collect::<BTreeMap<Entity, KinematicBody>>(),
             )
         };
 
         let existing_bodies = rhai.existing_bodies.clone();
+        let existing_body_map = {
+            let body_reader = existing_bodies.read().unwrap();
+            body_reader
+                .iter()
+                .map(|(k, e)| {
+                    (
+                        *k,
+                        registered_bodies_map
+                            .get(e)
+                            .cloned()
+                            .map(|b| rhai::Dynamic::from(b))
+                            .unwrap_or(rhai::Dynamic::UNIT),
+                    )
+                })
+                .collect::<BTreeMap<DefaultKey, rhai::Dynamic>>()
+        };
+        rhai.scope.set_value("_bodies", existing_body_map);
+
         rhai.engine.register_fn("get_body", move |id| {
             let body_reader = existing_bodies.read().unwrap();
             body_reader
@@ -286,7 +307,7 @@ pub fn run_script_update_sys(
                         .cloned()
                         .map(|body| rhai::Dynamic::from(body))
                 })
-            .unwrap_or(rhai::Dynamic::UNIT)
+                .unwrap_or(rhai::Dynamic::UNIT)
         });
 
         let ast = rhai.last_code.merge(&rhai.lib_ast);

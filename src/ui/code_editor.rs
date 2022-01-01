@@ -32,27 +32,22 @@ pub fn code_editor_sys(
     egui::Window::new("Scripting")
         .open(&mut shown)
         .resizable(true)
+        .default_height(0.6 * screen_height())
+        .default_width(0.5 * screen_width())
         .show(&egui_ctx, |ui| {
-            ui.set_min_width(0.5 * screen_width());
-
-            ui.horizontal(|ui| {
-                ui.vertical(|ui| {
-                    let mut code = code_editor.code.lock().unwrap();
-                    ui.add(
-                        egui::TextEdit::multiline(&mut *code)
-                            .code_editor()
-                            .desired_width(0.4 * screen_width())
-                            .desired_rows(30),
-                    );
-                    std::mem::drop(code);
-
-                    if ui.button("Run").clicked() {
-                        code_editor.should_run = true;
-                    }
-                    if ui.button("Clear Scene & Run").clicked() {
-                        entities.iter().for_each(|e| commands.entity(e).despawn());
-                        code_editor.should_run = true;
-                    }
+            egui::TopBottomPanel::bottom("Run")
+                .resizable(true)
+                .default_height(0.0)
+                .show_inside(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        if ui.button("Run").clicked() {
+                            code_editor.should_run = true;
+                        }
+                        if ui.button("Clear Scene & Run").clicked() {
+                            entities.iter().for_each(|e| commands.entity(e).despawn());
+                            code_editor.should_run = true;
+                        }
+                    });
 
                     if let Some(output) = code_editor.output.clone() {
                         let output = output.read().unwrap();
@@ -64,13 +59,26 @@ pub fn code_editor_sys(
                     }
                 });
 
-                ui.vertical(|ui| {
+            egui::SidePanel::right("Samples")
+                .resizable(true)
+                .show_inside(ui, |ui| {
                     let mut code = code_editor.code.lock().unwrap();
                     for (name, script) in crate::scripting::samples::SAMPLE_SCRIPTS {
                         if ui.button(name).clicked() {
                             *code = script.to_string();
                         }
                     }
+                });
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    let mut code = code_editor.code.lock().unwrap();
+                    ui.add(
+                        egui::TextEdit::multiline(&mut *code)
+                            .code_editor()
+                            .desired_width(0.4 * screen_width())
+                            .desired_rows(23),
+                    );
                 });
             });
         });
