@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SIMple Gravity</title>
+    <style>
+    html, body, canvas {
+        margin: 0px;
+        padding: 0px;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: absolute;
+        background: black;
+        z-index: 0;
+    }
+    </style>
+    <script> document.addEventListener('contextmenu', event => event.preventDefault()); </script>
+</head>
+<body>
+  <canvas id="glcanvas" tabindex="1"></canvas>
+  <script src="mq_js_bundle.js"></script>
+  <script type="module">
+    import init, { set_wasm } from "./simple_gravity.js";
+
+    async function run() {
+      let wbg = await init();
+
+      miniquad_add_plugin({
+        register_plugin: (a) => (a.wbg = wbg),
+        on_init: () => set_wasm(wasm_exports),
+        version: "0.0.1",
+        name: "wbg",
+      });
+
+      load("./simple_gravity_bg.wasm");
+    }
+    run();
+  </script>
+</body>
+</html>

@@ -1,4 +1,0 @@
-ui_signals should be a resource
-physics system might be possible to switch
-render_data might also work better as a resource or as just an argument passed to render() with its components as resources
-signal parsing should be refactored
