@@ -6,7 +6,7 @@ use crate::{
     force_lines::DrawForceLines,
     physics::{Paused, DT, G},
     preview::MultiPreview,
-    trails::{DrawTrails, RelativeTrails},
+    trails::{DrawTrails, RelativeTrails}, scripting::{RhaiRes, RhaiCommand},
 };
 
 use super::{
@@ -27,6 +27,7 @@ pub fn top_panel_sys(
     mut g: ResMut<G>,
     mut dt: ResMut<DT>,
     entities: Query<Entity>,
+    rhai: Res<RhaiRes>, 
     mut commands: Commands,
 ) {
     egui::TopBottomPanel::top("SIMple Gravity").show(&egui_ctx, |ui| {
@@ -50,6 +51,7 @@ pub fn top_panel_sys(
             });
 
             menu::menu(ui, "Options", |ui| {
+                ui.set_min_width(300.0);
                 ui.checkbox(&mut draw_force_lines.0, "Draw Force Lines");
                 ui.checkbox(&mut draw_trails.0, "Draw Trails");
                 ui.checkbox(&mut multi_preview.0, "Multi Preview");
@@ -65,7 +67,13 @@ pub fn top_panel_sys(
                 code_editor.shown = !code_editor.shown;
             }
 
-            if ui.button("Pause").clicked() {
+            let paused_text = if paused.0 {
+                "Unpause"
+            } else {
+                "Pause"
+            };
+
+            if ui.button(paused_text).clicked() {
                 paused.0 = !paused.0;
             }
 

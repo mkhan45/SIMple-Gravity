@@ -1,3 +1,6 @@
+// sets G to the default value of 100.0
+set_g(100.0);
+
 // add a body and sets b as its ID.
 let b = add_body(#{
     radius: 200.0, 

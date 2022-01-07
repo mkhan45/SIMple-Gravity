@@ -20,6 +20,7 @@ mod util;
 pub enum RhaiCommand {
     UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
     SetG(f32),
+    Export,
 }
 
 pub struct RhaiBody;
@@ -176,7 +177,7 @@ pub fn run_code_sys(
         rhai.output.write().unwrap().clear();
         code_editor.should_run = false;
 
-        let code_lock = code_editor.code.lock().unwrap();
+        let code_lock = code_editor.code.read().unwrap();
         let ast = match rhai.engine.compile_with_scope(&rhai.scope, &*code_lock) {
             Ok(ast) => ast.merge(&rhai.lib_ast),
             Err(e) => {
@@ -259,6 +260,11 @@ pub fn run_rhai_commands_sys(
             RhaiCommand::SetG(new_g) => {
                 g.0 = new_g;
             }
+            RhaiCommand::Export => {
+                let text = "asdf";
+                let dl_link = format!("data:text/plain;charset=utf-8,{text}");
+                println!("{}", dl_link);
+            }
         }
     }
 }
@@ -295,7 +301,6 @@ pub fn run_script_update_sys(
                 })
                 .collect::<BTreeMap<DefaultKey, rhai::Dynamic>>()
         };
-        rhai.scope.set_value("_bodies", existing_body_map);
 
         rhai.engine.register_fn("get_body", move |id| {
             let body_reader = existing_bodies.read().unwrap();
@@ -312,7 +317,7 @@ pub fn run_script_update_sys(
 
         let ast = rhai.last_code.merge(&rhai.lib_ast);
 
-        let res: Result<rhai::Dynamic, _> = update_fn.call(&rhai.engine, &ast, ());
+        let res: Result<rhai::Dynamic, _> = update_fn.call(&rhai.engine, &ast, (existing_body_map,));
         if let Err(e) = res {
             *rhai.output.write().unwrap() = e.to_string();
             rhai.scope.set_value("update", ());

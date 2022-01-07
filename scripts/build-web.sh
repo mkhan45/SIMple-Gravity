@@ -1,6 +1,6 @@
 #!/bin/sh
 
-./scripts/wasm-bindgen-macroquad.sh simple_gravity --release
+./scripts/wasm-bindgen-macroquad.sh simple_gravity
 
 # https://github.com/WebAssembly/wabt
 # wasm-strip docs/wbindgen/simple_gravity.wasm
