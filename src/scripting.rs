@@ -317,7 +317,8 @@ pub fn run_script_update_sys(
 
         let ast = rhai.last_code.merge(&rhai.lib_ast);
 
-        let res: Result<rhai::Dynamic, _> = update_fn.call(&rhai.engine, &ast, (existing_body_map,));
+        let res: Result<rhai::Dynamic, _> =
+            update_fn.call(&rhai.engine, &ast, (existing_body_map,));
         if let Err(e) = res {
             *rhai.output.write().unwrap() = e.to_string();
             rhai.scope.set_value("update", ());

@@ -1,9 +1,9 @@
 pub mod body_creation;
 pub mod code_editor;
+pub mod graphs;
 pub mod input_state;
 pub mod inspect;
 pub mod top_panel;
-pub mod graphs;
 
 use bevy_ecs::prelude::*;
 use egui_macroquad::egui::CtxRef;

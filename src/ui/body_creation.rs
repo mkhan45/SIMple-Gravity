@@ -85,7 +85,8 @@ pub fn create_body_sys(
                 let mouse_diff = mouse_state.prev_position - current_mouse_position;
 
                 let mouse_moved = mouse_diff.length_squared() > 15.0;
-                let preview_key_pressed = is_key_pressed(KeyCode::P);
+                let preview_key_pressed =
+                    is_key_pressed(KeyCode::P) || is_mouse_button_pressed(MouseButton::Right);
 
                 if (!multi_preview.0 && mouse_moved) || (multi_preview.0 && preview_key_pressed) {
                     commands
@@ -99,6 +100,12 @@ pub fn create_body_sys(
                         })
                         .insert(Color::new(0.5, 0.7, 1.0, 0.8))
                         .insert(Preview);
+
+                    if !multi_preview.0 {
+                        preview_query.iter().for_each(|entity| {
+                            commands.entity(entity).despawn();
+                        });
+                    }
                 }
             }
         }

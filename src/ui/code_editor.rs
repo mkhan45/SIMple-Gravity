@@ -52,7 +52,8 @@ pub fn code_editor_sys(
                         if ui.button("Download").clicked() {
                             let code = code_editor.code.read().unwrap();
 
-                                let js_code = format!("
+                            let js_code = format!(
+                                "
                                     const el = document.createElement('a');
                                     el.setAttribute('download', 'exported_script.rhai');
 
@@ -65,12 +66,13 @@ pub fn code_editor_sys(
                                     el.click();
 
                                     document.body.removeChild(el);
-                                ");
+                                "
+                            );
 
-                                let _ = js_sys::eval(&js_code);
-                                // let js_dl_link = wasm_bindgen::JsValue::from_str(&dl_link);
-                                // let log_args = js_sys::Array::of1(&js_dl_link);
-                                // web_sys::console::log(&log_args);
+                            let _ = js_sys::eval(&js_code);
+                            // let js_dl_link = wasm_bindgen::JsValue::from_str(&dl_link);
+                            // let log_args = js_sys::Array::of1(&js_dl_link);
+                            // web_sys::console::log(&log_args);
                         }
                     });
 
