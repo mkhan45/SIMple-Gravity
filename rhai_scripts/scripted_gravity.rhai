@@ -17,7 +17,7 @@ let earth = add_body(#{
     vel: vec(0.0, 15.0),
 });
 
-let update = || {
+let update = |bodies| {
     // make sure earth is properly instantiated,
     // creating bodies takes one tick
     if earth.get_body() != () {

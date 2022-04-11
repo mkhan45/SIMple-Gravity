@@ -12,7 +12,7 @@ let b = add_body(#{
 // called every frame
 // make sure this is a closure instead of a a function,
 // or else it will not have access to existing variables
-let update = || {
+let update = |bodies| {
     if get_body(b) != () {
         if get_pos(b).x > 500.0 {
             b.add_force(vec(-20.0, 0.0));
