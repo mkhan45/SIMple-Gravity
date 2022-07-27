@@ -4,6 +4,8 @@ use egui_macroquad::macroquad::prelude::*;
 
 use std::sync::{Arc, RwLock};
 
+use crate::scripting::RhaiRes;
+
 pub struct CodeEditor {
     pub shown: bool,
     pub code: Arc<RwLock<String>>,
@@ -27,6 +29,7 @@ pub fn code_editor_sys(
     mut code_editor: ResMut<CodeEditor>,
     entities: Query<Entity>,
     mut commands: Commands,
+    rhai: Res<RhaiRes>,
 ) {
     let mut shown = code_editor.shown;
     egui::Window::new("Scripting")
@@ -41,10 +44,13 @@ pub fn code_editor_sys(
                 .show_inside(ui, |ui| {
                     ui.horizontal(|ui| {
                         if ui.button("Run").clicked() {
+                            code_editor.output = None;
                             code_editor.should_run = true;
                         }
                         if ui.button("Clear Scene & Run").clicked() {
+                            code_editor.output = None;
                             entities.iter().for_each(|e| commands.entity(e).despawn());
+                            rhai.existing_bodies.write().unwrap().clear();
                             code_editor.should_run = true;
                         }
 

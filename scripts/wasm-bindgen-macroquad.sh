@@ -86,9 +86,10 @@ cargo build --target wasm32-unknown-unknown $EXTRA_ARGS
 
 # Generate bindgen outputs
 mkdir -p docs/wbindgen
-wasm-bindgen --target web --out-dir docs/wbindgen/ target/wasm32-unknown-unknown/$MODE/$PROJECT_NAME.wasm
+wasm-bindgen --target web --out-dir docs/wbindgen/ --no-typescript target/wasm32-unknown-unknown/$MODE/$PROJECT_NAME.wasm
 
 # Shim to tie the thing together
 sed -i "s/import \* as __wbg_star0 from 'env';//" docs/wbindgen/$PROJECT_NAME.js
 sed -i "s/let wasm;/let wasm; export const set_wasm = (w) => wasm = w;/" docs/wbindgen/$PROJECT_NAME.js
 sed -i "s/imports\['env'\] = __wbg_star0;/return imports.wbg\;/" docs/wbindgen/$PROJECT_NAME.js
+sed -i "s/const imports = getImports();/return getImports();/" docs/wbindgen/$PROJECT_NAME.js

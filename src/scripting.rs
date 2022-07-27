@@ -78,6 +78,8 @@ impl Default for RhaiRes {
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
         engine.register_type::<SlotMap<DefaultKey, KinematicBody>>();
+        engine.register_type::<Vec<DefaultKey>>();
+        engine.register_iterator::<Vec<DefaultKey>>();
 
         engine.register_fn("insert", SlotMap::<DefaultKey, KinematicBody>::insert);
         engine.register_fn("get", SlotMap::<DefaultKey, KinematicBody>::get);
@@ -302,6 +304,11 @@ pub fn run_script_update_sys(
                 .collect::<BTreeMap<DefaultKey, rhai::Dynamic>>()
         };
 
+        let existing_body_ids = {
+            let body_reader = existing_bodies.read().unwrap();
+            body_reader.iter().map(|(k, _)| *k).collect::<Vec<_>>()
+        };
+
         rhai.engine.register_fn("get_body", move |id| {
             let body_reader = existing_bodies.read().unwrap();
             body_reader
@@ -318,7 +325,7 @@ pub fn run_script_update_sys(
         let ast = rhai.last_code.merge(&rhai.lib_ast);
 
         let res: Result<rhai::Dynamic, _> =
-            update_fn.call(&rhai.engine, &ast, (existing_body_map,));
+            update_fn.call(&rhai.engine, &ast, (existing_body_ids, existing_body_map));
         if let Err(e) = res {
             *rhai.output.write().unwrap() = e.to_string();
             rhai.scope.set_value("update", ());
