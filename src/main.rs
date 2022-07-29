@@ -1,4 +1,5 @@
 #![feature(option_result_contains)]
+#![feature(btree_drain_filter)]
 
 use egui_macroquad::macroquad;
 use macroquad::prelude::*;

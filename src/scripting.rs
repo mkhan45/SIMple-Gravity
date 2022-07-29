@@ -78,8 +78,10 @@ impl Default for RhaiRes {
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
         engine.register_type::<SlotMap<DefaultKey, KinematicBody>>();
-        engine.register_type::<Vec<DefaultKey>>();
+        engine.register_type::<Vec<DefaultKey>>()
+              .register_get("length", |v: &mut Vec<DefaultKey>| v.len() as i64);
         engine.register_iterator::<Vec<DefaultKey>>();
+        engine.register_indexer_get(|v: &mut Vec<DefaultKey>, ix: i64| v[ix as usize]);
 
         engine.register_fn("insert", SlotMap::<DefaultKey, KinematicBody>::insert);
         engine.register_fn("get", SlotMap::<DefaultKey, KinematicBody>::get);
@@ -287,6 +289,9 @@ pub fn run_script_update_sys(
         };
 
         let existing_bodies = rhai.existing_bodies.clone();
+        existing_bodies.write().unwrap().drain_filter(|_, &mut e| {
+            registered_bodies.get(e).is_err()
+        });
         let existing_body_map = {
             let body_reader = existing_bodies.read().unwrap();
             body_reader

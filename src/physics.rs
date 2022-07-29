@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::{trails::Trail, ui::inspect::InspectedEntity};
+use crate::{trails::Trail, ui::inspect::InspectedEntity, scripting::{RhaiBody, RhaiRes}};
 
 pub struct DT(pub f32);
 pub struct Steps(pub usize);
@@ -108,7 +108,9 @@ pub fn collision_sys(
     )>,
     mut inspected_entity: ResMut<InspectedEntity>,
     mut commands: Commands,
+    rhai_bodies: Query<&RhaiBody>,
     paused: Res<Paused>,
+    rhai: Res<RhaiRes>,
 ) {
     use std::collections::HashSet;
 
@@ -162,6 +164,9 @@ pub fn collision_sys(
                 total_moment += b2.pos * b2.mass;
                 total_force += b2.force;
 
+                // if let Ok(rhai_id) = rhai_bodies.get(e2) {
+                //     rhai.existing_bodies.write().unwrap().
+                // }
                 commands.entity(e2).despawn();
 
                 if inspected_entity.0.contains(&e2) {
