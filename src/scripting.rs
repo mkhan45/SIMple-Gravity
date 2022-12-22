@@ -19,6 +19,7 @@ mod util;
 
 pub enum RhaiCommand {
     UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
+    DeleteBody { id: DefaultKey },
     SetG(f32),
     SetCollisions(bool),
     Export,
@@ -68,13 +69,23 @@ impl Default for RhaiRes {
             .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val)
             .register_get("length", |v: &mut Vec2| v.length());
 
+        engine.register_fn("angle_between", |a: Vec2, b: Vec2| a.angle_between(b));
+
         engine.register_fn("-", |v: Vec2| -v);
         engine.register_fn("-", |lhs: Vec2, rhs: Vec2| lhs - rhs);
         engine.register_fn("+", |lhs: Vec2, rhs: Vec2| lhs + rhs);
+
         engine.register_fn("/", |lhs: Vec2, rhs: f32| lhs / rhs);
+        engine.register_fn("/", |lhs: f32, rhs: Vec2| lhs / rhs);
+
         engine.register_fn("/", |lhs: Vec2, rhs: i64| lhs / rhs as f32);
+        engine.register_fn("/", |lhs: i64, rhs: Vec2| lhs as f32/ rhs);
+
         engine.register_fn("*", |lhs: Vec2, rhs: f32| lhs * rhs);
+        engine.register_fn("*", |lhs: f32, rhs: Vec2| lhs * rhs);
+
         engine.register_fn("*", |lhs: Vec2, rhs: i64| lhs * rhs as f32);
+        engine.register_fn("*", |lhs: i64, rhs: Vec2| lhs as f32 * rhs);
 
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
@@ -104,6 +115,12 @@ impl Default for RhaiRes {
         engine.register_fn("update_body", move |id, params| {
             let mut commands_writer = command_ref.write().unwrap();
             commands_writer.push(RhaiCommand::UpdateBody { id, params });
+        });
+
+        let command_ref = commands.clone();
+        engine.register_fn("delete_body", move |id| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::DeleteBody { id });
         });
 
         let command_ref = commands.clone();
@@ -279,6 +296,9 @@ pub fn run_rhai_commands_sys(
             }
             RhaiCommand::SetCollisions(enabled_or_disabled) => {
                 physics_toggles.collisions = enabled_or_disabled;
+            }
+            RhaiCommand::DeleteBody { id } => {
+                todo!()
             }
         }
     }
