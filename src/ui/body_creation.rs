@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::*;
-use egui_macroquad::{egui::CtxRef, macroquad};
+use egui_macroquad::{egui::Context, macroquad};
 use macroquad::prelude::*;
 
 use super::input_state::MouseState;
@@ -38,7 +38,7 @@ pub fn create_body_sys(
     preview_query: Query<Entity, With<Preview>>,
     multi_preview: Res<MultiPreview>,
     camera_res: Res<CameraRes>,
-    egui_ctx: Res<CtxRef>,
+    egui_ctx: Res<Context>,
     rhai: Res<RhaiRes>,
 ) {
     match *creation_state {

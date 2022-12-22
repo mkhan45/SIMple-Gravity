@@ -16,7 +16,7 @@ use super::{
 };
 
 pub fn top_panel_sys(
-    egui_ctx: Res<egui::CtxRef>,
+    egui_ctx: Res<egui::Context>,
     mut creation_state: ResMut<CreationState>,
     mut creation_data: ResMut<CreationData>,
     mut paused: ResMut<Paused>,
@@ -28,12 +28,12 @@ pub fn top_panel_sys(
     mut g: ResMut<G>,
     mut dt: ResMut<DT>,
     entities: Query<Entity>,
-    rhai: Res<RhaiRes>,
+    _rhai: Res<RhaiRes>,
     mut commands: Commands,
 ) {
     egui::TopBottomPanel::top("SIMple Gravity").show(&egui_ctx, |ui| {
         menu::bar(ui, |ui| {
-            menu::menu(ui, "Create", |ui| {
+            menu::menu_button(ui, "Create", |ui| {
                 ui.spacing_mut().slider_width = 500.0;
                 ui.add(
                     egui::Slider::new(&mut creation_data.mass, 0.0..=10_000.0)
@@ -51,7 +51,7 @@ pub fn top_panel_sys(
                 }
             });
 
-            menu::menu(ui, "Options", |ui| {
+            menu::menu_button(ui, "Options", |ui| {
                 ui.set_min_width(300.0);
                 ui.checkbox(&mut draw_force_lines.0, "Draw Force Lines");
                 ui.checkbox(&mut draw_trails.0, "Draw Trails");

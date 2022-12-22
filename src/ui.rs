@@ -6,7 +6,7 @@ pub mod inspect;
 pub mod top_panel;
 
 use bevy_ecs::prelude::*;
-use egui_macroquad::egui::CtxRef;
+use egui_macroquad::egui::Context;
 
 use crate::physics::{Paused, Preview};
 
@@ -17,7 +17,7 @@ pub fn handle_keybinds_sys(
     mut code_editor: ResMut<CodeEditor>,
     preview_query: Query<Entity, With<Preview>>,
     mut commands: Commands,
-    egui_ctx: Res<CtxRef>,
+    egui_ctx: Res<Context>,
 ) {
     use egui_macroquad::macroquad::prelude::*;
 

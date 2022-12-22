@@ -7,6 +7,10 @@ pub struct DT(pub f32);
 pub struct Steps(pub usize);
 pub struct G(pub f32);
 
+pub struct PhysicsToggles {
+    pub collisions: bool,
+}
+
 #[derive(Default, Clone)]
 pub struct KinematicBody {
     pub pos: Vec2,
@@ -110,11 +114,12 @@ pub fn collision_sys(
     mut commands: Commands,
     rhai_bodies: Query<&RhaiBody>,
     paused: Res<Paused>,
+    physics_toggles: Res<PhysicsToggles>,
     rhai: Res<RhaiRes>,
 ) {
     use std::collections::HashSet;
 
-    if paused.0 {
+    if paused.0 || !physics_toggles.collisions {
         return;
     }
 

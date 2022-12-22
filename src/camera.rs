@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::*;
-use egui_macroquad::{egui::CtxRef, macroquad::prelude::*};
+use egui_macroquad::{egui::Context, macroquad::prelude::*};
 
 use crate::{physics::KinematicBody, ui::input_state::MouseState};
 
@@ -61,13 +61,13 @@ pub fn camera_transform_sys(
     mut camera_res: ResMut<CameraRes>,
     mouse_state: Res<MouseState>,
     mut followed_body: ResMut<FollowBody>,
-    egui_ctx: Res<CtxRef>,
+    egui_ctx: Res<Context>,
 ) {
     let mouse_screen_pos: Vec2 = mouse_position().into();
     let current_mouse_pos = camera_res.camera.screen_to_world(mouse_screen_pos);
 
     // panning via middle mouse
-    if is_mouse_button_down(MouseButton::Middle) && !egui_ctx.is_pointer_over_area() {
+    if (is_mouse_button_down(MouseButton::Middle) || is_key_down(KeyCode::LeftAlt)) && !egui_ctx.is_pointer_over_area() {
         let offset = current_mouse_pos - mouse_state.prev_position;
         camera_res.camera.target -= offset;
         followed_body.0 = None;

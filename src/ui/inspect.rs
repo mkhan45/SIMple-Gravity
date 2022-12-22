@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::*;
-use egui_macroquad::egui::{self, CtxRef};
+use egui_macroquad::egui::{self, Context};
 use egui_macroquad::macroquad::prelude::*;
 
 use crate::camera::FollowBody;
@@ -16,7 +16,7 @@ pub fn inspect_body_sys(
     kinematic_bodies: Query<(&KinematicBody, Entity)>,
     creation_state: Res<CreationState>,
     mouse_state: Res<MouseState>,
-    egui_ctx: Res<CtxRef>,
+    egui_ctx: Res<Context>,
 ) {
     if inspected_entity.0.is_none()
         && *creation_state != CreationState::Initiated
@@ -37,7 +37,7 @@ pub fn inspect_body_sys(
 }
 
 pub fn inspect_panel_sys(
-    egui_ctx: Res<egui::CtxRef>,
+    egui_ctx: Res<egui::Context>,
     inspected_entity: Res<InspectedEntity>,
     mut followed_body: ResMut<FollowBody>,
     mut relative_trails_body: ResMut<RelativeTrails>,

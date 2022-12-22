@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::*;
-use egui_macroquad::egui;
+use egui_macroquad::egui::{self, RichText, TextStyle};
 use egui_macroquad::macroquad::prelude::*;
 
 use std::sync::{Arc, RwLock};
@@ -25,7 +25,7 @@ impl Default for CodeEditor {
 }
 
 pub fn code_editor_sys(
-    egui_ctx: Res<egui::CtxRef>,
+    egui_ctx: Res<egui::Context>,
     mut code_editor: ResMut<CodeEditor>,
     entities: Query<Entity>,
     mut commands: Commands,
@@ -84,11 +84,8 @@ pub fn code_editor_sys(
 
                     if let Some(output) = code_editor.output.clone() {
                         let output = output.read().unwrap();
-                        ui.add(
-                            egui::Label::new(format!("Output:\n{}", &output))
-                                .monospace()
-                                .wrap(true),
-                        );
+                        let text = RichText::new(format!("Output:\n{}", &output)).text_style(TextStyle::Monospace);
+                        ui.label(text);
                     }
                 });
 
@@ -104,7 +101,7 @@ pub fn code_editor_sys(
                 });
 
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                egui::ScrollArea::vertical().show(ui, |ui| {
+                egui::ScrollArea::vertical().max_height(screen_height() * 0.6).show(ui, |ui| {
                     let mut code = code_editor.code.write().unwrap();
                     ui.add(
                         egui::TextEdit::multiline(&mut *code)

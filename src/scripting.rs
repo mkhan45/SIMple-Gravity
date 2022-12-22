@@ -3,7 +3,7 @@ use egui_macroquad::macroquad::prelude::*;
 use rhai::{Engine, Scope};
 
 use crate::{
-    physics::{KinematicBody, G},
+    physics::{KinematicBody, G, PhysicsToggles},
     ui::code_editor::CodeEditor,
 };
 
@@ -20,6 +20,7 @@ mod util;
 pub enum RhaiCommand {
     UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
     SetG(f32),
+    SetCollisions(bool),
     Export,
 }
 
@@ -109,6 +110,12 @@ impl Default for RhaiRes {
         engine.register_fn("set_g", move |new_g| {
             let mut commands_writer = command_ref.write().unwrap();
             commands_writer.push(RhaiCommand::SetG(new_g));
+        });
+
+        let command_ref = commands.clone();
+        engine.register_fn("set_collisions", move |enabled| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::SetCollisions(enabled));
         });
 
         // TODO: Constify via a macro
@@ -220,6 +227,7 @@ pub fn run_rhai_commands_sys(
     rhai_res: Res<RhaiRes>,
     mut query: Query<&mut KinematicBody, With<RhaiBody>>,
     mut g: ResMut<G>,
+    mut physics_toggles: ResMut<PhysicsToggles>,
 ) {
     let body_reader = rhai_res.existing_bodies.read().unwrap();
     let mut rhai_commands = rhai_res.commands.write().unwrap();
@@ -268,6 +276,9 @@ pub fn run_rhai_commands_sys(
                 let text = "asdf";
                 let dl_link = format!("data:text/plain;charset=utf-8,{text}");
                 println!("{}", dl_link);
+            }
+            RhaiCommand::SetCollisions(enabled_or_disabled) => {
+                physics_toggles.collisions = enabled_or_disabled;
             }
         }
     }
