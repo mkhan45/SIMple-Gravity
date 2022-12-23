@@ -1,4 +1,4 @@
-set_g(100.0);
+reset_physics();
 
 add_body(#{
     pos: vec(-850.0, 0.0),

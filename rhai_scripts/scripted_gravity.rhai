@@ -1,3 +1,4 @@
+reset_physics();
 // set engine gravity to 0
 set_g(0.0);
 

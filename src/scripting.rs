@@ -136,7 +136,12 @@ impl Default for RhaiRes {
         });
 
         // TODO: Constify via a macro
-        let mut lib_code = "".to_string();
+        let mut lib_code = "
+            fn reset_physics() {
+                set_g(100.0);
+                set_collisions(true);
+            }
+        ".to_string();
         for field in ["pos", "vel", "accel", "force", "mass", "radius"] {
             lib_code.push_str(&format!(
                 "

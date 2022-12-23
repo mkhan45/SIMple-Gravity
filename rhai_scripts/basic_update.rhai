@@ -1,5 +1,4 @@
-// sets G to the default value of 100.0
-set_g(100.0);
+reset_physics();
 
 // add a body and sets b as its ID.
 let b = add_body(#{
