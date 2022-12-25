@@ -69,6 +69,8 @@ impl Default for RhaiRes {
             .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val)
             .register_get("length", |v: &mut Vec2| v.length());
 
+        engine.register_fn("to_string", |v: Vec2| v.to_string());
+        engine.register_fn("to_debug", |v: Vec2| format!("{:?}", v));
         engine.register_fn("angle_between", |a: Vec2, b: Vec2| a.angle_between(b));
 
         engine.register_fn("-", |v: Vec2| -v);
@@ -100,6 +102,7 @@ impl Default for RhaiRes {
         engine.register_fn("get", SlotMap::<DefaultKey, KinematicBody>::get);
 
         engine.register_fn("vec", Vec2::new);
+        engine.register_fn("vec", |x: i64, y: i64| Vec2::new(x as f32, y as f32));
         engine.register_fn("new_body", KinematicBody::from_rhai);
 
         let newly_added_bodies = Arc::new(RwLock::new(SlotMap::<DefaultKey, rhai::Map>::new()));
