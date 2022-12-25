@@ -55,7 +55,7 @@ pub fn top_panel_sys(
                 ui.set_min_width(300.0);
                 ui.checkbox(&mut draw_force_lines.0, "Draw Force Lines");
                 ui.checkbox(&mut draw_trails.0, "Draw Trails");
-                ui.checkbox(&mut multi_preview.0, "Multi Preview");
+                // ui.checkbox(&mut multi_preview.0, "Multi Preview");
                 ui.add(egui::Slider::new(&mut dt.0, 0.0..=10.0).text("Timestep"));
                 ui.add(egui::Slider::new(&mut g.0, 0.0..=1000.0).text("G"));
 
