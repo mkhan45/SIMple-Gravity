@@ -6,7 +6,8 @@ use super::input_state::MouseState;
 use crate::{
     camera::CameraRes,
     physics::{KinematicBody, Preview},
-    preview::MultiPreview, scripting::{RhaiBody, RhaiRes},
+    preview::MultiPreview,
+    scripting::{RhaiBody, RhaiRes},
 };
 
 #[derive(PartialEq, Debug)]
@@ -71,16 +72,24 @@ pub fn create_body_sys(
                     });
                 }
 
-                let id = commands.spawn().insert(KinematicBody {
-                    pos: start_point,
-                    mass: creation_data.mass,
-                    radius: creation_data.radius,
-                    vel: (start_point - mouse_state.prev_position) / 100.0,
-                    ..Default::default()
-                }).insert(RhaiBody).id();
+                let id = commands
+                    .spawn()
+                    .insert(KinematicBody {
+                        pos: start_point,
+                        mass: creation_data.mass,
+                        radius: creation_data.radius,
+                        vel: (start_point - mouse_state.prev_position) / 100.0,
+                        ..Default::default()
+                    })
+                    .insert(RhaiBody)
+                    .id();
 
                 // hacky way to get a unique key
-                let key = rhai.newly_added_bodies.write().unwrap().insert(rhai::Map::default());
+                let key = rhai
+                    .newly_added_bodies
+                    .write()
+                    .unwrap()
+                    .insert(rhai::Map::default());
                 rhai.existing_bodies.write().unwrap().insert(key, id);
                 rhai.newly_added_bodies.write().unwrap().remove(key);
 

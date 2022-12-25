@@ -67,7 +67,9 @@ pub fn camera_transform_sys(
     let current_mouse_pos = camera_res.camera.screen_to_world(mouse_screen_pos);
 
     // panning via middle mouse
-    if (is_mouse_button_down(MouseButton::Middle) || is_key_down(KeyCode::LeftAlt)) && !egui_ctx.is_pointer_over_area() {
+    if (is_mouse_button_down(MouseButton::Middle) || is_key_down(KeyCode::LeftAlt))
+        && !egui_ctx.is_pointer_over_area()
+    {
         let offset = current_mouse_pos - mouse_state.prev_position;
         camera_res.camera.target -= offset;
         followed_body.0 = None;

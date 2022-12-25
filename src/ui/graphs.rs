@@ -8,4 +8,6 @@ pub struct Graph {
     pub point_fn: rhai::FnPtr,
 }
 
-pub fn graph_points_sys(graph_query: Query<&Graph>, body_query: Query<&KinematicBody>) {}
+pub fn graph_points_sys(_graph_query: Query<&Graph>, _body_query: Query<&KinematicBody>) {
+    todo!()
+}

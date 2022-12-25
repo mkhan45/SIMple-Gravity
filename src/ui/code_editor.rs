@@ -40,15 +40,17 @@ pub fn code_editor_sys(
         .show(&egui_ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.set_max_height(screen_height() * 0.6);
-                egui::ScrollArea::vertical().min_scrolled_height(screen_height() * 0.5).show(ui, |ui| {
-                    let mut code = code_editor.code.write().unwrap();
-                    ui.add(
-                        egui::TextEdit::multiline(&mut *code)
-                        .code_editor()
-                        .desired_width(0.4 * screen_width())
-                        .desired_rows(23),
-                    );
-                });
+                egui::ScrollArea::vertical()
+                    .min_scrolled_height(screen_height() * 0.5)
+                    .show(ui, |ui| {
+                        let mut code = code_editor.code.write().unwrap();
+                        ui.add(
+                            egui::TextEdit::multiline(&mut *code)
+                                .code_editor()
+                                .desired_width(0.4 * screen_width())
+                                .desired_rows(23),
+                        );
+                    });
 
                 let mut code = code_editor.code.write().unwrap();
                 ui.vertical(|ui| {
@@ -103,7 +105,8 @@ pub fn code_editor_sys(
 
             if let Some(output) = code_editor.output.clone() {
                 let output = output.read().unwrap();
-                let text = RichText::new(format!("Output:\n{}", &output)).text_style(TextStyle::Monospace);
+                let text =
+                    RichText::new(format!("Output:\n{}", &output)).text_style(TextStyle::Monospace);
                 ui.label(text);
             }
 

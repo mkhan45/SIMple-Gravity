@@ -1,7 +1,11 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::{trails::Trail, ui::inspect::InspectedEntity, scripting::{RhaiBody, RhaiRes}};
+use crate::{
+    scripting::{RhaiBody, RhaiRes},
+    trails::Trail,
+    ui::inspect::InspectedEntity,
+};
 
 pub struct DT(pub f32);
 pub struct Steps(pub usize);
@@ -112,10 +116,10 @@ pub fn collision_sys(
     )>,
     mut inspected_entity: ResMut<InspectedEntity>,
     mut commands: Commands,
-    rhai_bodies: Query<&RhaiBody>,
+    _rhai_bodies: Query<&RhaiBody>,
     paused: Res<Paused>,
     physics_toggles: Res<PhysicsToggles>,
-    rhai: Res<RhaiRes>,
+    _rhai: Res<RhaiRes>,
 ) {
     use std::collections::HashSet;
 

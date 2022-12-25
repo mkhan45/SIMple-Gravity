@@ -2,7 +2,7 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::egui::FontFamily;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::physics::{KinematicBody, Paused, self};
+use crate::physics::{self, KinematicBody, Paused};
 
 use crate::scripting::RhaiRes;
 use crate::ui::body_creation::{CreationData, CreationState};
@@ -40,9 +40,7 @@ impl Default for MainState {
             world.insert_resource(egui_macroquad::egui::Context::default());
 
             world.insert_resource(Paused(false));
-            world.insert_resource(physics::PhysicsToggles {
-                collisions: true,
-            });
+            world.insert_resource(physics::PhysicsToggles { collisions: true });
 
             world.insert_resource(crate::preview::PreviewTrailTick::default());
             world.insert_resource(crate::preview::MultiPreview(false));
@@ -235,9 +233,17 @@ impl MainState {
         egui_macroquad::ui(|egui_ctx| {
             use egui_macroquad::egui::{FontId, TextStyle};
             let mut style = (*egui_ctx.style()).clone();
-            style.text_styles.insert(TextStyle::Button, FontId::new(28.0, FontFamily::Proportional));
-            style.text_styles.insert(TextStyle::Body, FontId::new(28.0, FontFamily::Proportional));
-            style.text_styles.insert(TextStyle::Monospace, FontId::new(24.0, FontFamily::Monospace));
+            style.text_styles.insert(
+                TextStyle::Button,
+                FontId::new(28.0, FontFamily::Proportional),
+            );
+            style
+                .text_styles
+                .insert(TextStyle::Body, FontId::new(28.0, FontFamily::Proportional));
+            style.text_styles.insert(
+                TextStyle::Monospace,
+                FontId::new(24.0, FontFamily::Monospace),
+            );
             egui_ctx.set_style(style);
             // let mut fonts = FontDefinitions::default();
             // fonts.family_and_size.get_mut(&TextStyle::Button).unwrap().1 = 28.0;

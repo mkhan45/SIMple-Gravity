@@ -6,7 +6,7 @@ use crate::{
     force_lines::DrawForceLines,
     physics::{Paused, DT, G},
     preview::MultiPreview,
-    scripting::{RhaiCommand, RhaiRes},
+    scripting::RhaiRes,
     trails::{DrawTrails, RelativeTrails},
 };
 
@@ -24,7 +24,7 @@ pub fn top_panel_sys(
     mut draw_trails: ResMut<DrawTrails>,
     mut relative_trails_body: ResMut<RelativeTrails>,
     mut code_editor: ResMut<CodeEditor>,
-    mut multi_preview: ResMut<MultiPreview>,
+    mut _multi_preview: ResMut<MultiPreview>,
     mut g: ResMut<G>,
     mut dt: ResMut<DT>,
     entities: Query<Entity>,

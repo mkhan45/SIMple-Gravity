@@ -3,7 +3,7 @@ use egui_macroquad::macroquad::prelude::*;
 use rhai::{Engine, Scope};
 
 use crate::{
-    physics::{KinematicBody, G, PhysicsToggles},
+    physics::{KinematicBody, PhysicsToggles, G},
     ui::code_editor::CodeEditor,
 };
 
@@ -79,7 +79,7 @@ impl Default for RhaiRes {
         engine.register_fn("/", |lhs: f32, rhs: Vec2| lhs / rhs);
 
         engine.register_fn("/", |lhs: Vec2, rhs: i64| lhs / rhs as f32);
-        engine.register_fn("/", |lhs: i64, rhs: Vec2| lhs as f32/ rhs);
+        engine.register_fn("/", |lhs: i64, rhs: Vec2| lhs as f32 / rhs);
 
         engine.register_fn("*", |lhs: Vec2, rhs: f32| lhs * rhs);
         engine.register_fn("*", |lhs: f32, rhs: Vec2| lhs * rhs);
@@ -90,8 +90,9 @@ impl Default for RhaiRes {
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
         engine.register_type::<SlotMap<DefaultKey, KinematicBody>>();
-        engine.register_type::<Vec<DefaultKey>>()
-              .register_get("length", |v: &mut Vec<DefaultKey>| v.len() as i64);
+        engine
+            .register_type::<Vec<DefaultKey>>()
+            .register_get("length", |v: &mut Vec<DefaultKey>| v.len() as i64);
         engine.register_iterator::<Vec<DefaultKey>>();
         engine.register_indexer_get(|v: &mut Vec<DefaultKey>, ix: i64| v[ix as usize]);
 
@@ -141,7 +142,8 @@ impl Default for RhaiRes {
                 set_g(100.0);
                 set_collisions(true);
             }
-        ".to_string();
+        "
+        .to_string();
         for field in ["pos", "vel", "accel", "force", "mass", "radius"] {
             lib_code.push_str(&format!(
                 "
@@ -302,7 +304,7 @@ pub fn run_rhai_commands_sys(
             RhaiCommand::SetCollisions(enabled_or_disabled) => {
                 physics_toggles.collisions = enabled_or_disabled;
             }
-            RhaiCommand::DeleteBody { id } => {
+            RhaiCommand::DeleteBody { id: _ } => {
                 todo!()
             }
         }
@@ -325,9 +327,10 @@ pub fn run_script_update_sys(
         };
 
         let existing_bodies = rhai.existing_bodies.clone();
-        existing_bodies.write().unwrap().drain_filter(|_, &mut e| {
-            registered_bodies.get(e).is_err()
-        });
+        existing_bodies
+            .write()
+            .unwrap()
+            .drain_filter(|_, &mut e| registered_bodies.get(e).is_err());
         let existing_body_map = {
             let body_reader = existing_bodies.read().unwrap();
             body_reader
@@ -338,7 +341,7 @@ pub fn run_script_update_sys(
                         registered_bodies_map
                             .get(e)
                             .cloned()
-                            .map(|b| rhai::Dynamic::from(b))
+                            .map(rhai::Dynamic::from)
                             .unwrap_or(rhai::Dynamic::UNIT),
                     )
                 })
@@ -358,7 +361,7 @@ pub fn run_script_update_sys(
                     registered_bodies_map
                         .get(entity)
                         .cloned()
-                        .map(|body| rhai::Dynamic::from(body))
+                        .map(rhai::Dynamic::from)
                 })
                 .unwrap_or(rhai::Dynamic::UNIT)
         });

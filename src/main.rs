@@ -1,5 +1,8 @@
 #![feature(option_result_contains)]
 #![feature(btree_drain_filter)]
+// bevy
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::type_complexity)]
 
 use egui_macroquad::macroquad;
 use macroquad::prelude::*;
