@@ -13,6 +13,7 @@ pub struct G(pub f32);
 
 pub struct PhysicsToggles {
     pub collisions: bool,
+    pub integration: bool,
 }
 
 #[derive(Default, Clone)]
@@ -40,9 +41,10 @@ macro_rules! generate_integration_systems {
         pub fn $name(
             mut query: Query<&mut KinematicBody, $filter<Preview>>,
             dt: Res<DT>,
+            physics_toggles: Res<PhysicsToggles>,
             paused: Res<Paused>,
         ) {
-            if paused.0 {
+            if paused.0 || !physics_toggles.integration {
                 return;
             }
 

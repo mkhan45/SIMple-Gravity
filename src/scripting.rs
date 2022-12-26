@@ -22,6 +22,7 @@ pub enum RhaiCommand {
     DeleteBody { id: DefaultKey },
     SetG(f32),
     SetCollisions(bool),
+    SetIntegration(bool),
     Export,
 }
 
@@ -137,6 +138,12 @@ impl Default for RhaiRes {
         engine.register_fn("set_collisions", move |enabled| {
             let mut commands_writer = command_ref.write().unwrap();
             commands_writer.push(RhaiCommand::SetCollisions(enabled));
+        });
+
+        let command_ref = commands.clone();
+        engine.register_fn("set_integration", move |enabled| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::SetIntegration(enabled));
         });
 
         // TODO: Constify via a macro
@@ -306,6 +313,9 @@ pub fn run_rhai_commands_sys(
             }
             RhaiCommand::SetCollisions(enabled_or_disabled) => {
                 physics_toggles.collisions = enabled_or_disabled;
+            }
+            RhaiCommand::SetIntegration(enabled_or_disabled) => {
+                physics_toggles.integration = enabled_or_disabled;
             }
             RhaiCommand::DeleteBody { id: _ } => {
                 todo!()

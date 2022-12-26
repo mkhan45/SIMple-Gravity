@@ -40,7 +40,7 @@ impl Default for MainState {
             world.insert_resource(egui_macroquad::egui::Context::default());
 
             world.insert_resource(Paused(false));
-            world.insert_resource(physics::PhysicsToggles { collisions: true });
+            world.insert_resource(physics::PhysicsToggles { collisions: true, integration: true });
 
             world.insert_resource(crate::preview::PreviewTrailTick::default());
             world.insert_resource(crate::preview::MultiPreview(false));
