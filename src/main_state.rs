@@ -2,10 +2,11 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::egui::FontFamily;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::physics::{self, KinematicBody, Paused};
+use crate::physics::{self, Paused};
 
 use crate::scripting::RhaiRes;
 use crate::ui::body_creation::{CreationData, CreationState};
+use crate::ui::code_editor::CodeEditor;
 use crate::ui::input_state::MouseState;
 use crate::ui::inspect::InspectedEntity;
 
@@ -19,7 +20,7 @@ pub struct MainState {
 
 impl Default for MainState {
     fn default() -> Self {
-        let world = {
+        let mut world = {
             let mut world = World::new();
 
             world.insert_resource(crate::physics::DT(1.0));
@@ -51,21 +52,6 @@ impl Default for MainState {
             world.insert_resource(crate::ui::code_editor::CodeEditor::default());
 
             world.insert_resource(RhaiRes::default());
-
-            world.spawn().insert(KinematicBody {
-                pos: Vec2::new(0.0, 0.0),
-                mass: 10_000.0,
-                radius: 300.0,
-                ..Default::default()
-            });
-
-            world.spawn().insert(KinematicBody {
-                pos: Vec2::new(4000.0, 0.0),
-                mass: 0.01,
-                radius: 50.0,
-                vel: Vec2::new(0.0, -15.0),
-                ..Default::default()
-            });
 
             world
         };
@@ -161,7 +147,7 @@ impl Default for MainState {
             draw_schedule
         };
 
-        let input_schedule = {
+        let mut input_schedule = {
             let mut input_schedule = Schedule::default();
 
             input_schedule.add_stage(
@@ -205,6 +191,17 @@ impl Default for MainState {
 
             input_schedule
         };
+
+        {
+            use std::sync::{Arc, RwLock};
+            world.insert_resource(CodeEditor {
+                code: Arc::new(RwLock::new(include_str!("../rhai_scripts/basic_orbit.rhai").to_string())),
+                should_run: true,
+                ..CodeEditor::default()
+            });
+            input_schedule.run(&mut world);
+            world.insert_resource(CodeEditor::default());
+        }
 
         Self {
             world,
