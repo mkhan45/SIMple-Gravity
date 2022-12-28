@@ -7,7 +7,7 @@ use crate::{
     ui::code_editor::CodeEditor,
 };
 
-use slotmap::{DefaultKey, SlotMap};
+use slotmap::{DefaultKey, SlotMap, KeyData};
 
 use std::{
     collections::BTreeMap,
@@ -16,6 +16,8 @@ use std::{
 
 pub mod samples;
 mod util;
+
+pub struct RhaiID(pub DefaultKey);
 
 pub enum RhaiCommand {
     UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
@@ -33,6 +35,7 @@ pub struct RhaiRes {
     pub output: Arc<RwLock<String>>,
     pub newly_added_bodies: Arc<RwLock<SlotMap<DefaultKey, rhai::Map>>>,
     pub existing_bodies: Arc<RwLock<BTreeMap<DefaultKey, Entity>>>,
+    pub names: BTreeMap<String, DefaultKey>,
     pub commands: Arc<RwLock<Vec<RhaiCommand>>>,
     pub last_code: rhai::AST,
     pub lib_ast: rhai::AST,
@@ -70,6 +73,9 @@ impl Default for RhaiRes {
             .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val)
             .register_get("length", |v: &mut Vec2| v.length());
 
+        engine.register_fn("id", move |id_num: i64| {
+            DefaultKey::from(KeyData::from_ffi(id_num as u64))
+        });
         engine.register_fn("to_string", |v: Vec2| v.to_string());
         engine.register_fn("to_debug", |v: Vec2| format!("{:?}", v));
         engine.register_fn("angle_between", |a: Vec2, b: Vec2| a.angle_between(b));
@@ -178,6 +184,7 @@ impl Default for RhaiRes {
             newly_added_bodies,
             existing_bodies,
             commands,
+            names: BTreeMap::new(),
             last_code: rhai::AST::default(),
             lib_ast,
         }
@@ -211,8 +218,6 @@ impl RhaiRes {
     }
 }
 
-pub struct RhaiID(pub usize);
-
 pub fn run_code_sys(
     mut code_editor: ResMut<CodeEditor>,
     mut rhai: ResMut<RhaiRes>,
@@ -242,7 +247,7 @@ pub fn run_code_sys(
             let registered = added_body
                 .get("registered")
                 .and_then(|r| r.clone().try_cast::<bool>())
-                .unwrap_or(false);
+                .unwrap_or(true);
 
             let mut builder = commands.spawn();
 
@@ -253,6 +258,7 @@ pub fn run_code_sys(
 
             let entity = builder.id();
             rhai.existing_bodies.write().unwrap().insert(key, entity);
+            commands.entity(entity).insert(RhaiID(key));
         }
     }
 }

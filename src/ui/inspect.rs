@@ -1,9 +1,11 @@
 use bevy_ecs::prelude::*;
 use egui_macroquad::egui::{self, Context};
 use egui_macroquad::macroquad::prelude::*;
+use slotmap::Key;
 
 use crate::camera::FollowBody;
 use crate::physics::KinematicBody;
+use crate::scripting::RhaiID;
 use crate::trails::{RelativeTrails, Trail};
 
 use super::body_creation::CreationState;
@@ -39,6 +41,7 @@ pub fn inspect_body_sys(
 pub fn inspect_panel_sys(
     egui_ctx: Res<egui::Context>,
     inspected_entity: Res<InspectedEntity>,
+    rhai_ids: Query<&RhaiID>,
     mut followed_body: ResMut<FollowBody>,
     mut relative_trails_body: ResMut<RelativeTrails>,
     mut body_info: Query<(&mut KinematicBody, &mut Trail)>,
@@ -79,6 +82,10 @@ pub fn inspect_panel_sys(
             ));
 
             ui.add(egui::Slider::new(&mut trail.max_len, 0..=10_000).text("Trail Max Length"));
+
+            if let Ok(RhaiID(id)) = rhai_ids.get(entity) {
+                ui.label(format!("id: {}", id.data().as_ffi()));
+            }
 
             if ui.button("Follow").clicked() {
                 if followed_body.0.contains(&entity) {

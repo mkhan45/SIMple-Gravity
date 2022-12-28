@@ -7,7 +7,7 @@ use crate::{
     camera::CameraRes,
     physics::{KinematicBody, Preview},
     preview::MultiPreview,
-    scripting::{RhaiBody, RhaiRes},
+    scripting::{RhaiBody, RhaiRes, RhaiID},
 };
 
 #[derive(PartialEq, Debug)]
@@ -92,6 +92,7 @@ pub fn create_body_sys(
                     .insert(rhai::Map::default());
                 rhai.existing_bodies.write().unwrap().insert(key, id);
                 rhai.newly_added_bodies.write().unwrap().remove(key);
+                commands.entity(id).insert(RhaiID(key));
 
                 *creation_state = CreationState::Initiated;
             } else {

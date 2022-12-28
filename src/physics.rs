@@ -16,7 +16,7 @@ pub struct PhysicsToggles {
     pub integration: bool,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct KinematicBody {
     pub pos: Vec2,
     pub vel: Vec2,
