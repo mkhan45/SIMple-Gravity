@@ -333,15 +333,23 @@ pub fn run_rhai_commands_sys(
 pub fn run_script_update_sys(
     mut rhai: ResMut<RhaiRes>,
     mut code_editor: ResMut<CodeEditor>,
-    registered_bodies: Query<(Entity, &KinematicBody), With<RhaiBody>>,
+    registered_bodies: Query<(Entity, &KinematicBody, &RhaiID)>,
 ) {
     if let Some(update_fn) = rhai.scope.get_value::<rhai::FnPtr>("update") {
+        {
+            let existing_bodies_lock = rhai.existing_bodies.clone();
+            let mut existing_bodies = existing_bodies_lock.write().unwrap();
+            for (e, _, id) in registered_bodies.iter() {
+                existing_bodies.insert(id.0, e);
+            }
+        }
+
         let registered_bodies_map = {
             Arc::new(
                 registered_bodies
-                    .iter()
-                    .map(|(e, b)| (e, b.clone()))
-                    .collect::<BTreeMap<Entity, KinematicBody>>(),
+                .iter()
+                .map(|(e, b, _)| (e, b.clone()))
+                .collect::<BTreeMap<Entity, KinematicBody>>(),
             )
         };
 
@@ -349,7 +357,7 @@ pub fn run_script_update_sys(
         existing_bodies
             .write()
             .unwrap()
-            .drain_filter(|_, &mut e| registered_bodies.get(e).is_err());
+            .retain(|_, e| registered_bodies_map.contains_key(&e));
         let existing_body_map = {
             let body_reader = existing_bodies.read().unwrap();
             body_reader
@@ -358,13 +366,13 @@ pub fn run_script_update_sys(
                     (
                         *k,
                         registered_bodies_map
-                            .get(e)
-                            .cloned()
-                            .map(rhai::Dynamic::from)
-                            .unwrap_or(rhai::Dynamic::UNIT),
+                        .get(e)
+                        .cloned()
+                        .map(rhai::Dynamic::from)
+                        .unwrap_or(rhai::Dynamic::UNIT),
                     )
                 })
-                .collect::<BTreeMap<DefaultKey, rhai::Dynamic>>()
+            .collect::<BTreeMap<DefaultKey, rhai::Dynamic>>()
         };
 
         let existing_body_ids = {

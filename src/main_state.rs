@@ -185,6 +185,7 @@ impl Default for MainState {
                     .with_system(
                         crate::scripting::run_script_update_sys
                             .system()
+                            .label("update")
                             .after("commands"),
                     ),
             );
