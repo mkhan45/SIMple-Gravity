@@ -243,15 +243,6 @@ impl MainState {
                 FontId::new(24.0, FontFamily::Monospace),
             );
             egui_ctx.set_style(style);
-            // let mut fonts = FontDefinitions::default();
-            // fonts.family_and_size.get_mut(&TextStyle::Button).unwrap().1 = 28.0;
-            // fonts.family_and_size.get_mut(&TextStyle::Body).unwrap().1 = 28.0;
-            // fonts
-            //     .family_and_size
-            //     .get_mut(&TextStyle::Monospace)
-            //     .unwrap()
-            //     .1 = 24.0;
-            // egui_ctx.set_fonts(fonts);
 
             self.world.insert_resource(egui_ctx.clone());
             self.draw_schedule.run(&mut self.world);

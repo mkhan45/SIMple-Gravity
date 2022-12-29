@@ -157,10 +157,13 @@ impl Default for RhaiRes {
             fn reset_physics() {
                 set_g(100.0);
                 set_collisions(true);
+                set_integration(true);
             }
         "
         .to_string();
         for field in ["pos", "vel", "accel", "force", "mass", "radius"] {
+            // the set_{field} functions are weird because of the 1-frame
+            // delay and black magic
             lib_code.push_str(&format!(
                 "
                 fn get_{0}(body) {{ get_body(body).{0} }}
@@ -169,8 +172,8 @@ impl Default for RhaiRes {
                 fn add_{0}(body, field) {{ update_body(body, #{{ add_{0}: field }}) }}
                 fn add_{0}(field) {{ update_body(this, #{{ add_{0}: field }} ) }}
 
-                fn set_{0}(body, field) {{ update_body(body, #{{ set_{0}: field }}) }}
-                fn set_{0}(field) {{ update_body(this, #{{ set_{0}: field }} ) }}
+                fn set_{0}(body, field) {{ update_body(body, #{{ add_{0}: -body.get_{0}() + field }}) }}
+                fn set_{0}(field) {{ update_body(this, #{{ add_{0}: -this.get_{0}() + field }} ) }}
             ",
                 field
             ));
