@@ -52,7 +52,13 @@ impl Default for RhaiRes {
         let output = Arc::new(RwLock::new(String::new()));
 
         let logger = output.clone();
-        engine.on_print(move |s| logger.write().unwrap().push_str(&format!("{}\n", s)));
+        engine.on_print(move |s| {
+            let new_log = {
+                let previous = logger.read().unwrap();
+                format!("{}\n{}", s, previous)
+            };
+            *logger.write().unwrap() = new_log;
+        });
 
         engine
             .register_type::<KinematicBody>()
