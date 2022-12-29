@@ -84,7 +84,19 @@ pub fn inspect_panel_sys(
             ui.add(egui::Slider::new(&mut trail.max_len, 0..=10_000).text("Trail Max Length"));
 
             if let Ok(RhaiID(id)) = rhai_ids.get(entity) {
-                ui.label(format!("id: {}", id.data().as_ffi()));
+                let id_label = egui::Label::new(format!("id: {}", id.data().as_ffi())).sense(egui::Sense::click());
+                // let id_btn = .label(format!("id: {}", id.data().as_ffi())).on_hover_text("Click to Copy");
+                
+                #[allow(unused_variables)]
+                let added = ui.add(id_label);
+                #[cfg(target_arch = "wasm32")]
+                if added.on_hover_text("Click to Copy").clicked() {
+                    let js = format!("
+                        navigator.clipboard.writeText('{}')
+                    ", id.data().as_ffi());
+
+                    let _ = js_sys::eval(&js);
+                }
             }
 
             if ui.button("Follow").clicked() {

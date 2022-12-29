@@ -21,3 +21,6 @@ js-sys = "*"
 
 [profile.dev.package.'*']
 opt-level = 3
+
+[patch.crates-io]
+miniquad = { path = "../miniquad" }
