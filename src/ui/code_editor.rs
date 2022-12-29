@@ -107,7 +107,12 @@ pub fn code_editor_sys(
                 let output = output.read().unwrap();
                 let text =
                     RichText::new(format!("Output:\n{}", &output)).text_style(TextStyle::Monospace);
-                ui.label(text);
+
+                ui.add_space(30.0);
+                egui::ScrollArea::vertical().stick_to_bottom(true)
+                    .show(ui, |ui| {
+                        ui.label(text);
+                    });
             }
 
             // egui::TopBottomPanel::bottom("Run")
