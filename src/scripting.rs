@@ -3,7 +3,7 @@ use egui_macroquad::macroquad::prelude::*;
 use rhai::{Engine, Scope};
 
 use crate::{
-    physics::{KinematicBody, PhysicsToggles, G},
+    physics::{KinematicBody, PhysicsToggles, G, Paused},
     ui::code_editor::CodeEditor,
 };
 
@@ -26,6 +26,7 @@ pub enum RhaiCommand {
     SetCollisions(bool),
     SetIntegration(bool),
     Export,
+    SetPaused(bool),
 }
 
 pub struct RhaiBody;
@@ -152,6 +153,12 @@ impl Default for RhaiRes {
             commands_writer.push(RhaiCommand::SetIntegration(enabled));
         });
 
+        let command_ref = commands.clone();
+        engine.register_fn("set_paused", move |enabled| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::SetPaused(enabled));
+        });
+
         // TODO: Constify via a macro
         let mut lib_code = "
             fn reset_physics() {
@@ -271,6 +278,7 @@ pub fn run_rhai_commands_sys(
     mut query: Query<&mut KinematicBody, With<RhaiBody>>,
     mut g: ResMut<G>,
     mut physics_toggles: ResMut<PhysicsToggles>,
+    mut paused: ResMut<Paused>,
 ) {
     let body_reader = rhai_res.existing_bodies.read().unwrap();
     let mut rhai_commands = rhai_res.commands.write().unwrap();
@@ -328,6 +336,9 @@ pub fn run_rhai_commands_sys(
             }
             RhaiCommand::DeleteBody { id: _ } => {
                 todo!()
+            }
+            RhaiCommand::SetPaused(enabled_or_disabled) => {
+                paused.0 = enabled_or_disabled;
             }
         }
     }
