@@ -3,7 +3,7 @@ use egui_macroquad::macroquad::prelude::*;
 use rhai::{Engine, Scope};
 
 use crate::{
-    physics::{KinematicBody, PhysicsToggles, G, Paused},
+    physics::{KinematicBody, PhysicsToggles, G, Paused, DT},
     ui::code_editor::CodeEditor,
 };
 
@@ -347,6 +347,7 @@ pub fn run_rhai_commands_sys(
 pub fn run_script_update_sys(
     mut rhai: ResMut<RhaiRes>,
     mut code_editor: ResMut<CodeEditor>,
+    dt: Res<DT>,
     registered_bodies: Query<(Entity, &KinematicBody, &RhaiID)>,
 ) {
     if let Some(update_fn) = rhai.scope.get_value::<rhai::FnPtr>("update") {
@@ -406,6 +407,9 @@ pub fn run_script_update_sys(
                 })
                 .unwrap_or(rhai::Dynamic::UNIT)
         });
+
+        let dt = Arc::new(dt.0);
+        rhai.engine.register_fn("DT", move || *dt.clone());
 
         let ast = rhai.last_code.merge(&rhai.lib_ast);
 
