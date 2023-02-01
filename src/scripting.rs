@@ -348,6 +348,7 @@ pub fn run_script_update_sys(
     mut rhai: ResMut<RhaiRes>,
     mut code_editor: ResMut<CodeEditor>,
     dt: Res<DT>,
+    paused: Res<Paused>,
     registered_bodies: Query<(Entity, &KinematicBody, &RhaiID)>,
 ) {
     if let Some(update_fn) = rhai.scope.get_value::<rhai::FnPtr>("update") {
@@ -410,6 +411,9 @@ pub fn run_script_update_sys(
 
         let dt = Arc::new(dt.0);
         rhai.engine.register_fn("DT", move || *dt.clone());
+
+        let paused = Arc::new(paused.0);
+        rhai.engine.register_fn("is_paused", move || *paused.clone());
 
         let ast = rhai.last_code.merge(&rhai.lib_ast);
 
