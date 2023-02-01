@@ -6,7 +6,7 @@ use crate::{
     force_lines::{DrawForceLines, ForceLine},
     physics::KinematicBody,
     ui::body_creation::{CreationData, CreationState},
-    ui::input_state::MouseState,
+    ui::input_state::MouseState, scripting::RhaiRes,
 };
 
 const PREVIEW_COLOR: Color = Color::new(1.0, 1.0, 1.0, 0.75);
@@ -88,4 +88,9 @@ pub fn draw_force_lines(
             }
         }
     }
+}
+
+pub fn draw_rhai_stuff(mut rhai: ResMut<RhaiRes>) {
+    (rhai.drawings)();
+    rhai.drawings = std::sync::Arc::new(|| {});
 }

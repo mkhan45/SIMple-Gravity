@@ -25,6 +25,7 @@ pub enum RhaiCommand {
     SetG(f32),
     SetCollisions(bool),
     SetIntegration(bool),
+    Draw { params: rhai::Map },
     Export,
     SetPaused(bool),
 }
@@ -38,6 +39,7 @@ pub struct RhaiRes {
     pub existing_bodies: Arc<RwLock<BTreeMap<DefaultKey, Entity>>>,
     pub names: BTreeMap<String, DefaultKey>,
     pub commands: Arc<RwLock<Vec<RhaiCommand>>>,
+    pub drawings: Arc<dyn Fn() + Send + Sync>,
     pub last_code: rhai::AST,
     pub lib_ast: rhai::AST,
 }
@@ -159,6 +161,12 @@ impl Default for RhaiRes {
             commands_writer.push(RhaiCommand::SetPaused(enabled));
         });
 
+        let command_ref = commands.clone();
+        engine.register_fn("draw", move |params| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::Draw { params });
+        });
+
         // TODO: Constify via a macro
         let mut lib_code = "
             fn reset_physics() {
@@ -197,6 +205,7 @@ impl Default for RhaiRes {
             names: BTreeMap::new(),
             last_code: rhai::AST::default(),
             lib_ast,
+            drawings: Arc::new(|| {}),
         }
     }
 }
@@ -274,7 +283,7 @@ pub fn run_code_sys(
 }
 
 pub fn run_rhai_commands_sys(
-    rhai_res: Res<RhaiRes>,
+    mut rhai_res: ResMut<RhaiRes>,
     mut query: Query<&mut KinematicBody, With<RhaiBody>>,
     mut g: ResMut<G>,
     mut physics_toggles: ResMut<PhysicsToggles>,
@@ -282,6 +291,7 @@ pub fn run_rhai_commands_sys(
 ) {
     let body_reader = rhai_res.existing_bodies.read().unwrap();
     let mut rhai_commands = rhai_res.commands.write().unwrap();
+    let mut draw = rhai_res.drawings.clone();
     for command in rhai_commands.drain(..) {
         match command {
             RhaiCommand::UpdateBody { id, params } => {
@@ -320,6 +330,35 @@ pub fn run_rhai_commands_sys(
                     generate_set_add!(radius, "radius", f32);
                 }
             }
+            RhaiCommand::Draw { params } => {
+                match params.get("type") {
+                    Some(s) if s.clone_cast::<String>().as_str() == "line" => {
+                        let start = params
+                            .get("start")
+                            .and_then(|d| d.clone().try_cast::<Vec2>())
+                            .unwrap_or(Vec2::ZERO);
+                        let end = params
+                            .get("end")
+                            .and_then(|d| d.clone().try_cast::<Vec2>())
+                            .unwrap_or(Vec2::ZERO);
+                        let thickness = params
+                            .get("thickness")
+                            .and_then(|d| d.clone().try_cast::<f32>())
+                            .unwrap_or(1.0);
+                        let color = params
+                            .get("color")
+                            .and_then(|d| d.clone().try_cast::<Color>())
+                            .unwrap_or(WHITE);
+
+                        draw = Arc::new(move || {
+                            draw_line(start.x, start.y, end.x, end.y, thickness, color);
+                            draw();
+                        });
+                    },
+                    Some(_) => todo!(),
+                    None => todo!(),
+                }
+            }
             RhaiCommand::SetG(new_g) => {
                 g.0 = new_g;
             }
@@ -342,6 +381,10 @@ pub fn run_rhai_commands_sys(
             }
         }
     }
+
+    std::mem::drop(body_reader);
+    std::mem::drop(rhai_commands);
+    rhai_res.drawings = draw;
 }
 
 pub fn run_script_update_sys(

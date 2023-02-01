@@ -144,6 +144,11 @@ impl Default for MainState {
                     ),
             );
 
+            draw_schedule.add_stage(
+                "rhai",
+                SystemStage::single_threaded().with_system(crate::draw::draw_rhai_stuff.system()),
+            );
+
             draw_schedule
         };
 
