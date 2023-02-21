@@ -30,6 +30,11 @@ pub enum RhaiCommand {
     SetPaused(bool),
 }
 
+#[derive(Clone)]
+pub enum DrawFn {
+    Draw(Arc<dyn Fn() -> DrawFn + Send + Sync>),
+    Finished,
+}
 pub struct RhaiBody;
 pub struct RhaiRes {
     pub engine: Engine,
@@ -39,7 +44,7 @@ pub struct RhaiRes {
     pub existing_bodies: Arc<RwLock<BTreeMap<DefaultKey, Entity>>>,
     pub names: BTreeMap<String, DefaultKey>,
     pub commands: Arc<RwLock<Vec<RhaiCommand>>>,
-    pub drawings: Arc<dyn Fn() + Send + Sync>,
+    pub drawings: DrawFn,
     pub last_code: rhai::AST,
     pub lib_ast: rhai::AST,
 }
@@ -205,7 +210,7 @@ impl Default for RhaiRes {
             names: BTreeMap::new(),
             last_code: rhai::AST::default(),
             lib_ast,
-            drawings: Arc::new(|| {}),
+            drawings: DrawFn::Finished,
         }
     }
 }
@@ -291,7 +296,7 @@ pub fn run_rhai_commands_sys(
 ) {
     let body_reader = rhai_res.existing_bodies.read().unwrap();
     let mut rhai_commands = rhai_res.commands.write().unwrap();
-    let mut draw = rhai_res.drawings.clone();
+    let mut draw_fn = DrawFn::Finished;
     for command in rhai_commands.drain(..) {
         match command {
             RhaiCommand::UpdateBody { id, params } => {
@@ -345,15 +350,15 @@ pub fn run_rhai_commands_sys(
                             .get("thickness")
                             .and_then(|d| d.clone().try_cast::<f32>())
                             .unwrap_or(1.0);
-                        let color = params
-                            .get("color")
-                            .and_then(|d| d.clone().try_cast::<Color>())
-                            .unwrap_or(WHITE);
+                        // let color = params
+                        //     .get("color")
+                        //     .and_then(|d| d.clone().try_cast::<Color>())
+                        //     .unwrap_or(WHITE);
 
-                        draw = Arc::new(move || {
-                            draw_line(start.x, start.y, end.x, end.y, thickness, color);
-                            draw();
-                        });
+                        draw_fn = DrawFn::Draw(Arc::new(move || {
+                            draw_line(start.x, start.y, end.x, end.y, thickness, WHITE);
+                            draw_fn.clone()
+                        }))
                     },
                     Some(_) => todo!(),
                     None => todo!(),
@@ -384,7 +389,7 @@ pub fn run_rhai_commands_sys(
 
     std::mem::drop(body_reader);
     std::mem::drop(rhai_commands);
-    rhai_res.drawings = draw;
+    rhai_res.drawings = draw_fn;
 }
 
 pub fn run_script_update_sys(

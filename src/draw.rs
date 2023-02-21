@@ -91,6 +91,10 @@ pub fn draw_force_lines(
 }
 
 pub fn draw_rhai_stuff(mut rhai: ResMut<RhaiRes>) {
-    (rhai.drawings)();
-    rhai.drawings = std::sync::Arc::new(|| {});
+    let mut draw_fn = rhai.drawings.clone();
+    while let crate::scripting::DrawFn::Draw(f) = draw_fn {
+        draw_fn = f();
+    }
+
+    rhai.drawings = crate::scripting::DrawFn::Finished;
 }
