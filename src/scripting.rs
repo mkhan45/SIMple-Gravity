@@ -79,7 +79,8 @@ impl Default for RhaiRes {
             .register_type::<Vec2>()
             .register_get_set("x", |v: &mut Vec2| v.x, |v: &mut Vec2, val: f32| v.x = val)
             .register_get_set("y", |v: &mut Vec2| v.y, |v: &mut Vec2, val: f32| v.y = val)
-            .register_get("length", |v: &mut Vec2| v.length());
+            .register_get("length", |v: &mut Vec2| v.length())
+            .register_get("normalized", |v: &mut Vec2| v.normalize());
 
         engine.register_fn("id", move |id_num: i64| {
             DefaultKey::from(KeyData::from_ffi(id_num as u64))
@@ -87,6 +88,7 @@ impl Default for RhaiRes {
         engine.register_fn("to_string", |v: Vec2| v.to_string());
         engine.register_fn("to_debug", |v: Vec2| format!("{:?}", v));
         engine.register_fn("angle_between", |a: Vec2, b: Vec2| a.angle_between(b));
+        engine.register_fn("rotate", |a: Vec2, b: f32| Vec2::from_angle(b).rotate(a));
 
         engine.register_fn("-", |v: Vec2| -v);
         engine.register_fn("-", |lhs: Vec2, rhs: Vec2| lhs - rhs);
@@ -198,6 +200,17 @@ impl Default for RhaiRes {
                 field
             ));
         }
+
+        lib_code.push_str("
+            fn draw_line(start, end, thickness) {
+                draw(#{
+                    type: \"line\",
+                    start: start,
+                    end: end,
+                    thickness: thickness,
+                });
+            }
+        ");
         let lib_ast = engine.compile(&lib_code).unwrap();
 
         Self {
