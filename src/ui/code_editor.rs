@@ -37,29 +37,32 @@ pub fn code_editor_sys(
         .resizable(true)
         .default_height(0.6 * screen_height())
         .default_width(0.5 * screen_width())
+        .collapsible(false)
         .show(&egui_ctx, |ui| {
-            ui.horizontal(|ui| {
+            egui::CollapsingHeader::new("Editor").default_open(true).show(ui, |ui| {
                 ui.set_max_height(screen_height() * 0.6);
-                egui::ScrollArea::vertical()
-                    .min_scrolled_height(screen_height() * 0.5)
-                    .show(ui, |ui| {
-                        let mut code = code_editor.code.write().unwrap();
-                        ui.add(
-                            egui::TextEdit::multiline(&mut *code)
+                ui.horizontal(|ui| {
+                    egui::ScrollArea::vertical()
+                        .min_scrolled_height(screen_height() * 0.5)
+                        .show(ui, |ui| {
+                            let mut code = code_editor.code.write().unwrap();
+                            ui.add(
+                                egui::TextEdit::multiline(&mut *code)
                                 .code_editor()
                                 .desired_width(0.4 * screen_width())
                                 .desired_rows(23),
-                        );
-                    });
+                            );
+                        });
 
-                let mut code = code_editor.code.write().unwrap();
-                ui.vertical(|ui| {
-                    ui.set_min_width(screen_width() * 0.1);
-                    for (name, script) in crate::scripting::samples::SAMPLE_SCRIPTS {
-                        if ui.button(name).clicked() {
-                            *code = script.to_string();
+                    let mut code = code_editor.code.write().unwrap();
+                    ui.vertical(|ui| {
+                        ui.set_min_width(screen_width() * 0.1);
+                        for (name, script) in crate::scripting::samples::SAMPLE_SCRIPTS {
+                            if ui.button(name).clicked() {
+                                *code = script.to_string();
+                            }
                         }
-                    }
+                    });
                 });
             });
 
