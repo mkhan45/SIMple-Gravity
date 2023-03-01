@@ -1,5 +1,6 @@
 #![feature(option_result_contains)]
 #![feature(btree_drain_filter)]
+#![feature(is_some_and)]
 // bevy
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]

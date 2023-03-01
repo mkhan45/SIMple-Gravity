@@ -117,6 +117,8 @@ impl Default for RhaiRes {
 
         engine.register_fn("insert", SlotMap::<DefaultKey, KinematicBody>::insert);
         engine.register_fn("get", SlotMap::<DefaultKey, KinematicBody>::get);
+        engine.register_fn("==", |a: DefaultKey, b: DefaultKey| a == b);
+        engine.register_fn("!=", |a: DefaultKey, b: DefaultKey| a != b);
 
         engine.register_fn("vec", Vec2::new);
         engine.register_fn("vec", |x: i64, y: i64| Vec2::new(x as f32, y as f32));
@@ -457,6 +459,19 @@ pub fn run_script_update_sys(
             body_reader.iter().map(|(k, _)| *k).collect::<Vec<_>>()
         };
 
+        {
+            let existing_bodies = existing_bodies.clone();
+            let registered_bodies_map = registered_bodies_map.clone();
+            rhai.engine.register_fn("exists", move |id| {
+                let body_reader = existing_bodies.read().unwrap();
+                body_reader.get(&id).is_some_and(|entity| {
+                    registered_bodies_map
+                        .get(entity)
+                        .is_some()
+                })
+            });
+        }
+
         rhai.engine.register_fn("get_body", move |id| {
             let body_reader = existing_bodies.read().unwrap();
             body_reader
@@ -467,7 +482,7 @@ pub fn run_script_update_sys(
                         .cloned()
                         .map(rhai::Dynamic::from)
                 })
-                .unwrap_or(rhai::Dynamic::UNIT)
+            .unwrap_or(rhai::Dynamic::UNIT)
         });
 
         let dt = Arc::new(dt.0);
