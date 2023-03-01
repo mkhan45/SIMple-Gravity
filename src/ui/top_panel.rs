@@ -7,7 +7,7 @@ use crate::{
     physics::{Paused, DT, G},
     preview::MultiPreview,
     scripting::RhaiRes,
-    trails::{DrawTrails, RelativeTrails},
+    trails::{DrawTrails, RelativeTrails}, camera::CameraRes,
 };
 
 use super::{
@@ -27,6 +27,7 @@ pub fn top_panel_sys(
     mut _multi_preview: ResMut<MultiPreview>,
     mut g: ResMut<G>,
     mut dt: ResMut<DT>,
+    mut camera: ResMut<CameraRes>,
     entities: Query<Entity>,
     _rhai: Res<RhaiRes>,
     mut commands: Commands,
@@ -72,6 +73,10 @@ pub fn top_panel_sys(
 
             if ui.button(paused_text).clicked() {
                 paused.0 = !paused.0;
+            }
+
+            if ui.button("Reset Camera").clicked() {
+                *camera = CameraRes::default();
             }
 
             if ui.button("Clear Scene").clicked() {
