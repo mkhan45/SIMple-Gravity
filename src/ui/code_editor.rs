@@ -49,17 +49,11 @@ pub fn code_editor_sys(
                         ui.vertical(|ui| {
                             ui.set_min_width(screen_width() * 0.4);
                             ui.set_min_height(screen_height() * 0.5);
-                            let pos = ui.clip_rect().min;
-                            // let mut code = code_editor.code.write().unwrap();
-                            // TODO: make a blank space
-                            // let editor = ui.add(
-                            //     egui::TextEdit::multiline(&mut *code)
-                            //     // .code_editor()
-                            //     .desired_width(0.4 * screen_width())
-                            //     .desired_rows(23),
-                            // );
+                            let padding = ui.style().spacing.window_margin.left_top();
+                            let pos = ui.clip_rect().min + padding;
+                            let y_offs = 32.0; // bc of the collapse title
 
-                            let js_code = format!("set_editor_pos({}, {});",pos.x, pos.y);
+                            let js_code = format!("set_editor_pos({}, {});", pos.x, pos.y + y_offs);
                             js_sys::eval(&js_code);
                         });
                         // egui::ScrollArea::vertical()
