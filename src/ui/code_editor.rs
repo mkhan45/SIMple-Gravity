@@ -32,6 +32,8 @@ pub fn code_editor_sys(
     rhai: Res<RhaiRes>,
 ) {
     let mut shown = code_editor.shown;
+    let mut ace_shown = shown;
+
     egui::Window::new("Scripting")
         .open(&mut shown)
         .resizable(true)
@@ -39,32 +41,48 @@ pub fn code_editor_sys(
         .default_width(0.5 * screen_width())
         .collapsible(false)
         .show(&egui_ctx, |ui| {
-            egui::CollapsingHeader::new("Editor").default_open(true).show(ui, |ui| {
-                ui.set_max_height(screen_height() * 0.6);
-                ui.horizontal(|ui| {
-                    egui::ScrollArea::vertical()
-                        .min_scrolled_height(screen_height() * 0.5)
-                        .show(ui, |ui| {
-                            let mut code = code_editor.code.write().unwrap();
-                            ui.add(
-                                egui::TextEdit::multiline(&mut *code)
-                                .code_editor()
-                                .desired_width(0.4 * screen_width())
-                                .desired_rows(23),
-                            );
-                        });
+            // TODO: encode/decode all text so you cant escape it 💀
+            let collapse_resp = 
+                egui::CollapsingHeader::new("Editor").default_open(true).show(ui, |ui| {
+                    ui.set_max_height(screen_height() * 0.6);
+                    ui.horizontal(|ui| {
+                        ui.vertical(|ui| {
+                            ui.set_min_width(screen_width() * 0.4);
+                            ui.set_min_height(screen_height() * 0.5);
+                            let pos = ui.clip_rect().min;
+                            // let mut code = code_editor.code.write().unwrap();
+                            // TODO: make a blank space
+                            // let editor = ui.add(
+                            //     egui::TextEdit::multiline(&mut *code)
+                            //     // .code_editor()
+                            //     .desired_width(0.4 * screen_width())
+                            //     .desired_rows(23),
+                            // );
 
-                    let mut code = code_editor.code.write().unwrap();
-                    ui.vertical(|ui| {
-                        ui.set_min_width(screen_width() * 0.1);
-                        for (name, script) in crate::scripting::samples::SAMPLE_SCRIPTS {
-                            if ui.button(name).clicked() {
-                                *code = script.to_string();
+                            let js_code = format!("set_editor_pos({}, {});",pos.x, pos.y);
+                            js_sys::eval(&js_code);
+                        });
+                        // egui::ScrollArea::vertical()
+                        //     .min_scrolled_height(screen_height() * 0.5)
+                        //     .show(ui, |ui| {
+                        //     });
+
+                        let mut code = code_editor.code.write().unwrap();
+                        ui.vertical(|ui| {
+                            ui.set_min_width(screen_width() * 0.1);
+                            for (name, script) in crate::scripting::samples::SAMPLE_SCRIPTS {
+                                if ui.button(name).clicked() {
+                                    // *code = script.to_string();
+                                    js_sys::eval(&format!("set_editor_code(`{}`)", script.to_string())).unwrap();
+                                }
                             }
-                        }
+                        });
                     });
                 });
-            });
+
+            if let None = collapse_resp.body_response {
+                ace_shown = false;
+            }
 
             ui.horizontal(|ui| {
                 if ui.button("Run").clicked() {
@@ -76,6 +94,12 @@ pub fn code_editor_sys(
                     entities.iter().for_each(|e| commands.entity(e).despawn());
                     rhai.existing_bodies.write().unwrap().clear();
                     code_editor.should_run = true;
+                }
+
+                if code_editor.should_run {
+                    let mut code = code_editor.code.write().unwrap();
+                    let code_str = js_sys::eval("get_editor_code()").unwrap();
+                    *code = code_str.as_string().unwrap();
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -127,6 +151,9 @@ pub fn code_editor_sys(
             // egui::CentralPanel::default().show_inside(ui, |ui| {
             // });
         });
+
+    let js_code_shown = format!("set_editor_visibility({});", ace_shown);
+    js_sys::eval(&js_code_shown);
 
     code_editor.shown = shown;
 }

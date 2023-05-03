@@ -19,7 +19,34 @@
 </head>
 <body>
   <canvas id="glcanvas" tabindex="1"></canvas>
+  <script src=" https://cdn.jsdelivr.net/npm/ace-builds@1.16.0/src-min-noconflict/ace.min.js "></script>
+  <div id="editor" style="position: absolute; width: 40vw; height: 50vh; display: none"> </div>
   <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
+  <script>
+      let editor = ace.edit("editor");
+      editor.setTheme("ace/theme/monokai");
+      editor.setFontSize(18);
+      let editor_div = document.querySelector("#editor");
+
+      function set_editor_visibility(visible) {
+          editor_div.style.display = visible ? "block" : "none";
+      }
+
+      // TODO: why 1.2?? it seems perfect though
+      function set_editor_pos(x, y) {
+          editor_div.style.left = x/1.2 + 10 + "px";
+          editor_div.style.top = y/1.2 + 30 + "px";
+      }
+
+      function get_editor_code() {
+          return editor.getValue();
+      }
+
+      function set_editor_code(code) {
+          editor.setValue(code);
+          editor.clearSelection();
+      }
+  </script>
   <script type="module">
       import init, { set_wasm } from "./simple_gravity.js";
         async function impl_run() {
