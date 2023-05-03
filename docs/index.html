@@ -32,10 +32,10 @@
           editor_div.style.display = visible ? "block" : "none";
       }
 
-      // TODO: why 1.2?? it seems perfect though
+      // TODO: gotta scale by tab zoom somehow
       function set_editor_pos(x, y) {
-          editor_div.style.left = x/1.2 + 10 + "px";
-          editor_div.style.top = y/1.2 + 30 + "px";
+          editor_div.style.left = x + 10 + "px";
+          editor_div.style.top = y + 30 + "px";
       }
 
       function get_editor_code() {
