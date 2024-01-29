@@ -100,14 +100,14 @@ pub fn inspect_panel_sys(
             }
 
             if ui.button("Follow").clicked() {
-                if followed_body.0.contains(&entity) {
+                if followed_body.0 == Some(entity) {
                     *followed_body = FollowBody(None)
                 } else {
                     *followed_body = FollowBody(Some(entity));
                 }
             }
             if ui.button("Relative Trails").clicked() {
-                if relative_trails_body.0.contains(&entity) {
+                if relative_trails_body.0 == Some(entity) {
                     *relative_trails_body = RelativeTrails(None);
                 } else {
                     *relative_trails_body = RelativeTrails(Some(entity));

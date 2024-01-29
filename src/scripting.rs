@@ -2,6 +2,8 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::macroquad::prelude::*;
 use rhai::{Engine, Scope};
 
+use crate::ui::graphs::Graph;
+
 use crate::{
     physics::{KinematicBody, PhysicsToggles, G, Paused, DT},
     ui::code_editor::CodeEditor,
@@ -28,6 +30,7 @@ pub enum RhaiCommand {
     Draw { params: rhai::Map },
     Export,
     SetPaused(bool),
+    // AddToGraph { name: String, point: f32 },
 }
 
 #[derive(Clone)]
@@ -45,6 +48,7 @@ pub struct RhaiRes {
     pub names: BTreeMap<String, DefaultKey>,
     pub commands: Arc<RwLock<Vec<RhaiCommand>>>,
     pub drawings: DrawFn,
+    pub graphs: Arc<RwLock<BTreeMap<String, Graph>>>,
     pub last_code: rhai::AST,
     pub lib_ast: rhai::AST,
 }
@@ -105,6 +109,34 @@ impl Default for RhaiRes {
 
         engine.register_fn("*", |lhs: Vec2, rhs: i64| lhs * rhs as f32);
         engine.register_fn("*", |lhs: i64, rhs: Vec2| lhs as f32 * rhs);
+
+        engine.register_fn("max", |lhs: f32, rhs: f32| lhs.max(rhs));
+        engine.register_fn("min", |lhs: f32, rhs: f32| lhs.min(rhs));
+
+        engine.register_type::<Graph>()
+              .register_fn("to_string", |g: &mut Graph| format!("Graph: {}", g.label));
+
+        let mut graphs = Arc::new(RwLock::new(BTreeMap::<String, Graph>::new()));
+
+        let graphs_ref = graphs.clone();
+        engine.register_fn("new_graph", move |name: String, max_points: i64, r: i64, g: i64, b: i64| {
+            if let Ok(mut graphs) = graphs_ref.write() {
+                let g = Graph::new(name.as_str(), max_points as usize, r as u8, g as u8, b as u8);
+                graphs.insert(name.clone(), g);
+            }
+        });
+
+        let graphs_ref = graphs.clone();
+        engine.register_fn("add_point", move |name: &str, point: f32| {
+            if let Ok(mut graphs) = graphs_ref.write() {
+                if let Some(graph) = graphs.get_mut(name) {
+                    graph.points.push_back(point);
+                    while graph.points.len() > graph.max_points {
+                        graph.points.pop_front();
+                    }
+                }
+            }
+        });
 
         engine.register_type::<Entity>();
         engine.register_type::<DefaultKey>();
@@ -226,6 +258,7 @@ impl Default for RhaiRes {
             last_code: rhai::AST::default(),
             lib_ast,
             drawings: DrawFn::Finished,
+            graphs,
         }
     }
 }

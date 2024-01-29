@@ -180,7 +180,7 @@ pub fn collision_sys(
                 // }
                 commands.entity(e2).despawn();
 
-                if inspected_entity.0.contains(&e2) {
+                if inspected_entity.0 == Some(e2) {
                     inspected_is_collided = true;
                 }
             }

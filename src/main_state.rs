@@ -121,7 +121,8 @@ impl Default for MainState {
                             .system()
                             .label("transform"),
                     )
-                    .with_system(crate::camera::camera_follow_sys.system().after("transform")),
+                    .with_system(crate::camera::camera_follow_sys.system().after("transform"))
+                    .with_system(crate::ui::graphs::draw_graphs_sys.system().after("bodies")),
             );
 
             draw_schedule.add_stage(

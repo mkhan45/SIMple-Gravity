@@ -92,4 +92,4 @@ wasm-bindgen --target web --out-dir docs/wbindgen/ --no-typescript target/wasm32
 sed -i "s/import \* as __wbg_star0 from 'env';//" docs/wbindgen/$PROJECT_NAME.js
 sed -i "s/let wasm;/let wasm; export const set_wasm = (w) => wasm = w;/" docs/wbindgen/$PROJECT_NAME.js
 sed -i "s/imports\['env'\] = __wbg_star0;/return imports.wbg\;/" docs/wbindgen/$PROJECT_NAME.js
-sed -i "s/const imports = getImports();/return getImports();/" docs/wbindgen/$PROJECT_NAME.js
+sed -i "s/const imports = __wbg_get_imports();/return __wbg_get_imports();/" docs/wbindgen/$PROJECT_NAME.js
