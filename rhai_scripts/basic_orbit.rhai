@@ -1,4 +1,4 @@
-       reset_physics();
+reset_physics();
 
 let sun = add_body(#{
     pos: vec(0.0, 0.0),

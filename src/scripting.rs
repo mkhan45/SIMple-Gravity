@@ -273,6 +273,8 @@ impl RhaiRes {
                 .unwrap()
                 .push_str(e.to_string().as_str()),
         }
+        
+        self.graphs.write().unwrap().clear();
     }
 
     pub fn run_ast(&mut self, code: &rhai::AST) {
@@ -296,6 +298,7 @@ pub fn run_code_sys(
     mut commands: Commands,
 ) {
     if code_editor.should_run {
+        rhai.graphs.write().unwrap().clear();
         rhai.output.write().unwrap().clear();
         code_editor.should_run = false;
 

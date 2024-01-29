@@ -98,3 +98,7 @@ pub fn draw_rhai_stuff(mut rhai: ResMut<RhaiRes>) {
 
     rhai.drawings = crate::scripting::DrawFn::Finished;
 }
+
+
+pub fn draw_graph_sys(mut rhai: ResMut<RhaiRes>) {
+}
