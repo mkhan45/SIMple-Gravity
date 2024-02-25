@@ -1,6 +1,8 @@
 const SPRING_CONSTANT = 0.001;
 const DAMPING_FACTOR = 0.999;
-set_g(0.0);
+set_dt(1.0);
+
+set_g(0.0); # disables gravity
 
 fn apply_spring_force(body) {
     draw_body_spring(body);

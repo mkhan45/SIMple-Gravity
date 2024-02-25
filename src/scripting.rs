@@ -25,6 +25,7 @@ pub enum RhaiCommand {
     UpdateBody { id: DefaultKey, params: rhai::Map }, // TODO: set timestep, add graph, etc.
     DeleteBody { id: DefaultKey },
     SetG(f32),
+    SetDT(f32),
     SetCollisions(bool),
     SetIntegration(bool),
     Draw { params: rhai::Map },
@@ -188,6 +189,12 @@ impl Default for RhaiRes {
         });
 
         let command_ref = commands.clone();
+        engine.register_fn("set_dt", move |new_dt| {
+            let mut commands_writer = command_ref.write().unwrap();
+            commands_writer.push(RhaiCommand::SetDT(new_dt));
+        });
+
+        let command_ref = commands.clone();
         engine.register_fn("set_collisions", move |enabled| {
             let mut commands_writer = command_ref.write().unwrap();
             commands_writer.push(RhaiCommand::SetCollisions(enabled));
@@ -348,6 +355,7 @@ pub fn run_rhai_commands_sys(
     mut rhai_res: ResMut<RhaiRes>,
     mut query: Query<&mut KinematicBody, With<RhaiBody>>,
     mut g: ResMut<G>,
+    mut dt: ResMut<DT>,
     mut physics_toggles: ResMut<PhysicsToggles>,
     mut paused: ResMut<Paused>,
 ) {
@@ -423,6 +431,9 @@ pub fn run_rhai_commands_sys(
             }
             RhaiCommand::SetG(new_g) => {
                 g.0 = new_g;
+            }
+            RhaiCommand::SetDT(new_dt) => {
+                dt.0 = new_dt;
             }
             RhaiCommand::Export => {
                 let text = "asdf";
