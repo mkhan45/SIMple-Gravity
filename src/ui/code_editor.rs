@@ -87,6 +87,7 @@ pub fn code_editor_sys(
                     code_editor.output = None;
                     entities.iter().for_each(|e| commands.entity(e).despawn());
                     rhai.existing_bodies.write().unwrap().clear();
+                    rhai.newly_added_bodies.write().unwrap().clear();
                     code_editor.should_run = true;
                 }
 

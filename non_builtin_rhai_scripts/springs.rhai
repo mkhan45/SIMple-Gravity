@@ -1,45 +1,45 @@
 const SPRING_CONSTANT = 0.001;
 const DAMPING_FACTOR = 0.999;
+set_g(0.0);
 
-fn apply_spring_forces(ids) {
-    for body in ids {
-        draw_spring(
-            vec(0.0, body.get_pos().y),
-            body.get_pos(),
-            body.get_radius() * 2.0,
-            body.get_radius() / 2.0,
-            10
-        );
-        let spring_length = (body.get_pos().x + body.get_vel().x);
-        body.add_force(vec(SPRING_CONSTANT * -spring_length, 0.0));
-        body.set_vel(body.get_vel() * DAMPING_FACTOR);
-    }
+fn apply_spring_force(body) {
+    draw_body_spring(body);
+    let spring_length = (body.get_pos().x + body.get_vel().x);
+
+    let spring_force = SPRING_CONSTANT * -spring_length;
+    body.add_force(vec(spring_force, 0.0));
 }
 
-set_g(0.0);
+fn calculate_kinetic_energy(body) {
+    let m = body.get_mass();
+    let x = body.get_pos().x;
+    let v = body.get_vel();
+    let v_mag = v.length;
+    return 0.5 * m * v_mag**2;
+}
+
+fn calculate_potential_energy(body) {
+    let x = body.get_pos().x;
+    return 0.5 * SPRING_CONSTANT * x**2;
+}
 
 new_graph("Kinetic", 1000, 0, 0, 255);
 new_graph("Potential", 1000, 255, 0, 0);
 new_graph("Total", 1000, 0, 255, 0);
 
-
 let update = |ids, bodies| {
-    if (!is_paused()) {
-        apply_spring_forces(ids);
+    if (is_paused()) {
+        return;
     }
 
     let total_kinetic_energy = 0.0;
     let total_potential_energy = 0.0;
     for body in ids {
-        let m = body.get_mass();
-        let x = body.get_pos().x;
-        let v = body.get_vel();
-        let v_mag = v.length;
+        apply_spring_force(body);
+        body.set_vel(body.get_vel() * DAMPING_FACTOR);
 
-        // use the SPRING_CONSTANT variable for 
-        // potential energy
-        let body_kinetic_energy = 0.5 * m * v_mag**2;
-        let body_potential_energy = 0.5 * SPRING_CONSTANT * x**2;
+        let body_kinetic_energy = calculate_kinetic_energy(body);
+        let body_potential_energy = calculate_potential_energy(body);
         
         if body == ids[0] {
             add_point("Kinetic", body_kinetic_energy);
@@ -71,4 +71,14 @@ fn draw_spring(start, end, width, thickness, coils) {
         draw_line(p2, p3, thickness);
         pos = p3;
     }
+}
+
+fn draw_body_spring(body) {
+    draw_spring(
+        vec(0.0, body.get_pos().y),
+        body.get_pos(),
+        body.get_radius() * 2.0,
+        body.get_radius() / 2.0,
+        10
+    );
 }

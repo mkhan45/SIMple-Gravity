@@ -51,6 +51,7 @@ pub struct RhaiRes {
     pub graphs: Arc<RwLock<BTreeMap<String, Graph>>>,
     pub last_code: rhai::AST,
     pub lib_ast: rhai::AST,
+    pub should_update: bool,
 }
 
 impl Default for RhaiRes {
@@ -60,6 +61,8 @@ impl Default for RhaiRes {
 
         let mut engine = Engine::new();
         engine.set_max_expr_depths(0, 0);
+
+        engine.set_optimization_level(rhai::OptimizationLevel::Full);
 
         let output = Arc::new(RwLock::new(String::new()));
 
@@ -259,6 +262,7 @@ impl Default for RhaiRes {
             lib_ast,
             drawings: DrawFn::Finished,
             graphs,
+            should_update: false,
         }
     }
 }
@@ -301,6 +305,7 @@ pub fn run_code_sys(
         rhai.graphs.write().unwrap().clear();
         rhai.output.write().unwrap().clear();
         code_editor.should_run = false;
+        rhai.should_update = false;
 
         let code_lock = code_editor.code.read().unwrap();
         let ast = match rhai.engine.compile_with_scope(&rhai.scope, &*code_lock) {
@@ -314,6 +319,7 @@ pub fn run_code_sys(
             }
         };
         std::mem::drop(code_lock);
+        rhai.scope.remove::<rhai::FnPtr>("update");
         rhai.run_ast(&ast);
         rhai.last_code = ast;
         code_editor.output = Some(rhai.output.clone());
@@ -451,6 +457,23 @@ pub fn run_script_update_sys(
     registered_bodies: Query<(Entity, &KinematicBody, &RhaiID)>,
 ) {
     if let Some(update_fn) = rhai.scope.get_value::<rhai::FnPtr>("update") {
+        if !rhai.should_update {
+            rhai.should_update = true;
+            let code_lock = code_editor.code.read().unwrap();
+            let ast = match rhai.engine.compile_with_scope(&rhai.scope, &*code_lock) {
+                Ok(ast) => ast.merge(&rhai.lib_ast),
+                Err(e) => {
+                    *rhai.output.write().unwrap() = e.to_string();
+                    std::mem::drop(e);
+                    std::mem::drop(code_lock);
+                    code_editor.output = Some(rhai.output.clone());
+                    return;
+                }
+            };
+            rhai.last_code = ast;
+            return;
+        }
+
         {
             let existing_bodies_lock = rhai.existing_bodies.clone();
             let mut existing_bodies = existing_bodies_lock.write().unwrap();
@@ -465,7 +488,7 @@ pub fn run_script_update_sys(
                 .iter()
                 .map(|(e, b, _)| (e, b.clone()))
                 .collect::<BTreeMap<Entity, KinematicBody>>(),
-            )
+                )
         };
 
         let existing_bodies = rhai.existing_bodies.clone();
@@ -485,7 +508,7 @@ pub fn run_script_update_sys(
                         .cloned()
                         .map(rhai::Dynamic::from)
                         .unwrap_or(rhai::Dynamic::UNIT),
-                    )
+                        )
                 })
             .collect::<BTreeMap<DefaultKey, rhai::Dynamic>>()
         };
@@ -527,10 +550,10 @@ pub fn run_script_update_sys(
         let paused = Arc::new(paused.0);
         rhai.engine.register_fn("is_paused", move || *paused.clone());
 
-        let ast = rhai.last_code.merge(&rhai.lib_ast);
+        let ast = &rhai.last_code;
 
         let res: Result<rhai::Dynamic, _> =
-            update_fn.call(&rhai.engine, &ast, (existing_body_ids, existing_body_map));
+            update_fn.call(&rhai.engine, ast, (existing_body_ids, existing_body_map));
         if let Err(e) = res {
             *rhai.output.write().unwrap() = e.to_string();
             rhai.scope.set_value("update", ());
