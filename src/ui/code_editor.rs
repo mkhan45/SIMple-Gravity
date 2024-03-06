@@ -78,6 +78,7 @@ pub fn code_editor_sys(
                 ace_shown = false;
             }
 
+            ui.add(egui::widgets::Separator::default().horizontal());
             ui.horizontal(|ui| {
                 if ui.button("Run").clicked() {
                     code_editor.output = None;

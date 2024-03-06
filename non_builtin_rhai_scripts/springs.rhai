@@ -2,7 +2,7 @@ const SPRING_CONSTANT = 0.001;
 const DAMPING_FACTOR = 0.999;
 set_dt(1.0);
 
-set_g(0.0); # disables gravity
+set_g(0.0);
 
 fn apply_spring_force(body) {
     draw_body_spring(body);
@@ -43,12 +43,6 @@ let update = |ids, bodies| {
         let body_kinetic_energy = calculate_kinetic_energy(body);
         let body_potential_energy = calculate_potential_energy(body);
         
-        if body == ids[0] {
-            add_point("Kinetic", body_kinetic_energy);
-            add_point("Potential", body_potential_energy);
-            add_point("Total", body_kinetic_energy + body_potential_energy);
-        }
-
         // add the body's energy to the total
         total_kinetic_energy += body_kinetic_energy;
         total_potential_energy += body_potential_energy;
@@ -56,6 +50,10 @@ let update = |ids, bodies| {
 
     let total_energy = 
         total_kinetic_energy + total_potential_energy;
+
+    add_point("Kinetic", total_kinetic_energy);
+    add_point("Potential", total_potential_energy);
+    add_point("Total", total_kinetic_energy + total_potential_energy);
 };
 
 fn draw_spring(start, end, width, thickness, coils) {
